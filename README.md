@@ -1,4 +1,4 @@
-# GainTrain
+# GainTrain: A Cross-Platform Social Fitness and Workout Tracking App
 Repository for my Comp3000 Final Year Project 'GainTrain'.
 
 GainTrain aims to be:
