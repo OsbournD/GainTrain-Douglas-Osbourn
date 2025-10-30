@@ -1,16 +1,17 @@
 import { useEffect } from 'react';
 import { View, Text } from 'react-native';
-import { addUser } from '../../src/firestoreTest';
+import { addTestUser } from '../../src/firestore';
 
 export default function FirebaseTestScreen() {
     useEffect(() => {
         console.log('useEffect running!');
-        addUser();
+        addTestUser();
     }, []);
 
     return (
-        <View style = {{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <Text> Firestore test running! </Text>
+        <View style = {{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white',}}>
+
+            <Text style = {{ color: 'black'}}> Firestore test running! </Text>
         </View>
     );
 
