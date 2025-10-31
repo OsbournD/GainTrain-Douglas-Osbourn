@@ -1,4 +1,4 @@
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 
 export async function addTestUser() {
@@ -12,6 +12,14 @@ export async function addTestUser() {
     catch (e) {
         console.error("Test user not added", e);
     }
+}
+
+export async function usernameCheck(username) {
+    const usersRef = collection(db, "users");
+    const usersQuery = query(usersRef, where("username", "==", username));
+    const queryResult = await getDocs(usersQuery);
+
+    return !queryResult.empty; // Returns true if username is taken.
 }
 
 export async function addUser(username, password) {

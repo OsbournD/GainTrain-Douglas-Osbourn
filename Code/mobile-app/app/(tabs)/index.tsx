@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
 
-import { addUser } from '../../src/firestore';
+import { addUser, usernameCheck } from '../../src/firestore';
 
 export default function LoginScreen() {
   // console.log("HomeScreen loading!");
@@ -17,6 +17,14 @@ export default function LoginScreen() {
   const signUpClicked = async () => {
       if (username.trim() && password.trim()) {
           try {
+              const exists = await usernameCheck(username);
+
+              if (exists) {
+                  console.log("Username: " + username + " already taken");
+                  Alert.alert("Username " + "'" + username + "'" + " taken!");
+                  return;
+              }
+
               await addUser(username, password);
               console.log('User ' + username + ' created an account.');
               Alert.alert('Welcome ' + username + '!');
