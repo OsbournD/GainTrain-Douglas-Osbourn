@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Button, View, Alert } from 'react-native';
-
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
@@ -9,7 +7,6 @@ import { Link } from 'expo-router';
 import { addUser, usernameCheck } from '../../src/firestore';
 
 export default function SignUpScreen() {
-  // console.log("HomeScreen loading!");
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -42,66 +39,71 @@ export default function SignUpScreen() {
   };
 
   return (
-    <ParallaxScrollView headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}>
+    <View style={{ flex: 1 }}>
+
       <ThemedView style={styles.headerContainer}>
         <ThemedText type="title">GainTrain!</ThemedText>
       </ThemedView>
 
-      <ThemedView style={styles.sectionContainer}>
-        <ThemedText type = "subtitle"> Sign Up </ThemedText>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ThemedView style={styles.sectionContainer}>
 
-        <TextInput style = { styles.input } placeholder = "Enter a username" value = { username } onChangeText = { setUsername } />
+          <ThemedText type="subtitle">Sign Up</ThemedText>
 
-        <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
+          <TextInput style = { styles.input } placeholder = "Enter a username" value = { username } onChangeText = { setUsername } />
 
-        <View style = { styles.buttonContainer }>
-            <Button title = 'Create Account' onPress = {signUpClicked} />
-        </View>
+          <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
 
-        <View style = { styles.buttonContainer }>
-            <Link href = "/(tabs)/login">
-                <ThemedText type = "link"> Already have an account? Log in </ThemedText>
+          <View style={styles.buttonContainer}>
+            <Button title="Create Account" onPress={signUpClicked} />
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <Link href="/(tabs)/login">
+              <ThemedText type="link">Already have an account? Log in</ThemedText>
             </Link>
-        </View>
+          </View>
+        </ThemedView>
 
-      </ThemedView>
+        <ThemedView style={styles.sectionContainer}>
+          <Link href="/(tabs)/firebaseTest">
+            <ThemedText type="subtitle">Firebase Test</ThemedText>
+          </Link>
+        </ThemedView>
 
+      </ScrollView>
 
-
-      <ThemedView style={styles.sectionContainer}>
-
-        <Link href = "/(tabs)/firebaseTest">
-            <ThemedText type = "subtitle"> Firebase Test </ThemedText>
-        </Link>
-
-
-
-      </ThemedView>
-    </ParallaxScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
 
-  input: {
-      borderWidth: 1,
-      borderColour: 'black',
-      borderRadius: 5,
-      padding: 10,
-      backgroundColor: 'white',
-      },
+    headerContainer: {
+        height: 120,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#A1CEDC',
+    },
+    scrollContent: {
+        paddingBottom: 20,
+    },
+    sectionContainer: {
+        padding: 20,
+        backgroundColor: '#fff',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: 'black',
+        borderRadius: 5,
+        padding: 10,
+        marginVertical: 10,
+        backgroundColor: 'white',
 
-  buttonContainer: {
-      marginTop: 10,
-      },
-
+    },
+    buttonContainer: {
+        marginTop: 10,
+    },
 });
+
+

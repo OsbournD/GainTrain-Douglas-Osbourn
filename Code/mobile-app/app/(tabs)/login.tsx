@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Button, View, Alert } from 'react-native';
-
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
@@ -23,56 +21,64 @@ export default function LoginScreen() {
     };
 
     return (
-        <ParallaxScrollView headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}>
+        <View style={{ flex: 1 }}>
 
           <ThemedView style={styles.headerContainer}>
             <ThemedText type="title">GainTrain!</ThemedText>
           </ThemedView>
 
-          <ThemedView style={styles.sectionContainer}>
-            <ThemedText type = "subtitle"> Login </ThemedText>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
 
-            <TextInput style = { styles.input } placeholder = "Enter a username" value = { username } onChangeText = { setUsername } />
+              <ThemedView style={styles.sectionContainer}>
+                <ThemedText type = "subtitle"> Login </ThemedText>
 
-            <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
+                <TextInput style = { styles.input } placeholder = "Enter a username" value = { username } onChangeText = { setUsername } />
 
-            <View style = { styles.buttonContainer }>
-                <Button title = 'Login' onPress = {loginClicked}/>
-            </View>
+                <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
 
-            <View style = { styles.buttonContainer }>
-                <Link href = "/(tabs)">
-                    <ThemedText type = "link"> Make an Account </ThemedText>
-                </Link>
-            </View>
+                <View style = { styles.buttonContainer }>
+                    <Button title = 'Login' onPress = {loginClicked}/>
+                </View>
 
-          </ThemedView>
+                <View style = { styles.buttonContainer }>
+                    <Link href = "/(tabs)">
+                        <ThemedText type = "link"> Make an Account </ThemedText>
+                    </Link>
+                </View>
 
-        </ParallaxScrollView>
+              </ThemedView>
+
+            </ScrollView>
+
+        </View>
       );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
 
-  input: {
-      borderWidth: 1,
-      borderColour: 'black',
-      borderRadius: 5,
-      padding: 10,
-      backgroundColor: 'white',
-      },
+    headerContainer: {
+        height: 120,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#A1CEDC',
+    },
+    scrollContent: {
+        paddingBottom: 20,
+    },
+    sectionContainer: {
+        padding: 20,
+        backgroundColor: '#fff',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: 'black',
+        borderRadius: 5,
+        padding: 10,
+        marginVertical: 10,
+        backgroundColor: 'white',
 
-  buttonContainer: {
-      marginTop: 10,
-      },
-
+    },
+    buttonContainer: {
+        marginTop: 10,
+    },
 });

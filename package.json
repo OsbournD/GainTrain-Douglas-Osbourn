@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "react-native-parallax-scroll-view": "^0.21.3"
+  }
+}
