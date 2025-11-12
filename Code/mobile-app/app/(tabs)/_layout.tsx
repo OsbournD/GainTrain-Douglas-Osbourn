@@ -19,8 +19,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Login',
+          title: 'Sign Up',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="login"
+        options={{
+        title: 'Login',
+
         }}
       />
       <Tabs.Screen
@@ -30,6 +37,7 @@ export default function TabLayout() {
 
         }}
       />
+
     </Tabs>
   );
 }

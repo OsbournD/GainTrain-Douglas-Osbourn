@@ -38,3 +38,27 @@ export async function addUser(username, password) {
     }
 
 }
+
+export async function verifyUserLogin(username, password) {
+    try {
+        const usersRef = collection(db, "users");
+        const usersQuery = query(usersRef, where("username", "==", username));
+        const queryResult = await getDocs(usersQuery);
+
+        if (queryResult.empty) {
+            return { success: false, message: "User not found."};
+        }
+
+        const user = queryResult.docs[0].data();
+
+        if (user.password === password) {
+            return { success: true, message: "Login successful!"};
+        } else {
+            return { success: true, message: "Incorrect password."};
+        }
+
+    } catch (e) {
+        console.error("Error verifying user: ", e);
+        return { success: false, message: "Login error."};
+    }
+}

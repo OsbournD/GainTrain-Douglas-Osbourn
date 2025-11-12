@@ -8,7 +8,7 @@ import { Link } from 'expo-router';
 
 import { addUser, usernameCheck } from '../../src/firestore';
 
-export default function LoginScreen() {
+export default function SignUpScreen() {
   // console.log("HomeScreen loading!");
 
   const [username, setUsername] = useState('');
@@ -58,13 +58,23 @@ export default function LoginScreen() {
             <Button title = 'Create Account' onPress = {signUpClicked} />
         </View>
 
+        <View style = { styles.buttonContainer }>
+            <Link href = "/(tabs)/login">
+                <ThemedText type = "link"> Already have an account? Log in </ThemedText>
+            </Link>
+        </View>
+
       </ThemedView>
+
+
 
       <ThemedView style={styles.sectionContainer}>
 
         <Link href = "/(tabs)/firebaseTest">
             <ThemedText type = "subtitle"> Firebase Test </ThemedText>
         </Link>
+
+
 
       </ThemedView>
     </ParallaxScrollView>
