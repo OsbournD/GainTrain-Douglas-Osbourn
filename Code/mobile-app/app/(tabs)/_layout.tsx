@@ -26,15 +26,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="login"
         options={{
-        title: 'Login',
-
+            title: 'Login',
         }}
       />
       <Tabs.Screen
         name="firebaseTest"
         options={{
-          title: 'firebaseTest',
-
+            title: 'firebaseTest',
+            tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+            title: 'Dashboard',
+            tabBarButton: () => null,
         }}
       />
 
