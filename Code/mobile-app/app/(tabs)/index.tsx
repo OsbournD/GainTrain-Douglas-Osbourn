@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 
-import { addUser, usernameCheck } from '../../src/firestore';
+import { addUser, usernameCheck, verifyUserLogin } from '../../src/firestore';
 
 export default function SignUpScreen() {
 
@@ -14,7 +14,7 @@ export default function SignUpScreen() {
   const signUpClicked = async () => {
       if (username.trim() && password.trim()) {
           try {
-              const exists = await usernameCheck(username);
+              const exists = await usernameCheck(username); // check if username taken.
 
               if (exists) {
                   console.log("Username: " + username + " already taken");
@@ -22,12 +22,30 @@ export default function SignUpScreen() {
                   return;
               }
 
-              await addUser(username, password);
+              const createAccountResult = await addUser(username, password); // create user account.
+              if (!createAccountResult.success) {
+                  Alert.alert('Error: ', createAccountResult.message);
+                  return;
+              }
               console.log('User ' + username + ' created an account.');
+
+              const autoLoginResult = await verifyUserLogin(username, password);
+
+              if (!autoLoginResult.success) {
+                  Alert.alert('Login error: ', autoLoginResult.message);
+                  return;
+              }
+              console.log('User ' + username + ' logged in after sign up.');
+
               Alert.alert('Welcome ' + username + '!');
+              router.push({
+                  pathname: '/(tabs)/dashboard',
+                  params: { username },
+              })
 
               setUsername('');
               setPassword('');
+
           } catch (error) {
               Alert.alert('Error, could not create account');
           }

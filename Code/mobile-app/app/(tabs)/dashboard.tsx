@@ -3,6 +3,7 @@ import { StyleSheet, View, Button } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { logoutUser } from '../../src/firestore';
 
 export default function welcomeDashboard() {
 
@@ -11,6 +12,7 @@ export default function welcomeDashboard() {
 
     const logoutClicked = async () => {
         try {
+            await logoutUser();
             router.push('/(tabs)/login');
         } catch (e) {
             console.error("Logout error: ", e);

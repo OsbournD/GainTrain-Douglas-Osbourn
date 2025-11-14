@@ -1,7 +1,8 @@
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
-import { db } from "./firebase";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from "./firebase";
 
-export async function addTestUser() {
+export async function addTestUser() { // for testing only.
     try {
         await addDoc(collection(db, "testUsers"), {
             name: "Tester Testington",
@@ -19,46 +20,71 @@ export async function usernameCheck(username) {
     const usersQuery = query(usersRef, where("username", "==", username));
     const queryResult = await getDocs(usersQuery);
 
-    return !queryResult.empty; // Returns true if username is taken.
+    return !queryResult.empty; // returns true if username is taken.
 }
 
-export async function addUser(username, password) {
+export async function addUser(username, password) { // to sign up with custom username and password (uses fake email for auth).
     try {
-        await addDoc(collection(db, "users"), {
-            username: username,
-            password: password, // CHANGE LATER WITH FIREBASE AUTH!!
-            createdAt: new Date(),
+        if (await usernameCheck(username)) {
+            console.log('Username ' + username + ' already taken.');
+            return { success: false, message: "Username already taken."};
+        }
 
+        // creating firebase auth account.
+        const emailAlias = `${username}@example.com`;
+        const userCredentials = await createUserWithEmailAndPassword(
+            auth,
+            emailAlias,
+            password
+        );
+
+        await addDoc(collection(db, "users"),{ // add data to firestore.
+            username,
+            uid: userCredentials.user.uid,
+            createdAt: new Date(),
         });
-        console.log("User " + username + " added!");
+
+        console.log('User ' + username + ' created successfully!');
+        return { success: true, message: "Account created!"};
+
     } catch (e) {
         console.error("Error adding user: ", e);
-        throw e;
-
+        return { success: false, message: e.message };
     }
 
 }
 
 export async function verifyUserLogin(username, password) {
+
     try {
-        const usersRef = collection(db, "users");
-        const usersQuery = query(usersRef, where("username", "==", username));
-        const queryResult = await getDocs(usersQuery);
-
-        if (queryResult.empty) {
-            return { success: false, message: "User not found."};
-        }
-
-        const user = queryResult.docs[0].data();
-
-        if (user.password === password) {
-            return { success: true, message: "Login successful!"};
-        } else {
-            return { success: true, message: "Incorrect password."};
-        }
+        const emailAlias = `${username}@example.com`;
+        const userCredentials = await signInWithEmailAndPassword(
+            auth,
+            emailAlias,
+            password
+        );
+        console.log('User ' + username + ' logged in.');
+        return { success: true, message: "Login successful!" };
 
     } catch (e) {
-        console.error("Error verifying user: ", e);
-        return { success: false, message: "Login error."};
+        console.error("Login error: ", e);
+        return { success: false, message: "Invalid username or password."};
     }
+
+}
+
+export async function logoutUser() {
+    try {
+        await signOut(auth);
+        console.log("User logged out.");
+        return { success: true };
+
+    } catch (e) {
+        console.error("Logout failed: ", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export function onAuthStateChange(callback) {
+    return onAuthStateChanged(auth, callback);
 }
