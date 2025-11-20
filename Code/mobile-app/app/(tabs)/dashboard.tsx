@@ -1,18 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Button } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { logoutUser } from '../../src/firestore';
+import { useIsFocused } from '@react-navigation/native';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function welcomeDashboard() {
 
-    const { username } = useLocalSearchParams();
     const router = useRouter();
+    const [username, setUsername] = useState<string | null>(null);
+
+    const isFocused = useIsFocused();
+
+    useEffect(() => { // when screen is focused, load logged in username.
+        const loadUsername = async () => {
+            const storedUser = await AsyncStorage.getItem('loggedInUser');
+            setUsername(storedUser);
+        }
+        if (isFocused) {
+            loadUsername();
+        }
+    }, [isFocused]);
 
     const logoutClicked = async () => {
         try {
             await logoutUser();
+            await AsyncStorage.removeItem('loggedInUser');
             router.push('/(tabs)/login');
         } catch (e) {
             console.error("Logout error: ", e);

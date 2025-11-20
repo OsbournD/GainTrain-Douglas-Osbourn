@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from "./firebase";
 
@@ -83,6 +83,49 @@ export async function logoutUser() {
         console.error("Logout failed: ", e);
         return { success: false, message: e.message };
     }
+}
+
+export async function sendFriendRequest(from, to) {
+    try {
+        const usersQuery = query(collection(db, "users"), where("username", "==", to));
+        const queryResult = await getDocs(usersQuery);
+
+        if (queryResult.empty) {
+            return { success: false, message: "User does not exist." };
+        }
+
+        await addDoc(collection(db, "friendRequests"), {
+            from,
+            to,
+            status: "pending",
+            sentAt: new Date(),
+        });
+
+        return { success: true };
+
+    } catch (e) {
+        console.error("Error sending friend request: ", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export async function getIncomingRequests(username) {
+    try {
+        const friendRequestsQuery = query(collection(db, "friendRequests"), where("to", "==", username), where("status", "==", "pending"));
+        const queryResult = await getDocs(friendRequestsQuery);
+
+        const requests = queryResult.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return requests;
+
+    } catch (e) {
+        console.error("Error getting incoming requests: ", e);
+        return[];
+    }
+
 }
 
 export function onAuthStateChange(callback) {

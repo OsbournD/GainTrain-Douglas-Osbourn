@@ -4,6 +4,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link, router } from 'expo-router';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { addUser, usernameCheck, verifyUserLogin } from '../../src/firestore';
 
 export default function SignUpScreen() {
@@ -38,9 +40,11 @@ export default function SignUpScreen() {
               console.log('User ' + username + ' logged in after sign up.');
 
               Alert.alert('Welcome ' + username + '!');
+
+              await AsyncStorage.setItem('loggedInUser', username);
+
               router.push({
                   pathname: '/(tabs)/dashboard',
-                  params: { username },
               })
 
               setUsername('');
