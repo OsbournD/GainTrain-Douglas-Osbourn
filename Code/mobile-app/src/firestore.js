@@ -87,11 +87,32 @@ export async function logoutUser() {
 
 export async function sendFriendRequest(from, to) {
     try {
+
+        if (from === to) {
+            return { success: false, message: "You cannot add yourself as a friend, sorry!"}
+        }
+
         const usersQuery = query(collection(db, "users"), where("username", "==", to));
         const queryResult = await getDocs(usersQuery);
 
         if (queryResult.empty) {
             return { success: false, message: "User does not exist." };
+        }
+
+        const duplicatePendingQuery = query(collection(db, "friendRequests"), where("from", "==", from), where ("to", "==", to), where("status", "==", "pending"));
+
+        const duplicatePendingCheck = await getDocs(duplicatePendingQuery);
+
+        if (!duplicatePendingCheck.empty) {
+            return { success: false, message: "Request already sent to " + to };
+        }
+
+        const reversePendingQuery = query(collection(db, "friendRequests"), where("from", "==", to), where ("to", "==", from), where("status", "==", "pending"));
+
+        const reversePendingCheck = await getDocs(reversePendingQuery);
+
+        if (!reversePendingCheck.empty) {
+            return { success: false, message: to + " Already sent you a request!" };
         }
 
         await addDoc(collection(db, "friendRequests"), {
