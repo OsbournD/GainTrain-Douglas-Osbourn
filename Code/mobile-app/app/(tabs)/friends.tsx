@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { sendFriendRequest, getIncomingRequests } from '../../src/firestore';
+import { sendFriendRequest, getIncomingRequests, denyFriendRequest } from '../../src/firestore';
 
 export default function FriendsScreen() {
 
@@ -62,6 +62,17 @@ export default function FriendsScreen() {
         loadRequests();
     }
 
+    const denyClicked = async (requestId) => {
+        const result = await denyFriendRequest(requestId);
+
+        if(result.success) {
+            Alert.alert("Request denied.");
+            loadRequests();
+        } else {
+            Alert.alert("Error denying request.");
+        }
+    }
+
     const backToDashboardClicked = async () => {
         try {
             router.push('/(tabs)/dashboard');
@@ -99,6 +110,8 @@ export default function FriendsScreen() {
                             <Text>From: { item.from }</Text>
                             <Text>Status: { item.status }</Text>
                             <Text>Sent At: { item.sentAt?.toDate ? item.sentAt.toDate().toLocaleString() : "Unknown" }</Text>
+
+                            <Button title = "Deny" color = "red" onPress = { () => denyClicked(item.id) }/>
                         </View>
                     )}
 

@@ -149,6 +149,24 @@ export async function getIncomingRequests(username) {
 
 }
 
+export async function denyFriendRequest(requestId) {
+    try {
+        const requestRef = doc(db, "friendRequests", requestId);
+
+        await updateDoc(requestRef, {
+            status: "denied",
+            deniedAt: new Date(),
+        });
+
+        console.log("Request " + requestId + " denied.");
+        return { success: true };
+
+    } catch (e) {
+        console.error("Error denying request: ", e);
+        return { success: false, message: e.message };
+    }
+}
+
 export function onAuthStateChange(callback) {
     return onAuthStateChanged(auth, callback);
 }
