@@ -99,6 +99,17 @@ export async function sendFriendRequest(from, to) {
             return { success: false, message: "User does not exist." };
         }
 
+        const userFromQuery = query(collection(db, "users"), where("username", "==", from));
+        const userFromDocs = await getDocs(userFromQuery);
+
+        if (!userFromDocs.empty) {
+            const userData = userFromDocs.docs[0].data();
+
+            if (userData.friends && userData.friends.includes(to)) {
+                return { success: false, message: "You are already friends with " + to };
+            }
+        }
+
         const duplicatePendingQuery = query(collection(db, "friendRequests"), where("from", "==", from), where ("to", "==", to), where("status", "==", "pending"));
 
         const duplicatePendingCheck = await getDocs(duplicatePendingQuery);
