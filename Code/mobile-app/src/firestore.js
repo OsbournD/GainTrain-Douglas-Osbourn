@@ -167,6 +167,48 @@ export async function denyFriendRequest(requestId) {
     }
 }
 
+export async function acceptFriendRequest(requestId, userA, userB) {
+    try {
+        const usersRef = collection(db, "users");
+
+        const userAQuery = query(usersRef, where("username", "==", userA));
+        const userADocs = await getDocs(userAQuery);
+
+        const userBQuery = query(usersRef, where("username", "==", userB));
+        const userBDocs = await getDocs(userBQuery);
+
+        if (userADocs.empty || userBDocs.empty) {
+            return { success: false, message: "User not found."};
+        }
+
+        const userARef = doc(db, "users", userADocs.docs[0].id);
+        const userBRef = doc(db, "users", userBDocs.docs[0].id);
+
+        await updateDoc(userARef, {
+            friends: arrayUnion(userB)
+        });
+
+        await updateDoc(userBRef, {
+            friends: arrayUnion(userA)
+        });
+
+        const requestRef = doc(db, "friendRequests", requestId);
+
+        await updateDoc(requestRef, {
+            status: "accepted",
+            acceptedAt: new Date(),
+        });
+
+        console.log("Request " + requestId + " accepted.");
+        return { success: true };
+
+    } catch (e) {
+        console.error("Error accepting request: ", e);
+        return { success: false, message: e.message };
+    }
+
+}
+
 export function onAuthStateChange(callback) {
     return onAuthStateChanged(auth, callback);
 }

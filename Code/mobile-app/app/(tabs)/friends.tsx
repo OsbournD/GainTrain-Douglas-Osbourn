@@ -1,3 +1,6 @@
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../../src/firebase";
+
 import React, { useEffect, useState } from 'react';
 import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
@@ -8,13 +11,14 @@ import { router } from 'expo-router';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { sendFriendRequest, getIncomingRequests, denyFriendRequest } from '../../src/firestore';
+import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriendRequest } from '../../src/firestore';
 
 export default function FriendsScreen() {
 
     const [username, setUsername] = useState<string | null>(null);
     const [targetUser, setTargetUser] = useState("");
     const [incoming, setIncoming] = useState([]);
+    const [friends, setFriends] = useState([]);
     const isFocused = useIsFocused();
 
     useEffect(() => { // when screen is focused, load logged in username.
@@ -35,8 +39,24 @@ export default function FriendsScreen() {
         setIncoming(requests);
     };
 
+    const loadFriends = async () => {
+        if (!username) {
+            return;
+        }
+        const usersRef = collection(db, "users");
+        const userQuery = query(usersRef, where("username", "==", username));
+        const userDocs = await getDocs(userQuery);
+
+        if (!userDocs.empty) {
+            const data = userDocs.docs[0].data();
+            setFriends(data.friends || []);
+        }
+    };
+
+
     useEffect(() => {
         loadRequests();
+        loadFriends();
     }, [username]);
 
     const sendRequestClicked = async () => {
@@ -73,6 +93,20 @@ export default function FriendsScreen() {
         }
     }
 
+    const acceptClicked = async (requestId, fromUser) => {
+        if (!username) return;
+
+        const result = await acceptFriendRequest(requestId, username, fromUser);
+
+        if (result.success) {
+            Alert.alert("Friend request accepted.");
+            loadRequests();
+            loadFriends();
+        } else {
+            Alert.alert("Error accepting request.");
+        }
+    }
+
     const backToDashboardClicked = async () => {
         try {
             router.push('/(tabs)/dashboard');
@@ -87,7 +121,7 @@ export default function FriendsScreen() {
         <View style={{ flex: 1 }}>
 
             <ThemedView style={ styles.headerContainer }>
-                <ThemedText type="title">Friend Requests</ThemedText>
+                <ThemedText type="title">Friends</ThemedText>
             </ThemedView>
 
             <View style={styles.container}>
@@ -112,6 +146,21 @@ export default function FriendsScreen() {
                             <Text>Sent At: { item.sentAt?.toDate ? item.sentAt.toDate().toLocaleString() : "Unknown" }</Text>
 
                             <Button title = "Deny" color = "red" onPress = { () => denyClicked(item.id) }/>
+                            <Button title = "Accept" color = "green" onPress = { () => acceptClicked(item.id, item.from)}/>
+
+                        </View>
+                    )}
+
+                />
+
+                <ThemedText type = "subtitle" style = {{ marginTop: 20 }} >Friends</ThemedText>
+
+                <FlatList
+                    data={friends}
+                    keyExtractor={(item) => item}
+                    renderItem={({ item }) => (
+                        <View style={ styles.requestBox }>
+                            <Text>{ item }</Text>
                         </View>
                     )}
 
