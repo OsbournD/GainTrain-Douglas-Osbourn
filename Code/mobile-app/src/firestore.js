@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, getDocs, doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from "./firebase";
 
@@ -219,6 +219,42 @@ export async function acceptFriendRequest(requestId, userA, userB) {
     }
 
 }
+
+export async function removeFriend(userA, userB) {
+    try {
+
+        const usersRef = collection(db, "users");
+
+        const userAQuery = query(usersRef, where("username", "==", userA));
+        const userADocs = await getDocs(userAQuery);
+
+        const userBQuery = query(usersRef, where("username", "==", userB));
+        const userBDocs = await getDocs(userBQuery);
+
+        if (userADocs.empty || userBDocs.empty) {
+            return { success: false, message: "User not found."};
+        }
+
+        const userARef = doc(db, "users", userADocs.docs[0].id);
+        const userBRef = doc(db, "users", userBDocs.docs[0].id);
+
+        await updateDoc(userARef, {
+            friends: arrayRemove(userB)
+        });
+
+        await updateDoc(userBRef, {
+            friends: arrayRemove(userA)
+        });
+
+        console.log("Friend status removed between " + userA + " and " + userB);
+        return { success: true };
+
+    } catch (e) {
+        console.error("Error removing friend: ", e);
+        return { success: false, message: e.message };
+    }
+}
+
 
 export function onAuthStateChange(callback) {
     return onAuthStateChanged(auth, callback);

@@ -11,7 +11,7 @@ import { router } from 'expo-router';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriendRequest } from '../../src/firestore';
+import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriendRequest, removeFriend } from '../../src/firestore';
 
 export default function FriendsScreen() {
 
@@ -107,6 +107,19 @@ export default function FriendsScreen() {
         }
     }
 
+    const removeFriendClicked = async (friendUsername) => {
+        if (!username) return;
+
+        const result = await removeFriend(username, friendUsername);
+
+        if (result.success) {
+            Alert.alert("Friend removed.");
+            loadFriends();
+        } else {
+            Alert.alert("Error removing friend.");
+        }
+    }
+
     const backToDashboardClicked = async () => {
         try {
             router.push('/(tabs)/dashboard');
@@ -161,6 +174,8 @@ export default function FriendsScreen() {
                     renderItem={({ item }) => (
                         <View style={ styles.requestBox }>
                             <Text>{ item }</Text>
+
+                            <Button title = "Remove Friend" color = "red" onPress = { () => removeFriendClicked(item) }/>
                         </View>
                     )}
 
