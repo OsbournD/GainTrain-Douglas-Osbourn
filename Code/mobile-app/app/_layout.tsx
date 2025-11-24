@@ -68,7 +68,20 @@ export default function RootLayout() {
           }
       }
 
+      const onReceiveNotification = Notifications.addNotificationReceivedListener(notification => {
+          console.log("Notification received: ", notification);
+      })
+
+      const onPressNotification = Notifications.addNotificationResponseReceivedListener(response => {
+          console.log("Notification tapped: ", response);
+      })
+
       registerForPush();
+
+      return () => {
+          onReceiveNotification.remove();
+          onPressNotification.remove();
+      }
 
   }, []);
 

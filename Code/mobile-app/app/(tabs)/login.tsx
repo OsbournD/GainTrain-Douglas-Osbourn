@@ -7,6 +7,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { verifyUserLogin } from '../../src/firestore';
 
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../src/firebase';
+import * as Notifications from 'expo-notifications';
+
 export default function LoginScreen() {
 
     const [username, setUsername] = useState('');
@@ -23,6 +27,31 @@ export default function LoginScreen() {
             Alert.alert('Success', result.message);
 
             await AsyncStorage.setItem('loggedInUser', username);
+
+            try {
+                const tokenData = await Notifications.getExpoPushTokenAsync(); // get expo push token.
+                const token = tokenData.data;
+
+                console.log("Saving push token after login: ", token);
+
+                const usersRef = collection(db, "users");
+                const usersQuery = query(usersRef, where("username", "==", username));
+                const userDocs = await getDocs(usersQuery);
+
+                if (!userDocs.empty) {
+                    const userRef = doc(db, "users", userDocs.docs[0].id);
+
+                    await updateDoc(userRef, { // save token to firestore.
+                        pushToken: token
+                    });
+                    console.log("Stored push token for: ", username);
+                } else {
+                    console.log("No Firestore user found for: ", username);
+                }
+
+            } catch (e) {
+                console.log("Error saving push token after login: ", e);
+            }
 
             router.push({
                 pathname: '/(tabs)/dashboard',
