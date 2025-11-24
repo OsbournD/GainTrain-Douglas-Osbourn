@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "944270050231",
+    "project_id": "gaintrain-158df",
+    "storage_bucket": "gaintrain-158df.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:944270050231:android:330b247bc6a15cef9c9e32",
+        "android_client_info": {
+          "package_name": "com.dougogaintrain.mobileapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjmiFkWH9wEoOFOJ6m0_CNnqySMjEHRkI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
