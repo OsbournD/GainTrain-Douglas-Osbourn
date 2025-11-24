@@ -7,6 +7,10 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { db } from '../src/firebase';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
         shouldShowAlert: true,
@@ -38,7 +42,30 @@ export default function RootLayout() {
           }
 
           const tokenData = await Notifications.getExpoPushTokenAsync(); // get expo push token.
+          const token = tokenData.data;
           console.log("Expo push token: ", tokenData.data);
+
+          const currentUser = await AsyncStorage.getItem('loggedInUser');
+
+          if (currentUser) {
+              const usersRef = collection(db, "users");
+              const usersQuery = query(usersRef, where("username", "==", currentUser));
+              const userDocs = await getDocs(usersQuery);
+
+              if (!userDocs.empty) {
+                  const userRef = doc(db, "users", userDocs.docs[0].id);
+
+                  await updateDoc(userRef, { // save token to firestore.
+                      pushToken: token
+                  });
+                  console.log("Stored push token for: ", currentUser);
+              } else {
+                  console.log("No Firestore user found for: ", currentUser);
+              }
+
+          } else {
+              console.log("No logged in user, skipping storing token.");
+          }
       }
 
       registerForPush();
