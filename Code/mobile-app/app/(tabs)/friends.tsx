@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../../src/firebase";
 
 import React, { useEffect, useState } from 'react';
@@ -31,33 +31,44 @@ export default function FriendsScreen() {
         }
     }, [isFocused]);
 
-    const loadRequests = async () => {
-        if (!username) {
-            return;
-        }
-        const requests = await getIncomingRequests(username);
-        setIncoming(requests);
-    };
-
-    const loadFriends = async () => {
-        if (!username) {
-            return;
-        }
-        const usersRef = collection(db, "users");
-        const userQuery = query(usersRef, where("username", "==", username));
-        const userDocs = await getDocs(userQuery);
-
-        if (!userDocs.empty) {
-            const data = userDocs.docs[0].data();
-            setFriends(data.friends || []);
-        }
-    };
-
 
     useEffect(() => {
-        loadRequests();
-        loadFriends();
+        if (!username) return;
+
+        const requestsQuery = query( // listen for incoming requests.
+            collection(db, "friendRequests"),
+            where("to", "==", username),
+            where("status", "==", "pending")
+        );
+
+        const stopRequestsListening = onSnapshot(requestsQuery, snapshot => {
+            const updated = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setIncoming(updated);
+        });
+
+        const userQuery = query( // listen for friend list change.
+            collection(db, "users"),
+            where("username", "==", username)
+        );
+
+        const stopFriendsListening = onSnapshot(userQuery, snapshot => {
+            if (!snapshot.empty) {
+                const data = snapshot.docs[0].data();
+                setFriends(data.friends || []);
+            }
+        });
+
+        return () => {
+            stopRequestsListening();
+            stopFriendsListening();
+        }
+
     }, [username]);
+
+
 
     const sendRequestClicked = async () => {
 
@@ -79,7 +90,6 @@ export default function FriendsScreen() {
         }
 
         setTargetUser('');
-        loadRequests();
     }
 
     const denyClicked = async (requestId) => {
@@ -87,7 +97,6 @@ export default function FriendsScreen() {
 
         if(result.success) {
             Alert.alert("Request denied.");
-            loadRequests();
         } else {
             Alert.alert("Error denying request.");
         }
@@ -100,8 +109,6 @@ export default function FriendsScreen() {
 
         if (result.success) {
             Alert.alert("Friend request accepted.");
-            loadRequests();
-            loadFriends();
         } else {
             Alert.alert("Error accepting request.");
         }
@@ -114,7 +121,6 @@ export default function FriendsScreen() {
 
         if (result.success) {
             Alert.alert("Friend removed.");
-            loadFriends();
         } else {
             Alert.alert("Error removing friend.");
         }

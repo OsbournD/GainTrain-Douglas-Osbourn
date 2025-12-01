@@ -75,3 +75,9 @@ credentials.json
 
 # Editor folders
 .vscode/
+
+# Microsoft Word temporary files
+~$*.docx
+~*.tmp
+*.tmp
+
