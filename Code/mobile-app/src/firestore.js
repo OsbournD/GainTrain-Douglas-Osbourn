@@ -141,21 +141,30 @@ export async function sendFriendRequest(from, to) {
             const recipient = recipientDocs.docs[0].data();
 
             if (recipient.pushToken) {
-                await fetch("https://exp.host/--/api/v2/push/send", {
-                    method: "POST",
-                    headers: {
-                        "Accept": "application/json",
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        to: recipient.pushToken,
-                        sound: "default",
-                        title: "New Friend Request",
-                        body: `${from} sent you a friend request!`,
-                        data: { sender: from }
+                try {
+                    const response = await fetch("https://exp.host/--/api/v2/push/send", {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            to: recipient.pushToken,
+                            sound: "default",
+                            title: "New Friend Request",
+                            body: `${from} sent you a friend request!`,
+                            data: { sender: from }
 
-                    })
-                });
+                        })
+                    });
+
+                    const result = await response.json();
+                    console.log("Expo push response: ", result);
+
+                } catch (e) {
+                    console.log("Push notification fetch failed: ", e);
+                }
+
 
             }
 

@@ -5,9 +5,13 @@ node_modules/
 
 # Expo
 .expo/
+.expo-shared/
+.expo-manifests/
 dist/
 web-build/
 expo-env.d.ts
+.expo/web-build/
+assets/.cache/
 
 # Native
 .kotlin/
@@ -18,26 +22,56 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# generated native folders
+/ios
+/android
+android/.gradle/
+android/.cxx/
+android/app/build/
+android/build/
+android/local.properties
+
+# Firebase / Google keys (DO NOT COMMIT)
+/google-services.json
+/google-service-account.json
+*.keystore
+*.keystore.jks
+
 # Metro
 .metro-health-check*
+.metro-cache/
 
 # debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+pnpm-debug.log*
 
-# macOS
+# macOS / Windows trash files
 .DS_Store
 *.pem
+Thumbs.db
 
 # local env files
 .env*.local
+.env
+.env.*
+*.env
 
 # typescript
 *.tsbuildinfo
 
+# example
 app-example
 
-# generated native folders
-/ios
-/android
+# EAS build artifacts
+*.apk
+*.aab
+*.ipa
+
+# EAS credentials
+credentials.json
+
+# Editor folders
+.vscode/
