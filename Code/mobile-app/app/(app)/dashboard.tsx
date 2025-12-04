@@ -29,7 +29,7 @@ export default function welcomeDashboard() {
         try {
             await logoutUser();
             await AsyncStorage.removeItem('loggedInUser');
-            router.push('/(tabs)/login');
+            router.push('/(auth)/login');
         } catch (e) {
             console.error("Logout error: ", e);
         }

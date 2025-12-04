@@ -54,7 +54,7 @@ export default function LoginScreen() {
             }
 
             router.push({
-                pathname: '/(tabs)/dashboard',
+                pathname: '/(app)/dashboard',
 
             });
 
@@ -84,7 +84,7 @@ export default function LoginScreen() {
                 </View>
 
                 <View style = { styles.buttonContainer }>
-                    <Link href = "/(tabs)">
+                    <Link href = "/(auth)/signup">
                         <ThemedText type = "link"> Make an Account </ThemedText>
                     </Link>
                 </View>

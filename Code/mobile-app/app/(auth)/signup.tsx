@@ -44,7 +44,7 @@ export default function SignUpScreen() {
               await AsyncStorage.setItem('loggedInUser', username);
 
               router.push({
-                  pathname: '/(tabs)/dashboard',
+                  pathname: '/(app)/dashboard',
               })
 
               setUsername('');
@@ -81,14 +81,14 @@ export default function SignUpScreen() {
           </View>
 
           <View style={styles.buttonContainer}>
-            <Link href="/(tabs)/login">
+            <Link href="/(auth)/login">
               <ThemedText type="link">Already have an account? Log in</ThemedText>
             </Link>
           </View>
         </ThemedView>
 
         <ThemedView style={styles.sectionContainer}>
-          <Link href="/(tabs)/firebaseTest">
+          <Link href="/(auth)/firebaseTest">
             <ThemedText type="subtitle">Firebase Test</ThemedText>
           </Link>
         </ThemedView>

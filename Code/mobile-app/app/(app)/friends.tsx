@@ -128,7 +128,7 @@ export default function FriendsScreen() {
 
     const backToDashboardClicked = async () => {
         try {
-            router.push('/(tabs)/dashboard');
+            router.push('/(app)/dashboard');
         } catch (e) {
             console.error("Navigation error: ", e);
         }

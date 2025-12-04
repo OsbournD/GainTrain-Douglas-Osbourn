@@ -1,32 +1,30 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useEffect } from 'react';
-import * as Notifications from 'expo-notifications';
-
+import React, { useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View } from "react-native";
+
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { StatusBar } from 'expo-status-bar';
+
+import * as Notifications from 'expo-notifications';
 import { db } from '../src/firebase';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
-        shouldShowAlert: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
         shouldPlaySound: true,
         shouldSetBadge: true,
     }),
 });
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
 
-  useEffect(() => {
+    const colorScheme = useColorScheme();
+
+    useEffect(() => {
       const registerForPush = async () => {
           const { status: existingStatus } = await Notifications.getPermissionsAsync(); // check current permission status.
           let finalStatus = existingStatus;
@@ -83,15 +81,19 @@ export default function RootLayout() {
           onPressNotification.remove();
       }
 
-  }, []);
+    }, []);
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+    return (
+        <ThemeProvider value={ colorScheme === 'dark' ? DarkTheme : DefaultTheme }>
+          <Stack screenOptions = {{ headerShown: false }}>
+
+              <Stack.Screen name = "(app)" />
+
+              <Stack.Screen name = "(auth)" />
+
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+    );
+
 }
