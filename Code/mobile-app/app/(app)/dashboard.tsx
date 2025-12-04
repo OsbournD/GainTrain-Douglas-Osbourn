@@ -15,13 +15,21 @@ export default function welcomeDashboard() {
 
     const isFocused = useIsFocused();
 
-    useEffect(() => { // when screen is focused, load logged in username.
-        const loadUsername = async () => {
+    useEffect(() => { // when screen is focused, check for login and load logged in username.
+
+        const checkLogin = async () => {
             const storedUser = await AsyncStorage.getItem('loggedInUser');
+
+            if (!storedUser) {
+                router.replace('/(auth)/login');
+                return;
+            }
+
             setUsername(storedUser);
         }
+
         if (isFocused) {
-            loadUsername();
+            checkLogin();
         }
     }, [isFocused]);
 
