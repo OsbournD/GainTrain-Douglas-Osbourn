@@ -2,7 +2,7 @@ import { collection, query, where, getDocs, onSnapshot } from "firebase/firestor
 import { db } from "../../src/firebase";
 
 import React, { useEffect, useState } from 'react';
-import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
+import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useIsFocused } from '@react-navigation/native';
@@ -16,6 +16,7 @@ import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriend
 export default function FriendsScreen() {
 
     const [username, setUsername] = useState<string | null>(null);
+    const [loadingUser, setLoadingUser] = useState(true);
     const [targetUser, setTargetUser] = useState("");
     const [incoming, setIncoming] = useState([]);
     const [friends, setFriends] = useState([]);
@@ -32,6 +33,7 @@ export default function FriendsScreen() {
             }
 
             setUsername(storedUser);
+            setLoadingUser(false);
         }
 
         if (isFocused) {
@@ -77,7 +79,13 @@ export default function FriendsScreen() {
 
     }, [username]);
 
-
+    if (loadingUser) { // load spinner if checking login.
+        return (
+            <View style = {{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size = "large" />
+            </View>
+        )
+    }
 
     const sendRequestClicked = async () => {
 
@@ -152,51 +160,64 @@ export default function FriendsScreen() {
                 <ThemedText type="title">Friends</ThemedText>
             </ThemedView>
 
-            <View style={styles.container}>
+            <FlatList
+                data = { incoming }
+                keyExtractor = { (item) => item?.id ?? Math.random().toString() }
 
-                <Button title = "Back to Dashboard" onPress = { backToDashboardClicked } />
+                contentContainerStyle = {{ paddingBottom: 20 }}
 
-                <ThemedText type = "subtitle" style = {{ marginTop: 20 }} >Add a Friend</ThemedText>
+                ListHeaderComponent = {
 
-                <TextInput style = { styles.input } placeholder = "Enter a friend's username" value = { targetUser } onChangeText = { setTargetUser } />
+                    <View style = { styles.container }>
 
-                <Button title = "Send Friend Request" onPress = { sendRequestClicked } />
+                        <Button title = "Back to Dashboard" onPress = { backToDashboardClicked } />
 
-                <ThemedText type = "subtitle" style = {{ marginTop: 20 }} >Incoming Requests</ThemedText>
+                        <ThemedText type = "subtitle" style = {{ marginTop: 20 }} >Add a Friend</ThemedText>
 
-                <FlatList
-                    data={incoming}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <View style={ styles.requestBox }>
-                            <Text>From: { item.from }</Text>
-                            <Text>Status: { item.status }</Text>
-                            <Text>Sent At: { item.sentAt?.toDate ? item.sentAt.toDate().toLocaleString() : "Unknown" }</Text>
+                        <TextInput style = { styles.input } placeholder = "Enter a friend's username" value = { targetUser } onChangeText = { setTargetUser } />
 
-                            <Button title = "Deny" color = "red" onPress = { () => denyClicked(item.id) }/>
+                        <Button title = "Send Friend Request" onPress = { sendRequestClicked } />
+
+                        <ThemedText type = "subtitle" style = {{ marginTop: 20 }} >Incoming Requests</ThemedText>
+
+                    </View>
+                }
+
+                renderItem = {({ item }) => (
+
+                    <View style={ styles.requestBox }>
+
+                        <Text>From: { item.from }</Text>
+                        <Text>Status: { item.status }</Text>
+                        <Text>Sent At: { item.sentAt?.toDate ? item.sentAt.toDate().toLocaleString() : "Unknown" }</Text>
+
+                        <View style = {{ marginTop: 8 }}>
                             <Button title = "Accept" color = "green" onPress = { () => acceptClicked(item.id, item.from)}/>
-
                         </View>
-                    )}
 
-                />
-
-                <ThemedText type = "subtitle" style = {{ marginTop: 20 }} >Friends</ThemedText>
-
-                <FlatList
-                    data={friends}
-                    keyExtractor={(item) => item}
-                    renderItem={({ item }) => (
-                        <View style={ styles.requestBox }>
-                            <Text>{ item }</Text>
-
-                            <Button title = "Remove Friend" color = "red" onPress = { () => removeFriendClicked(item) }/>
+                        <View style = {{ marginTop: 8 }}>
+                            <Button title = "Deny" color = "red" onPress = { () => denyClicked(item.id) }/>
                         </View>
-                    )}
 
-                />
+                    </View>
+                )}
 
-            </View>
+                ListFooterComponent = {
+                    <View>
+
+                        <ThemedText type = "subtitle" style = {{ marginTop: 20 }} padding = "20" >Friends</ThemedText>
+
+                        { friends.map(( friend ) => (
+                            <View key = { friend } style = { styles.requestBox } >
+                                <Text> { friend } </Text>
+                                <Button title = "Remove Friend" color = "red" onPress = { () => removeFriendClicked(friend)}/>
+                            </View>
+                        ))}
+
+                    </View>
+                }
+
+            />
 
         </View>
     );
@@ -226,6 +247,7 @@ const styles = StyleSheet.create({
     requestBox: {
         padding: 12,
         marginVertical: 8,
+        marginHorizontal: 20,
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 6,

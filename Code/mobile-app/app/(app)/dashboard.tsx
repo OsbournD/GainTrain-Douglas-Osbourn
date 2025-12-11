@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
@@ -12,6 +12,7 @@ export default function welcomeDashboard() {
 
     const router = useRouter();
     const [username, setUsername] = useState<string | null>(null);
+    const [loadingUser, setLoadingUser] = useState(true);
 
     const isFocused = useIsFocused();
 
@@ -26,12 +27,21 @@ export default function welcomeDashboard() {
             }
 
             setUsername(storedUser);
+            setLoadingUser(false);
         }
 
         if (isFocused) {
             checkLogin();
         }
     }, [isFocused]);
+
+    if (loadingUser) { // load spinner if checking login.
+        return (
+            <View style = {{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size = "large" />
+            </View>
+        )
+    }
 
     const logoutClicked = async () => {
         try {
