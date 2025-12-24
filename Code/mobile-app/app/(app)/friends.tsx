@@ -180,6 +180,10 @@ export default function FriendsScreen() {
 
                         <ThemedText type = "subtitle" style = {{ marginTop: 20 }} >Incoming Requests</ThemedText>
 
+                        { incoming.length === 0 ? (
+                            <Text style = { styles.placeholderText } > No Incoming Requests </Text>
+                        ) : null }
+
                     </View>
                 }
 
@@ -207,12 +211,16 @@ export default function FriendsScreen() {
 
                         <ThemedText type = "subtitle" style = {{ marginTop: 20 }} padding = "20" >Friends</ThemedText>
 
-                        { friends.map(( friend ) => (
-                            <View key = { friend } style = { styles.requestBox } >
-                                <Text> { friend } </Text>
-                                <Button title = "Remove Friend" color = "red" onPress = { () => removeFriendClicked(friend)}/>
-                            </View>
-                        ))}
+                        { friends.length === 0 ? (
+                            <Text style = { styles.placeholderText } > No Friends Added </Text>
+                        ) : (
+                            friends.map(( friend ) => (
+                                <View key = { friend } style = { styles.requestBox } >
+                                    <Text> { friend } </Text>
+                                    <Button title = "Remove Friend" color = "red" onPress = { () => removeFriendClicked(friend)}/>
+                                </View>
+                            ))
+                        )}
 
                     </View>
                 }
@@ -252,5 +260,10 @@ const styles = StyleSheet.create({
         borderColor: '#ccc',
         borderRadius: 6,
         backgroundColor: 'white',
+    },
+    placeholderText: {
+        color: '#555',
+        marginVertical: 10,
+        textAlign: 'center',
     },
 });
