@@ -160,64 +160,74 @@ export default function FriendsScreen() {
                 <ThemedText type="title">Friends</ThemedText>
             </ThemedView>
 
+            <View style = {{ marginTop: 10 }} padding = "20" >
+                <Button title = "Back to Dashboard" onPress = { backToDashboardClicked } />
+            </View>
+
+
             <FlatList
-                data = { incoming }
-                keyExtractor = { (item) => item?.id ?? Math.random().toString() }
 
                 contentContainerStyle = {{ paddingBottom: 20 }}
 
                 ListHeaderComponent = {
 
-                    <View style = { styles.container }>
+                    <>
 
-                        <Button title = "Back to Dashboard" onPress = { backToDashboardClicked } />
+                        <View style = { styles.card }>
 
-                        <ThemedText type = "subtitle" style = {{ marginTop: 20 }} >Add a Friend</ThemedText>
+                            <ThemedText type = "subtitle" padding = "10" >Add a Friend</ThemedText>
 
-                        <TextInput style = { styles.input } placeholder = "Enter a friend's username" value = { targetUser } onChangeText = { setTargetUser } />
+                            <TextInput style = { styles.input } placeholder = "Enter a friend's username" value = { targetUser } onChangeText = { setTargetUser } />
 
-                        <Button title = "Send Friend Request" onPress = { sendRequestClicked } />
+                            <Button title = "Send Friend Request" onPress = { sendRequestClicked } />
 
-                        <ThemedText type = "subtitle" style = {{ marginTop: 20 }} >Incoming Requests</ThemedText>
+                        </View>
 
-                        { incoming.length === 0 ? (
-                            <Text style = { styles.placeholderText } > No Incoming Requests </Text>
-                        ) : null }
+                        <View style = { styles.card }>
 
-                    </View>
+                            <ThemedText type = "subtitle" padding = "10" >Incoming Requests</ThemedText>
+
+                            { incoming.length === 0 ? (
+                                <Text style = { styles.placeholderText } > No Incoming Requests </Text>
+                            ) : (
+                                incoming.map((item) => (
+                                    <View key = { item.id } style={ styles.requestBox }>
+                                        <Text style = { styles.friendName } > { item.from }</Text>
+                                        <Text>Status: { item.status }</Text>
+                                        <Text>Sent At: { item.sentAt?.toDate ? item.sentAt.toDate().toLocaleString() : "Unknown" }</Text>
+
+                                        <View style = { styles.buttonRow}>
+                                            <View style = { styles.buttonWrapper }>
+                                                <Button title = "Accept" color = "green" onPress = { () => acceptClicked(item.id, item.from)}/>
+                                            </View>
+
+                                            <View style = { styles.buttonWrapper }>
+                                                <Button title = "Deny" color = "red" onPress = { () => denyClicked(item.id) }/>
+                                            </View>
+                                        </View>
+
+                                    </View>
+                                ))
+                            )}
+
+                        </View>
+
+                    </>
+
                 }
 
-                renderItem = {({ item }) => (
-
-                    <View style={ styles.requestBox }>
-
-                        <Text>From: { item.from }</Text>
-                        <Text>Status: { item.status }</Text>
-                        <Text>Sent At: { item.sentAt?.toDate ? item.sentAt.toDate().toLocaleString() : "Unknown" }</Text>
-
-                        <View style = {{ marginTop: 8 }}>
-                            <Button title = "Accept" color = "green" onPress = { () => acceptClicked(item.id, item.from)}/>
-                        </View>
-
-                        <View style = {{ marginTop: 8 }}>
-                            <Button title = "Deny" color = "red" onPress = { () => denyClicked(item.id) }/>
-                        </View>
-
-                    </View>
-                )}
-
                 ListFooterComponent = {
-                    <View>
+                    <View style = { styles.card }>
 
-                        <ThemedText type = "subtitle" style = {{ marginTop: 20 }} padding = "20" >Friends</ThemedText>
+                        <ThemedText type = "subtitle" padding = "10" >Friends</ThemedText>
 
                         { friends.length === 0 ? (
                             <Text style = { styles.placeholderText } > No Friends Added </Text>
                         ) : (
                             friends.map(( friend ) => (
-                                <View key = { friend } style = { styles.requestBox } >
-                                    <Text> { friend } </Text>
-                                    <Button title = "Remove Friend" color = "red" onPress = { () => removeFriendClicked(friend)}/>
+                                <View key = { friend } style = { styles.friendRow } >
+                                    <Text style = { styles.friendName } > { friend } </Text>
+                                        <Button title = "Remove Friend" color = "red" onPress = { () => removeFriendClicked(friend)}/>
                                 </View>
                             ))
                         )}
@@ -266,4 +276,42 @@ const styles = StyleSheet.create({
         marginVertical: 10,
         textAlign: 'center',
     },
+    card: {
+        backgroundColor: 'white',
+        borderRadius: 8,
+        padding: 15,
+        marginHorizontal: 20,
+        marginVertical: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 10,
+    },
+    buttonWrapper: {
+        flex: 1,
+        marginHorizontal: 5,
+    },
+    friendRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 12,
+        marginVertical: 8,
+        marginHorizontal: 20,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 6,
+        backgroundColor: 'white',
+    },
+    friendName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+
 });
