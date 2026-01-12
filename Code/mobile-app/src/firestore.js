@@ -4,14 +4,91 @@ import { db, auth } from "./firebase";
 
 export async function addTestUser() { // for testing only.
     try {
-        await addDoc(collection(db, "testUsers"), {
-            name: "Tester Testington",
-            createdAt: new Date(),
-        });
-        console.log("Test user added!");
+        await seedTestData();
+        console.log("Seeding complete.");
     }
     catch (e) {
-        console.error("Test user not added", e);
+        console.error("Seeding failed.", e);
+    }
+}
+
+export async function seedTestData() {
+    try {
+        console.log("Seeding test data...");
+
+        const userData = {
+            username: "TestUser",
+            uid: "uid_testUser",
+            pushToken: null,
+            friends: [],
+            createdAt: new Date(),
+            experienceLevel: 2,
+            goal: "muscle_gain",
+            likedBodyParts: ["chest", "triceps"],
+            dislikedBodyParts: ["legs"],
+            likedExercises: ["barbell_bench_press"],
+            dislikedExercises: ["barbell_squat"],
+            weightUnitPreference: "kg",
+            customSessionTags: ["hypertrophy_block"]
+        };
+
+        const userRef = await addDoc(collection(db, "users"), userData);
+        console.log("User created:", userRef.id);
+
+        const exerciseData = {
+            name: "Barbell Bench Press",
+            exerciseId: "barbell_bench_press",
+            difficulty: 4,
+            tags: ["upper_body", "chest", "triceps"],
+            primaryMuscle: "chest",
+            secondaryMuscles: ["triceps", "front_delts"],
+            points: 40,
+            bestFor: ["strength", "muscle_gain"],
+            usageCount: 0,
+            createdBy: "system",
+            createdAt: new Date()
+        };
+
+        const exerciseRef = await addDoc(collection(db, "exercises"), exerciseData);
+        console.log("Exercise created:", exerciseRef.id);
+
+        const exerciseLogData = {
+            uid: "uid_testUser",
+            exerciseName: "Barbell Bench Press",
+            exerciseId: "barbell_bench_press",
+            loggedAt: new Date(),
+            location: "gym",
+            notes: "Felt strong today, but shoulder hurt :(",
+            sets: [
+                { weight: 50, reps: 8, equipment: [], modifiers: ["2 second paused reps"], rpe: 7 },
+                { weight: 70, reps: 10, equipment: [], modifiers: [], rpe: 9 },
+                { weight: 80, reps: 12, equipment: ["wrist wraps"], modifiers: ["3 second negative reps"], rpe: 10 }
+            ]
+        };
+
+        const exerciseLogRef = await addDoc(collection(db, "exerciseLogs"), exerciseLogData);
+        console.log("Exercise log created:", exerciseLogRef.id);
+
+        const sessionData = {
+            uid: "uid_testUser",
+            startedAt: new Date(Date.now() - 3600000),
+            endedAt: new Date(),
+            location: "gym",
+            notes: "Chest session",
+            exerciseLogs: [exerciseLogRef.id],
+            tags: ["upper_body", "chest_day"],
+            templateUsed: null
+        };
+
+        const sessionRef = await addDoc(collection(db, "sessions"), sessionData);
+        console.log("Session created:", sessionRef.id);
+
+        console.log("Test data added successfully!");
+        return { success: true };
+    }
+    catch (e) {
+        console.error("Error adding test data:", e);
+        return { success: false, message: e.message };
     }
 }
 
