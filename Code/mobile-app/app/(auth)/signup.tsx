@@ -3,6 +3,7 @@ import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView } from 're
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link, router } from 'expo-router';
+import { seedTestData, addTestUser } from '../../src/firestore';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -76,24 +77,45 @@ export default function SignUpScreen() {
 
           <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
 
-          <View style={styles.buttonContainer}>
+          <View style={ styles.buttonContainer }>
             <Button title="Create Account" onPress={signUpClicked} />
           </View>
 
-          <View style={styles.buttonContainer}>
+          <View style={ styles.buttonContainer }>
             <Link href="/(auth)/login">
               <ThemedText type="link">Already have an account? Log in</ThemedText>
             </Link>
           </View>
         </ThemedView>
 
-        <ThemedView style={styles.sectionContainer}>
-          <Link href="/(auth)/firebaseTest">
-            <ThemedText type="subtitle">Firebase Test</ThemedText>
-          </Link>
-        </ThemedView>
-
       </ScrollView>
+
+      {__DEV__ && (
+
+          <>
+
+              <View style={ styles.buttonContainer }>
+                  <Button
+                      title = "Add New Test User"
+                      onPress = { async() => {
+                          const result = await addTestUser();
+                          console.log("Test user result:", result);
+                      }}
+                  />
+              </View>
+
+              <View style={ styles.buttonContainer }>
+                  <Button
+                      title = "Seed Data"
+                      onPress = { async() => {
+                          const result = await seedTestData();
+                          console.log("Seed result:", result);
+                      }}
+                  />
+              </View>
+
+          </>
+      )}
 
     </View>
   );

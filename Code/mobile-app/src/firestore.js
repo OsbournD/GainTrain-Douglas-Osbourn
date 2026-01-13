@@ -1,14 +1,37 @@
 import { collection, addDoc, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from "./firebase";
+import { systemExercises } from "./data/exercises";
 
 export async function addTestUser() { // for testing only.
     try {
-        await seedTestData();
-        console.log("Seeding complete.");
+        const existingTestUsersQuery = query(
+            collection(db, "users"),
+            where("username", ">=", "firestoreTestUser_"),
+            where("username", "<=", "firestoreTestUser_\uf8ff") // just so it doesnt accidentally grab other users.
+        );
+
+        const existingTestUsers = await getDocs(existingTestUsersQuery);
+        const count = existingTestUsers.size + 1;
+
+        const username = `firestoreTestUser_${count}`;
+        const uid = `uid_firestoreTestUser_${count}`;
+
+        const userData = {
+            username,
+            uid,
+            createdAt: new Date(),
+            friends: []
+        };
+
+        await addDoc(collection(db, "users"), userData);
+
+        console.log("Created test user:", username);
+        return { success: true };
     }
     catch (e) {
-        console.error("Seeding failed.", e);
+        console.error("Error creating new test user:", e);
+        return { success: false, message: e.message };
     }
 }
 
@@ -16,72 +39,114 @@ export async function seedTestData() {
     try {
         console.log("Seeding test data...");
 
-        const userData = {
-            username: "TestUser",
-            uid: "uid_testUser",
-            pushToken: null,
-            friends: [],
-            createdAt: new Date(),
-            experienceLevel: 2,
-            goal: "muscle_gain",
-            likedBodyParts: ["chest", "triceps"],
-            dislikedBodyParts: ["legs"],
-            likedExercises: ["barbell_bench_press"],
-            dislikedExercises: ["barbell_squat"],
-            weightUnitPreference: "kg",
-            customSessionTags: ["hypertrophy_block"]
-        };
+        for (const exerciseData of systemExercises) {
+            const existingExercisesQuery = query(
+                collection(db, "exercises"),
+                where("exerciseId", "==", exerciseData.exerciseId)
+            );
 
-        const userRef = await addDoc(collection(db, "users"), userData);
-        console.log("User created:", userRef.id);
+            const existingExercises = await getDocs(existingExercisesQuery);
 
-        const exerciseData = {
-            name: "Barbell Bench Press",
-            exerciseId: "barbell_bench_press",
-            difficulty: 4,
-            tags: ["upper_body", "chest", "triceps"],
-            primaryMuscle: "chest",
-            secondaryMuscles: ["triceps", "front_delts"],
-            points: 40,
-            bestFor: ["strength", "muscle_gain"],
-            usageCount: 0,
-            createdBy: "system",
-            createdAt: new Date()
-        };
+            if (!existingExercises.empty) {
+                console.log("Skipping existing exercise: " + exerciseData.exerciseId);
+                continue;
+            }
 
-        const exerciseRef = await addDoc(collection(db, "exercises"), exerciseData);
-        console.log("Exercise created:", exerciseRef.id);
+            const exerciseRef = await addDoc(collection(db, "exercises"), exerciseData);
+            console.log("Exercise created:", exerciseRef.id);
+        }
 
-        const exerciseLogData = {
-            uid: "uid_testUser",
-            exerciseName: "Barbell Bench Press",
-            exerciseId: "barbell_bench_press",
-            loggedAt: new Date(),
-            location: "gym",
-            notes: "Felt strong today, but shoulder hurt :(",
-            sets: [
-                { weight: 50, reps: 8, equipment: [], modifiers: ["2 second paused reps"], rpe: 7 },
-                { weight: 70, reps: 10, equipment: [], modifiers: [], rpe: 9 },
-                { weight: 80, reps: 12, equipment: ["wrist wraps"], modifiers: ["3 second negative reps"], rpe: 10 }
-            ]
-        };
+        const existingUserQuery = query(
+            collection(db, "users"),
+            where("username", "==", "TestUser")
+        );
 
-        const exerciseLogRef = await addDoc(collection(db, "exerciseLogs"), exerciseLogData);
-        console.log("Exercise log created:", exerciseLogRef.id);
+        const existingUsers = await getDocs(existingUserQuery);
 
-        const sessionData = {
-            uid: "uid_testUser",
-            startedAt: new Date(Date.now() - 3600000),
-            endedAt: new Date(),
-            location: "gym",
-            notes: "Chest session",
-            exerciseLogs: [exerciseLogRef.id],
-            tags: ["upper_body", "chest_day"],
-            templateUsed: null
-        };
+        let userUid;
 
-        const sessionRef = await addDoc(collection(db, "sessions"), sessionData);
-        console.log("Session created:", sessionRef.id);
+        if (!existingUsers.empty) {
+            console.log("TestUser already exists, skipping creation.");
+            userUid = existingUsers.docs[0].data().uid;
+        } else {
+            const userData = {
+                username: "TestUser",
+                uid: "uid_testUser",
+                pushToken: null,
+                friends: [],
+                createdAt: new Date(),
+                experienceLevel: 2,
+                goal: "muscle_gain",
+                likedBodyParts: ["chest", "triceps"],
+                dislikedBodyParts: ["legs"],
+                likedExercises: ["barbell_bench_press"],
+                dislikedExercises: ["barbell_squat"],
+                weightUnitPreference: "kg",
+                customSessionTags: ["hypertrophy_block"]
+            };
+            const userRef = await addDoc(collection(db, "users"), userData);
+            console.log("TestUser created:", userRef.id);
+            userUid = userData.uid;
+        }
+
+        const existingLogQuery = query(
+            collection(db, "exerciseLogs"),
+            where("uid", "==", userUid),
+            where("exerciseId", "==", "barbell_bench_press")
+        );
+
+        const existingLogs = await getDocs(existingLogQuery);
+
+        let exerciseLogId;
+
+        if (!existingLogs.empty) {
+            console.log("Test exercise log already exists, skipping creation.");
+            exerciseLogId = existingLogs.docs[0].id;
+        } else {
+
+            const exerciseLogData = {
+                uid: userUid,
+                exerciseName: "Barbell Bench Press",
+                exerciseId: "barbell_bench_press",
+                loggedAt: new Date(),
+                location: "gym",
+                notes: "TEST EXERCISE LOG!",
+                sets: [
+                    { weight: 50, reps: 8, equipment: [], modifiers: ["2 second paused reps"], rpe: 7 },
+                    { weight: 70, reps: 10, equipment: [], modifiers: [], rpe: 9 },
+                    { weight: 80, reps: 12, equipment: ["wrist wraps"], modifiers: ["3 second negative reps"], rpe: 10 }
+                ]
+            };
+
+            const exerciseLogRef = await addDoc(collection(db, "exerciseLogs"), exerciseLogData);
+            console.log("Exercise log created:", exerciseLogRef.id);
+            exerciseLogId = exerciseLogRef.id;
+        }
+
+        const existingSessionQuery = query(
+            collection(db, "sessions"),
+            where("uid", "==", userUid)
+        );
+
+        const existingSessions = await getDocs(existingSessionQuery);
+
+        if (!existingSessions.empty) {
+            console.log("Test session already exists, skipping creation.");
+        } else {
+            const sessionData = {
+                uid: userUid,
+                startedAt: new Date(Date.now() - 3600000),
+                endedAt: new Date(),
+                location: "gym",
+                notes: "TEST SESSION!",
+                exerciseLogs: [exerciseLogId],
+                tags: ["upper_body", "chest_day"],
+                templateUsed: null
+            };
+
+            const sessionRef = await addDoc(collection(db, "sessions"), sessionData);
+            console.log("Session created:", sessionRef.id);
+        }
 
         console.log("Test data added successfully!");
         return { success: true };
