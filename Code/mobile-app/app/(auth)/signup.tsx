@@ -13,9 +13,16 @@ export default function SignUpScreen() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const signUpClicked = async () => {
       if (username.trim() && password.trim()) {
+
+          if (password !== confirmPassword) {
+              Alert.alert("Passwords do not match!");
+              return;
+          }
+
           try {
               const exists = await usernameCheck(username); // check if username taken.
 
@@ -50,6 +57,7 @@ export default function SignUpScreen() {
 
               setUsername('');
               setPassword('');
+              setConfirmPassword('');
 
           } catch (error) {
               Alert.alert('Error, could not create account');
@@ -76,6 +84,8 @@ export default function SignUpScreen() {
           <TextInput style = { styles.input } placeholder = "Enter a username" value = { username } onChangeText = { setUsername } />
 
           <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
+
+          <TextInput style = { styles.input } placeholder = "Confirm password" secureTextEntry value = { confirmPassword } onChangeText = { setConfirmPassword } />
 
           <View style={ styles.buttonContainer }>
             <Button title="Create Account" onPress={signUpClicked} />
