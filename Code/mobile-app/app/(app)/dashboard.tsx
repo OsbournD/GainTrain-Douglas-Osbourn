@@ -59,17 +59,25 @@ export default function welcomeDashboard() {
         <View style={{ flex: 1 }}>
 
             <ThemedView style={styles.headerContainer}>
-                <ThemedText type="title">GainTrain!</ThemedText>
+                <View style = { styles.headerRow }>
+                    <View style = { styles.leftButton }>
+                        <Button title = "Log Out" onPress = { logoutClicked }/>
+                    </View>
+                    <View style = { styles.centerTitle } >
+                        <ThemedText type="title">GainTrain!</ThemedText>
+                    </View>
+                    <View style = { styles.rightButton }>
+                        <Button title = "Settings" onPress = { () => console.log("Settings button clicked") }/>
+                    </View>
+                </View>
             </ThemedView>
 
-            <ThemedView style = { styles.container }>
+            <ThemedView style = { styles.card }>
 
-                <ThemedText type = "title"> Welcome, {username}!</ThemedText>
+                <ThemedText type = "title"> Welcome, {username}</ThemedText>
                 <ThemedText type = "default"> You've successfully logged in to GainTrain! </ThemedText>
 
-                <View style = { styles.buttonContainer }>
-                    <Button title = "Log Out" onPress = { logoutClicked }/>
-                </View>
+
 
             </ThemedView>
 
@@ -81,16 +89,35 @@ const styles = StyleSheet.create({
     headerContainer: {
         height: 120,
         justifyContent: 'center',
-        alignItems: 'center',
         backgroundColor: '#94C8FF',
+        paddingHorizontal: 20,
     },
-    container: {
-        flex: 1,
+    headerRow: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
+        justifyContent: 'space-between',
+        width: '100%',
     },
-    buttonContainer: {
-        marginTop: 20,
+    leftButton: {
+        flex: 1,
+    },
+    centerTitle: {
+        flex: 2,
+        alignItems: 'center',
+    },
+    rightButton: {
+        flex: 1,
+    },
+    card: {
+        backgroundColor: 'white',
+        borderRadius: 8,
+        padding: 15,
+        marginHorizontal: 20,
+        marginVertical: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
     },
 });
