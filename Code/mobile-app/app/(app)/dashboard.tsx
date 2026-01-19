@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router';
 import { logoutUser } from '../../src/firestore';
 import { useIsFocused } from '@react-navigation/native';
 
+import { Image } from 'react-native';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function welcomeDashboard() {
@@ -56,38 +58,40 @@ export default function welcomeDashboard() {
 
     return (
 
-        <View style={{ flex: 1 }}>
+        <View style={ styles.appBackground }>
 
             <ThemedView style={styles.headerContainer}>
-                <View style = { styles.headerRow }>
-                    <View style = { styles.leftButton }>
-                        <Button title = "Log Out" onPress = { logoutClicked }/>
-                    </View>
-                    <View style = { styles.centerTitle } >
-                        <ThemedText type="title">GainTrain!</ThemedText>
-                    </View>
-                    <View style = { styles.rightButton }>
-                        <Button title = "Settings" onPress = { () => console.log("Settings button clicked") }/>
-                    </View>
-                </View>
+
+                    <TouchableOpacity style = { styles.logoutButton } onPress = { logoutClicked } >
+                        <Text style = { styles.headerButtonText }> LOG OUT </Text>
+                    </TouchableOpacity>
+
+                        <Image
+                            source = { require('@/assets/gaintrain-images/gaintrain-banner.png')}
+                            style = { styles.logo }
+                        />
+
+                    <TouchableOpacity style = { styles.headerButton } onPress = { () => console.log("Settings button clicked")} >
+                        <Text style = { styles.headerButtonText }> SETTINGS </Text>
+                    </TouchableOpacity>
+
             </ThemedView>
 
             <View style = { styles.spacer }/>
 
             <ThemedView style = { styles.card }>
-                <ThemedText type = "title">Welcome, {username}</ThemedText>
-                <ThemedText type = "default"> You've successfully logged in to GainTrain! </ThemedText>
+                <ThemedText style = { styles.welcomeText }>Welcome, {username}</ThemedText>
             </ThemedView>
 
             <ThemedView style = { styles.card }>
-                <ThemedText type = "subtitle">Recently You...</ThemedText>
-                <ThemedText type = "default">Logged 3 workouts</ThemedText>
-                <ThemedText type = "default">Made 2 new friends</ThemedText>
-                <ThemedText type = "default">Hit a PR of 75kg for 6 reps on Barbell Bench Press</ThemedText>
+                <ThemedText style = { styles.headingText }>Recently You...</ThemedText>
+                <ThemedText style = { styles.recentText }>Logged 3 workouts.</ThemedText>
+                <ThemedText style = { styles.recentText }>Made 2 new friends.</ThemedText>
+                <ThemedText style = { styles.recentText }>Hit a PR of 75kg for 6 reps on {"\n"} Barbell Bench Press.</ThemedText>
             </ThemedView>
 
             <ThemedView style = { styles.card }>
-                <ThemedText type = "subtitle">Smart Suggestions</ThemedText>
+                <ThemedText style = { styles.headingText }>Smart Suggestions</ThemedText>
                 <TouchableOpacity style = { styles.suggestionCard } onPress = { () => console.log("Smart suggestion clicked")} >
                     <Text style = { styles.suggestionText }> Barbell Romanian Deadlift </Text>
                 </TouchableOpacity>
@@ -114,27 +118,65 @@ export default function welcomeDashboard() {
 }
 
 const styles = StyleSheet.create({
-    headerContainer: {
-        height: 120,
-        justifyContent: 'center',
-        backgroundColor: '#94C8FF',
-        paddingHorizontal: 20,
-    },
-    headerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-    },
-    leftButton: {
+    appBackground: {
         flex: 1,
+        backgroundColor: '#E6F3FF',
+    },
+    logo: {
+        width: 320,
+        height: 100,
+        resizeMode: 'contain',
+    },
+    headerContainer: {
+        height: 140,
+        justifyContent: 'center',
+        backgroundColor: 'white',
+        paddingHorizontal: 20,
+        position: 'relative',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 8,
     },
     centerTitle: {
-        flex: 2,
         alignItems: 'center',
-    },
-    rightButton: {
         flex: 1,
+    },
+    headerButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 2,
+        backgroundColor: '#D9D9D9',
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        position: 'absolute',
+        top: 30,
+        right: 12,
+        zIndex: 10,
+    },
+    logoutButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 6,
+        backgroundColor: '#FF4646',
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        position: 'absolute',
+        top: 30,
+        left: 12,
+        zIndex: 10,
+    },
+    headerButtonText: {
+        fontSize: 10,
+        fontWeight: 'bold',
     },
     card: {
         backgroundColor: 'white',
@@ -146,20 +188,20 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
-        elevation: 2,
+        elevation: 4,
     },
     suggestionCard: {
         backgroundColor: '#C47CF8',
         padding: 10,
-        marginTop: 8,
-        borderRadius: 16,
+        margin: 6,
+        borderRadius: 12,
         alignItems: 'center',
         overflow: 'hidden',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
-        elevation: 2,
+        elevation: 3,
     },
     suggestionText: {
         fontSize: 16,
@@ -178,13 +220,13 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
-        elevation: 2,
+        elevation: 4,
     },
     secondaryButton: {
         backgroundColor: '#46C3F3',
-        paddingVertical: 34,
+        paddingVertical: 30,
         flex: 1,
-        borderRadius: 20,
+        borderRadius: 16,
         marginHorizontal: 8,
         alignItems: 'center',
         justifyContent: 'center',
@@ -192,7 +234,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
-        elevation: 2,
+        elevation: 4,
     },
     buttonRow: {
         flexDirection: 'row',
@@ -212,6 +254,23 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     spacer: {
-        height: 20,
+        height: 10,
+    },
+    headingText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+        paddingBottom: 10,
+        textAlign: 'center',
+    },
+    welcomeText: {
+        color: '#757575',
+        fontSize: 25,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    recentText: {
+        textAlign: 'center',
+        padding: 2,
     },
 });
