@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, TextInput } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
@@ -76,9 +76,55 @@ export default function communityPage() {
 }
 
 function FeedContent() {
+    const [showFilterMenu, setShowFilterMenu] = useState(false);
+    const [feedFilter, setFeedFilter] = useState<'Latest' | 'Popular' | 'Sessions' | 'Friends'>('Latest');
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filters = ['Latest', 'Popular', 'Sessions', 'Friends'];
+
     return (
-        <View style = { styles.card }>
-            <ThemedText style = { styles.welcomeText }>Feed</ThemedText>
+        <View style = {{ flex: 1 }}>
+
+            <View style = { styles.filterSearchRow }>
+
+                <TouchableOpacity
+                    style = { styles.filterButton }
+                    onPress = { () => setShowFilterMenu(!showFilterMenu) }
+                >
+                    <Text style = { styles.filterButtonText }>{feedFilter}</Text>
+                </TouchableOpacity>
+
+                <View style = { styles.searchBar }>
+                    <TextInput
+                        style = { styles.searchInput }
+                        placeholder = "Search..."
+                        placeholderTextColor = "#49454F"
+                        value = { searchQuery }
+                        onChangeText = { setSearchQuery }
+                    />
+                </View>
+
+            </View>
+
+            {showFilterMenu && (
+                <View style = { styles.dropdownMenu }>
+                    {filters.map( option => (
+                        <TouchableOpacity
+                            key = { option }
+                            style = { styles.dropdownItem }
+                            onPress = { () => {
+                                setFeedFilter(option);
+                                setShowFilterMenu(false);
+                            }}
+                        >
+
+                            <Text style = { styles.dropdownItemText }>{option}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+            )}
+
         </View>
     );
 }
@@ -105,7 +151,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#E6F3FF',
     },
     headerContainer: {
-        height: 140,
+        height: 100,
         justifyContent: 'center',
         backgroundColor: 'white',
         paddingHorizontal: 20,
@@ -217,6 +263,73 @@ const styles = StyleSheet.create({
     },
     tabTextActive: {
         color: '#52ABFF',
+    },
+
+    filterSearchRow: {
+        flexDirection: 'row',
+        marginHorizontal: 20,
+        marginTop: 20,
+        gap: 10,
+    },
+    filterButton: {
+        flex: 1,
+        backgroundColor: '#52ABFF',
+        paddingVertical: 6,
+        paddingHorizontal: 8,
+        borderRadius: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 4,
+    },
+    filterButtonText: {
+        fontSize: 16,
+        color: 'white',
+    },
+    searchBar: {
+        flex: 3,
+        backgroundColor: 'white',
+        paddingHorizontal: 8,
+        borderRadius: 15,
+        borderWidth: 1,
+        borderColor: '#7F7E7E',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    searchInput: {
+        fontSize: 16,
+    },
+    dropdownMenu: {
+        backgroundColor: 'white',
+        alignSelf: 'flex-start',
+        marginHorizontal: 20,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#D9D9D9',
+        marginTop: 4,
+        overflow: 'hidden',
+        padding: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 4,
+    },
+    dropdownItem: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: 'black',
+    },
+    dropdownItemText: {
+        fontSize: 14,
+        color: 'black',
     },
 });
 
