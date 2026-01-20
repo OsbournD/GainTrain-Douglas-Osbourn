@@ -268,6 +268,7 @@ const styles = StyleSheet.create({
         fontSize: 25,
         fontWeight: 'bold',
         textAlign: 'center',
+        lineHeight: 25,
     },
     recentText: {
         textAlign: 'center',
