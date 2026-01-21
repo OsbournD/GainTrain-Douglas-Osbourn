@@ -23,6 +23,15 @@ export default function communityPage() {
 
     }
 
+    const settingsClicked = async () => {
+        try {
+            router.push('../settings');
+        } catch (e) {
+            console.error("Navigation error: ", e);
+        }
+
+    }
+
     return(
 
         <View style={ styles.appBackground }>
@@ -35,7 +44,7 @@ export default function communityPage() {
 
                     <ThemedText style = { styles.titleText }>Community</ThemedText>
 
-                    <TouchableOpacity style = { styles.headerButton } onPress = { () => console.log("Settings button clicked")} >
+                    <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
                         <Text style = { styles.headerButtonText }> SETTINGS </Text>
                     </TouchableOpacity>
 

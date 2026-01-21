@@ -16,31 +16,20 @@ import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriend
 export default function FriendsScreen() {
 
     const [username, setUsername] = useState<string | null>(null);
-    const [loadingUser, setLoadingUser] = useState(true);
     const [targetUser, setTargetUser] = useState("");
     const [incoming, setIncoming] = useState([]);
     const [friends, setFriends] = useState([]);
-    const isFocused = useIsFocused();
 
-    useEffect(() => { // when screen is focused, check for login and load logged in username.
+    useEffect(() => {
 
-        const checkLogin = async () => {
+        const loadUsername = async () => {
             const storedUser = await AsyncStorage.getItem('loggedInUser');
 
-            if (!storedUser) {
-                router.replace('/(auth)/login');
-                return;
-            }
-
             setUsername(storedUser);
-            setLoadingUser(false);
         }
 
-        if (isFocused) {
-            checkLogin();
-        }
-
-    }, [isFocused]);
+        loadUsername();
+    }, []);
 
 
     useEffect(() => {
@@ -78,14 +67,6 @@ export default function FriendsScreen() {
         }
 
     }, [username]);
-
-    if (loadingUser) { // load spinner if checking login.
-        return (
-            <View style = {{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <ActivityIndicator size = "large" />
-            </View>
-        )
-    }
 
     const sendRequestClicked = async () => {
 

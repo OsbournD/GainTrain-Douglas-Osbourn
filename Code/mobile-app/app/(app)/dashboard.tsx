@@ -4,7 +4,6 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
 import { logoutUser } from '../../src/firestore';
-import { useIsFocused } from '@react-navigation/native';
 
 import { Image } from 'react-native';
 
@@ -14,36 +13,16 @@ export default function welcomeDashboard() {
 
     const router = useRouter();
     const [username, setUsername] = useState<string | null>(null);
-    const [loadingUser, setLoadingUser] = useState(true);
 
-    const isFocused = useIsFocused();
+    useEffect(() => {
 
-    useEffect(() => { // when screen is focused, check for login and load logged in username.
-
-        const checkLogin = async () => {
+        const loadUsername = async () => {
             const storedUser = await AsyncStorage.getItem('loggedInUser');
 
-            if (!storedUser) {
-                router.replace('/(auth)/login');
-                return;
-            }
-
             setUsername(storedUser);
-            setLoadingUser(false);
         }
-
-        if (isFocused) {
-            checkLogin();
-        }
-    }, [isFocused]);
-
-    if (loadingUser) { // load spinner if checking login.
-        return (
-            <View style = {{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <ActivityIndicator size = "large" />
-            </View>
-        )
-    }
+        loadUsername();
+    }, []);
 
     const logoutClicked = async () => {
         try {
@@ -52,6 +31,15 @@ export default function welcomeDashboard() {
             router.push('/(auth)/login');
         } catch (e) {
             console.error("Logout error: ", e);
+        }
+
+    }
+
+    const settingsClicked = async () => {
+        try {
+            router.push('../settings');
+        } catch (e) {
+            console.error("Navigation error: ", e);
         }
 
     }
@@ -71,7 +59,7 @@ export default function welcomeDashboard() {
                             style = { styles.logo }
                         />
 
-                    <TouchableOpacity style = { styles.headerButton } onPress = { () => console.log("Settings button clicked")} >
+                    <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
                         <Text style = { styles.headerButtonText }> SETTINGS </Text>
                     </TouchableOpacity>
 
