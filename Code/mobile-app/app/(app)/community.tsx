@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, TextInput, ScrollView } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, TextInput, ScrollView, Alert } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
@@ -7,6 +7,10 @@ import { logoutUser } from '../../src/firestore';
 import { useIsFocused } from '@react-navigation/native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
+import { db } from "../../src/firebase";
+import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriendRequest, removeFriend } from '../../src/firestore';
 
 export default function communityPage() {
 
@@ -256,10 +260,185 @@ function ChallengesContent() {
 }
 
 function FriendsContent() {
+
+    const [username, setUsername] = useState<string | null>(null);
+    const [targetUser, setTargetUser] = useState("");
+    const [incoming, setIncoming] = useState([]);
+    const [friends, setFriends] = useState([]);
+
+    useEffect(() => {
+
+        const loadUsername = async () => {
+            const storedUser = await AsyncStorage.getItem('loggedInUser');
+
+            setUsername(storedUser);
+        }
+
+        loadUsername();
+    }, []);
+
+
+    useEffect(() => {
+        if (!username) return;
+
+        const requestsQuery = query( // listen for incoming requests.
+            collection(db, "friendRequests"),
+            where("to", "==", username),
+            where("status", "==", "pending")
+        );
+
+        const stopRequestsListening = onSnapshot(requestsQuery, snapshot => {
+            const updated = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setIncoming(updated);
+        });
+
+        const userQuery = query( // listen for friend list change.
+            collection(db, "users"),
+            where("username", "==", username)
+        );
+
+        const stopFriendsListening = onSnapshot(userQuery, snapshot => {
+            if (!snapshot.empty) {
+                const data = snapshot.docs[0].data();
+                setFriends(data.friends || []);
+            }
+        });
+
+        return () => {
+            stopRequestsListening();
+            stopFriendsListening();
+        }
+
+    }, [username]);
+
+    const sendRequestClicked = async () => {
+
+        if (!username) {
+            return;
+        }
+
+        if (!targetUser.trim()) {
+            Alert.alert("Please enter a username");
+            return;
+        }
+
+        const result = await sendFriendRequest(username, targetUser);
+
+        if (result.success) {
+            Alert.alert("Friend request sent to " + targetUser + "!");
+        } else {
+            Alert.alert(result.message);
+        }
+
+        setTargetUser('');
+    }
+
+    const denyClicked = async (requestId) => {
+        const result = await denyFriendRequest(requestId);
+
+        if(result.success) {
+            Alert.alert("Request denied.");
+        } else {
+            Alert.alert("Error denying request.");
+        }
+    }
+
+    const acceptClicked = async (requestId, fromUser) => {
+        if (!username) return;
+
+        const result = await acceptFriendRequest(requestId, username, fromUser);
+
+        if (result.success) {
+            Alert.alert("Friend request accepted.");
+        } else {
+            Alert.alert("Error accepting request.");
+        }
+    }
+
+    const removeFriendClicked = async (friendUsername) => {
+        if (!username) return;
+
+        const result = await removeFriend(username, friendUsername);
+
+        if (result.success) {
+            Alert.alert("Friend removed.");
+        } else {
+            Alert.alert("Error removing friend.");
+        }
+    }
+
     return (
-        <View style = { styles.card }>
-            <ThemedText style = { styles.welcomeText }>Friends</ThemedText>
-        </View>
+        <ScrollView contentContainerStyle = {{ paddingBottom: 20 }}>
+
+            <View style = { styles.spacer }/>
+
+            <View style = { styles.card }>
+
+                <ThemedText type = "subtitle" padding = "10" >Add a Friend</ThemedText>
+
+                <TextInput style = { styles.input } placeholder = "Enter a friend's username" value = { targetUser } onChangeText = { setTargetUser } />
+
+                <TouchableOpacity style = { styles.sendButton } onPress = { sendRequestClicked }>
+                    <Text style = {styles.friendButtonText}>Send Friend Request</Text>
+                </TouchableOpacity>
+
+            </View>
+
+            <View style = { styles.card }>
+
+                <ThemedText type = "subtitle" padding = "10" >Incoming Requests</ThemedText>
+
+                { incoming.length === 0 ? (
+                    <Text style = { styles.placeholderText } > No Incoming Requests </Text>
+                ) : (
+                    incoming.map((item) => (
+                        <View key = { item.id } style={ styles.requestBox }>
+                            <Text style = { styles.friendName } > { item.from }</Text>
+                            <Text>Status: { item.status }</Text>
+                            <Text>Sent At: { item.sentAt?.toDate ? item.sentAt.toDate().toLocaleString() : "Unknown" }</Text>
+
+                            <View style = { styles.buttonRow}>
+                                <View style = { styles.buttonWrapper }>
+                                    <TouchableOpacity style = { styles.acceptButton } onPress = { () => acceptClicked(item.id, item.from) }>
+                                        <Text style = {styles.friendButtonText}>ACCEPT</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                <View style = { styles.buttonWrapper }>
+                                    <TouchableOpacity style = { styles.denyButton } onPress = { () => denyClicked(item.id) }>
+                                        <Text style = {styles.friendButtonText}>DENY</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                        </View>
+                    ))
+                )}
+
+            </View>
+
+            <View style = { styles.card }>
+
+                <ThemedText type = "subtitle" padding = "10" >Friends</ThemedText>
+
+                { friends.length === 0 ? (
+                    <Text style = { styles.placeholderText } > No Friends Added </Text>
+                ) : (
+                    friends.map(( friend ) => (
+                        <View key = { friend } style = { styles.friendRow } >
+                            <Text style = { styles.friendName } > { friend } </Text>
+                            <TouchableOpacity style = { styles.removeButton } onPress = { () => removeFriendClicked(friend) }>
+                                <Text style = {styles.friendButtonText}>Remove Friend</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))
+                )}
+
+            </View>
+        </ScrollView>
     );
 }
 
@@ -526,5 +705,110 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#757575',
     },
+
+    container: {
+        flex: 1,
+        padding: 20,
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: 'black',
+        borderRadius: 5,
+        padding: 10,
+        marginVertical: 10,
+        backgroundColor: 'white',
+    },
+    requestBox: {
+        padding: 12,
+        marginVertical: 8,
+        marginHorizontal: 20,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 6,
+        backgroundColor: 'white',
+    },
+    placeholderText: {
+        color: '#555',
+        marginVertical: 10,
+        textAlign: 'center',
+    },
+    friendRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 12,
+        marginVertical: 8,
+        marginHorizontal: 20,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 6,
+        backgroundColor: 'white',
+    },
+    friendName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 10,
+    },
+    buttonWrapper: {
+        flex: 1,
+        marginHorizontal: 5,
+    },
+    sendButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: '#52ABFF',
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        alignItems: 'center',
+    },
+    friendButtonText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    acceptButton: {
+        paddingVertical: 4,
+        paddingHorizontal: 16,
+        backgroundColor: 'green',
+        borderRadius: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        alignItems: 'center',
+    },
+    denyButton: {
+        paddingVertical: 4,
+        paddingHorizontal: 16,
+        backgroundColor: 'red',
+        borderRadius: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        alignItems: 'center',
+    },
+    removeButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 16,
+        backgroundColor: 'red',
+        borderRadius: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        alignItems: 'center',
+},
 });
 
