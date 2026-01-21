@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, TextInput } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, TextInput, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
@@ -82,50 +82,159 @@ function FeedContent() {
 
     const filters = ['Latest', 'Popular', 'Sessions', 'Friends'];
 
+    const activities = [
+        {
+            id: '1',
+            type: 'session',
+            user: 'UserB',
+            title: 'Push Day',
+            subtitle: 'Bench Press, Overhead Press, Tricep Dips...',
+            comment: 'Felt strong today!!',
+            time: '1h ago',
+            likes: 12,
+        },
+        {
+            id: '2',
+            type: 'newFriendExercise',
+            user: 'UserC',
+            title: 'Conventional Barbell Deadlift',
+            subtitle: '50kg x 10, 60kg x 12, 50kg x 8',
+            time: '2h ago',
+            likes: 9,
+        },
+        {
+            id: '3',
+            type: 'newFriend',
+            user: 'UserB',
+            title: 'New Friend!',
+            subtitle: 'Goal: Muscle Gain',
+            time: '2 days ago',
+            likes: 0,
+        },
+        {
+            id: '4',
+            type: 'friendPR',
+            user: 'UserD',
+            title: 'New PR!',
+            subtitle: 'Deadlift — 120kg',
+            comment: 'Finally hit this milestone!',
+            time: '3 days ago',
+            likes: 22,
+        }
+
+    ];
+
     return (
         <View style = {{ flex: 1 }}>
 
-            <View style = { styles.filterSearchRow }>
+            <View style = {{ position: 'relative', zIndex: 100 }}>
 
-                <TouchableOpacity
-                    style = { styles.filterButton }
-                    onPress = { () => setShowFilterMenu(!showFilterMenu) }
-                >
-                    <Text style = { styles.filterButtonText }>{feedFilter}</Text>
-                </TouchableOpacity>
+                <View style = { styles.filterSearchRow }>
 
-                <View style = { styles.searchBar }>
-                    <TextInput
-                        style = { styles.searchInput }
-                        placeholder = "Search..."
-                        placeholderTextColor = "#49454F"
-                        value = { searchQuery }
-                        onChangeText = { setSearchQuery }
-                    />
+                    <TouchableOpacity
+                        style = { styles.filterButton }
+                        onPress = { () => setShowFilterMenu(!showFilterMenu) }
+                    >
+                        <Text style = { styles.filterButtonText }>{feedFilter}</Text>
+                    </TouchableOpacity>
+
+                    <View style = { styles.searchBar }>
+                        <TextInput
+                            style = { styles.searchInput }
+                            placeholder = "Search..."
+                            placeholderTextColor = "#49454F"
+                            value = { searchQuery }
+                            onChangeText = { setSearchQuery }
+                        />
+                    </View>
+
                 </View>
 
+                {showFilterMenu && (
+                    <View style = { styles.dropdownMenu }>
+                        {filters.map( option => (
+                            <TouchableOpacity
+                                key = { option }
+                                style = { styles.dropdownItem }
+                                onPress = { () => {
+                                    setFeedFilter(option);
+                                    setShowFilterMenu(false);
+                                }}
+                            >
+
+                                <Text style = { styles.dropdownItemText }>{option}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
             </View>
 
-            {showFilterMenu && (
-                <View style = { styles.dropdownMenu }>
-                    {filters.map( option => (
-                        <TouchableOpacity
-                            key = { option }
-                            style = { styles.dropdownItem }
-                            onPress = { () => {
-                                setFeedFilter(option);
-                                setShowFilterMenu(false);
-                            }}
-                        >
-
-                            <Text style = { styles.dropdownItemText }>{option}</Text>
-                        </TouchableOpacity>
-                    ))}
+            <ScrollView style = {{ marginTop: 10 }}>
+                {activities.map(activity => (
+                    <ActivityCard key = { activity.id } activity = { activity } />
+                ))}
+                <View>
+                    <Text style = { styles.welcomeText }>You've reached the end!</Text>
                 </View>
-
-            )}
+            </ScrollView>
 
         </View>
+    );
+}
+
+function ActivityCard({ activity }: { activity: any}) {
+    return (
+        <View style = { styles.activityCard }>
+            <Text style={styles.activityUser}>{activity.user}</Text>
+
+                {activity.type === 'session' && (
+                    <>
+                        <Text style = { styles.activityTitle }>Logged a session: { activity.title }</Text>
+                        <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
+                        {activity.comment && (
+                            <Text style = { styles.activityComment } >“{ activity.comment }”</Text>
+                        )}
+                    </>
+                )}
+
+                {activity.type === 'newFriendExercise' && (
+                    <>
+                        <Text style = { styles.activityTitle }>Tried a new exercise</Text>
+                        <Text style = { styles.activitySubtitle }>{ activity.title }</Text>
+                        <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
+                    </>
+                )}
+
+                {activity.type === 'newFriend' && (
+                    <>
+                        <Text style = { styles.activityTitle }>New Friend!</Text>
+                        <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
+                    </>
+                )}
+
+                {activity.type === 'friendPR' && (
+                    <>
+                        <Text style = { styles.activityTitle }>New PR!</Text>
+                        <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
+                        {activity.comment && (
+                            <Text style = { styles.activityComment }>“{ activity.comment }”</Text>
+                        )}
+                    </>
+                )}
+
+                <View style = { styles.activityMetaRow }>
+
+                    <Text style = { styles.activityTime }>{ activity.time }</Text>
+
+                    {activity.likes > 0 && (
+                        <TouchableOpacity style = { styles.metaButton }>
+                            <Text style = { styles.metaButtonText }>{ activity.likes } likes</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+        </View>
+
     );
 }
 
@@ -162,6 +271,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 8,
+        zIndex: 20,
     },
     centerTitle: {
         alignItems: 'center',
@@ -233,7 +343,8 @@ const styles = StyleSheet.create({
     },
     welcomeText: {
         color: '#757575',
-        fontSize: 25,
+        margin: 20,
+        fontSize: 20,
         fontWeight: 'bold',
         textAlign: 'center',
         lineHeight: 30,
@@ -306,6 +417,8 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     dropdownMenu: {
+        position: 'absolute',
+        top: 65,
         backgroundColor: 'white',
         alignSelf: 'flex-start',
         marginHorizontal: 20,
@@ -320,6 +433,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 4,
+        zIndex: 100,
     },
     dropdownItem: {
         paddingVertical: 8,
@@ -330,6 +444,78 @@ const styles = StyleSheet.create({
     dropdownItemText: {
         fontSize: 14,
         color: 'black',
+    },
+
+    activityCard: {
+        backgroundColor: 'white',
+        borderRadius: 8,
+        padding: 15,
+        marginHorizontal: 20,
+        marginVertical: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 4,
+    },
+    activityUser: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#646262',
+        marginBottom: 4,
+    },
+    activityTitle: {
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+        marginBottom: 4,
+    },
+    activitySubtitle: {
+        fontSize: 14,
+        color: '#646262',
+        marginBottom: 2,
+    },
+    activityComment: {
+        fontSize: 14,
+        fontStyle: 'italic',
+        color: '#757575',
+        marginTop: 4,
+    },
+    activityMetaRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+    },
+    metaButton: {
+        backgroundColor: '#D9D9D9',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    metaButtonText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#646262',
+    },
+    activityTime: {
+      fontSize: 12,
+      color: '#646262',
+      fontWeight: 'bold',
+    },
+    endCard: {
+        marginHorizontal: 20,
+        marginVertical: 10,
+        paddingVertical: 10,
+        alignItems: 'center',
+    },
+    endText: {
+        fontSize: 14,
+        color: '#757575',
     },
 });
 
