@@ -44,6 +44,16 @@ export default function welcomeDashboard() {
 
     }
 
+    const startWorkoutClicked = async () => {
+    try {
+        router.push('/workout/logger');
+
+        } catch (e) {
+            console.error("Navigation error: ", e);
+        }
+
+    }
+
     return (
 
         <View style={ styles.appBackground }>
@@ -89,7 +99,7 @@ export default function welcomeDashboard() {
             </ThemedView>
 
 
-            <TouchableOpacity style = { styles.primaryButton } onPress = { () => console.log("Start workout clicked")} >
+            <TouchableOpacity style = { styles.primaryButton } onPress = { () => startWorkoutClicked() } >
                 <Text style = { styles.primaryButtonText }> Start Workout </Text>
             </TouchableOpacity>
             <View style = { styles.buttonRow }>
