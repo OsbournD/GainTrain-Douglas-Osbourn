@@ -82,10 +82,6 @@ export default function settingsScreen() {
                         <Text style = { styles.rowText }>Change Password</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style = { styles.rowButton }>
-                        <Text style ={ styles.rowText}>Manage Email</Text>
-                    </TouchableOpacity>
-
                 </View>
 
                 <View style = { styles.card }>
