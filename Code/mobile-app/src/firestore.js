@@ -135,6 +135,7 @@ export async function seedTestData() {
         } else {
             const sessionData = {
                 uid: userUid,
+                sessionName: "Push Day",
                 startedAt: new Date(Date.now() - 3600000),
                 endedAt: new Date(),
                 location: "gym",

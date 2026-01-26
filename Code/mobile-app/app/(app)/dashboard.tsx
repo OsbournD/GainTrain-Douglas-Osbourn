@@ -54,6 +54,16 @@ export default function welcomeDashboard() {
 
     }
 
+    const workoutDiaryClicked = async () => {
+    try {
+        router.push('/workout/diary');
+
+        } catch (e) {
+            console.error("Navigation error: ", e);
+        }
+
+    }
+
     return (
 
         <View style={ styles.appBackground }>
@@ -103,7 +113,7 @@ export default function welcomeDashboard() {
                 <Text style = { styles.primaryButtonText }> Start Workout </Text>
             </TouchableOpacity>
             <View style = { styles.buttonRow }>
-                <TouchableOpacity style = { styles.secondaryButton } onPress = { () => console.log("Workout diary clicked")} >
+                <TouchableOpacity style = { styles.secondaryButton } onPress = { () => workoutDiaryClicked()} >
                     <Text style = { styles.buttonText }> Workout Diary </Text>
                 </TouchableOpacity>
                 <TouchableOpacity style = { styles.secondaryButton } onPress = { () => console.log("Exercise discovery clicked")} >

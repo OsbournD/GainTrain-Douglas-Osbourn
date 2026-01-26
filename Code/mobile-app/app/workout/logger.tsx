@@ -16,6 +16,7 @@ export default function workoutLogger() {
     const defaultStyles = useDefaultStyles();
     const [sessionName, setSessionName] = useState("");
     const [sessionNotes, setSessionNotes] = useState("");
+    const [sessionLocation, setSessionLocation] = useState("");
 
     const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
     const [templateList, setTemplateList] = useState([
@@ -123,6 +124,13 @@ export default function workoutLogger() {
                         </View>
 
                         <TextInput
+                            style = { styles.input }
+                            placeholder = "Location (optional)"
+                            value = { sessionLocation }
+                            onChangeText = { setSessionLocation }
+                        />
+
+                        <TextInput
                             style = { styles.notesInput }
                             placeholder = "Session Notes (optional)"
                             multiline
@@ -137,7 +145,7 @@ export default function workoutLogger() {
                                 onPress = {() => setShowTemplateDropdown(!showTemplateDropdown)}
                             >
                                 <Text style = {{ color: selectedTemplate ? 'black' : '#24C3FF' }}>
-                                    { selectedTemplate || "Choose Template..." }
+                                    { selectedTemplate || "Choose Template (optional)..." }
                                 </Text>
                             </TouchableOpacity>
 
@@ -520,7 +528,7 @@ const styles = StyleSheet.create({
     },
     dropdownMenu: {
         position: 'absolute',
-        top: 390,
+        top: 500,
         backgroundColor: 'white',
         alignSelf: 'flex-start',
         marginHorizontal: 20,
