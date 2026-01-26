@@ -5,9 +5,17 @@ import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
 import { logoutUser } from '../src/firestore';
 
+import DateTimePicker, { useDefaultStyles, DateType } from 'react-native-ui-datepicker';
+import dayjs from 'dayjs';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function workoutLogger() {
+
+    const [sessionDate, setSessionDate] = useState<DateType>();
+    const defaultStyles = useDefaultStyles();
+    const [sessionName, setSessionName] = useState("");
+    const [sessionNotes, setSessionNotes] = useState("");
 
     const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
     const [templateList, setTemplateList] = useState([
@@ -65,7 +73,7 @@ export default function workoutLogger() {
 
         <View style={ [styles.appBackground, { position: 'relative' }] }>
 
-            <ThemedView style={styles.headerContainer}>
+            <ThemedView style = { styles.headerContainer }>
 
                     <TouchableOpacity style = { styles.backButton } onPress = { backToDashboardClicked } >
                         <Text style = { styles.headerButtonText }> BACK </Text>
@@ -88,11 +96,41 @@ export default function workoutLogger() {
                     <View style = { styles.card }>
 
                         <ThemedText style = { styles.headingText }>Session Setup</ThemedText>
-                        <TextInput style = { styles.input } placeholder = "Session Name" />
-                        <TextInput style = { styles.input } placeholder = "Date & Time" />
-                        <TextInput style = { styles.notesInput } placeholder = "Session Notes (optional)" multiline />
 
-                        <View style = {{ marginTop: 10 }}>
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Session Name"
+                            value = { sessionName }
+                            onChangeText = { setSessionName }
+                        />
+
+                        <View style = { styles.input }>
+                            <DateTimePicker
+                                mode = "single"
+                                date = { sessionDate }
+                                onChange = { ({ date }) => { setSessionDate(date); console.log(date); }}
+                                timePicker = { true }
+                                use12Hours = { true }
+                                containerHeight = {220}
+                                weekdaysHeight = {20}
+                                styles = {{
+                                    ...defaultStyles,
+                                    selected: { ...defaultStyles.selected, backgroundColor: '#24C3FF', borderRadius: 999 },
+                                    selected_label: { ...defaultStyles.selected_label, color: 'white', fontWeight: 'bold' },
+                                    today: { ...defaultStyles.today, borderColor: '#24C3FF', borderWidth: 1, borderRadius: 999 },
+                                }}
+                            />
+                        </View>
+
+                        <TextInput
+                            style = { styles.notesInput }
+                            placeholder = "Session Notes (optional)"
+                            multiline
+                            value = { sessionNotes }
+                            onChangeText = { setSessionNotes }
+                        />
+
+                        <View>
 
                             <TouchableOpacity
                                 style = { styles.input }
@@ -351,7 +389,7 @@ const styles = StyleSheet.create({
         padding: 10,
         marginVertical: 10,
         backgroundColor: 'white',
-        height: 80,
+        height: 60,
     },
     exerciseCard: {
         marginVertical: 4,
