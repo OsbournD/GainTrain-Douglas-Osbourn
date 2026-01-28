@@ -1,3 +1,6 @@
+import { collection, addDoc, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { db } from "../../src/firebase";
+
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
@@ -14,6 +17,7 @@ export default function workoutLogger() {
 
     const [sessionDate, setSessionDate] = useState<DateType>();
     const defaultStyles = useDefaultStyles();
+
     const [sessionName, setSessionName] = useState("");
     const [sessionNotes, setSessionNotes] = useState("");
     const [sessionLocation, setSessionLocation] = useState("");
@@ -29,6 +33,21 @@ export default function workoutLogger() {
 
     const [showSetup, setShowSetup] = useState(true);
 
+    const [exercises, setExercises] = useState([]);
+    const [showExerciseSelector, setShowExerciseSelector] = useState(false);
+    const [showNewExerciseModal, setShowNewExerciseModal] = useState(false);
+
+    const [exerciseLibrary, setExerciseLibrary] = useState([]);
+    const [loadingExercises, setLoadingExercises] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const [newExerciseName, setNewExerciseName] = useState("");
+    const [newDifficulty, setNewDifficulty] = useState("");
+    const [newTags, setNewTags] = useState("");
+    const [newPrimaryMuscle, setNewPrimaryMuscle] = useState("");
+    const [newSecondaryMuscles, setNewSecondaryMuscles] = useState("");
+    const [newBestFor, setNewBestFor] = useState("");
+
     const router = useRouter();
     const [checkingLogin, setCheckingLogin] = useState(true);
 
@@ -42,6 +61,30 @@ export default function workoutLogger() {
             setCheckingLogin(false);
         };
         checkLogin();
+
+        const fetchExercises = async () => {
+            try {
+                const exercisesQuery = query(
+                    collection(db, "exercises")
+                );
+
+                const querySnapshot = await getDocs(exercisesQuery);
+
+                const list = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                setExerciseLibrary(list);
+
+            } catch (e) {
+                console.error("Error fetching exercises: ", e);
+            }
+            setLoadingExercises(false);
+        }
+
+        fetchExercises();
+
     }, []);
 
     if (checkingLogin) {
@@ -92,7 +135,7 @@ export default function workoutLogger() {
 
             <View>
 
-                {showSetup && (
+                { showSetup && (
 
                     <View style = { styles.card }>
 
@@ -155,7 +198,7 @@ export default function workoutLogger() {
                 )}
 
                 <TouchableOpacity style = { styles.hideButton }
-                    onPress={() => {
+                    onPress = {() => {
                         setShowSetup(!showSetup);
                         setShowTemplateDropdown(false);
                     }}>
@@ -173,82 +216,45 @@ export default function workoutLogger() {
 
                     <ThemedText style = { styles.headingText }>Exercises</ThemedText>
 
-                    <View style = { styles.exerciseCard }>
+                    { exercises.length === 0 && (
+                        <Text style = { styles.setText }>No exercises added yet.</Text>
+                    )}
 
-                        <Text style = { styles.exerciseTitle }>Bench Press</Text>
-                        <Text style = { styles.setText }>60kg x 8 - 3sec negative - RPE 7</Text>
-                        <Text style = { styles.setText }>65kg x 6 - Wrist wraps, Pause - RPE 8</Text>
+                    { exercises.map((exercise, index) => (
 
-                        <View style = { styles.buttonRow }>
+                        <View key = { index } style = { styles.exerciseCard }>
 
-                            <TouchableOpacity style = { styles.addButton }>
-                                <Text style = { styles.exerciseButtonText }>+ Add Set</Text>
-                            </TouchableOpacity>
+                            <Text style = { styles.exerciseTitle }>{ exercise.name }</Text>
 
-                            <TouchableOpacity style = { styles.editButton }>
-                                <Text style = { styles.exerciseButtonText }>Edit</Text>
-                            </TouchableOpacity>
+                            <View style = { styles.buttonRow }>
 
-                            <TouchableOpacity style = { styles.removeButton }>
-                                <Text style = { styles.exerciseButtonText }>Remove</Text>
-                            </TouchableOpacity>
+                                <TouchableOpacity style = { styles.addButton }>
+                                    <Text style = { styles.exerciseButtonText }>+ Add Set</Text>
+                                </TouchableOpacity>
 
-                        </View>
+                                <TouchableOpacity style = { styles.editButton }>
+                                    <Text style = { styles.exerciseButtonText }>Edit</Text>
+                                </TouchableOpacity>
 
-                    </View>
+                                <TouchableOpacity
+                                    style = { styles.removeButton }
+                                    onPress = { () => {
+                                        setExercises(exercises.filter((_, i) => i !== index));
+                                    }}
+                                >
+                                    <Text style = { styles.exerciseButtonText }>Remove</Text>
+                                </TouchableOpacity>
 
-                    <View style = { styles.exerciseCard }>
-
-                        <Text style = { styles.exerciseTitle }>Bench Press Again!</Text>
-                        <Text style = { styles.setText }>60kg x 8 - 3sec negative - RPE 7</Text>
-                        <Text style = { styles.setText }>65kg x 6 - Wrist wraps, Pause - RPE 8</Text>
-                        <Text style = { styles.setText }>65kg x 6 - Wrist wraps, Pause - RPE 8</Text>
-
-                        <View style = { styles.buttonRow }>
-
-                            <TouchableOpacity style = { styles.addButton }>
-                                <Text style = { styles.exerciseButtonText }>+ Add Set</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style = { styles.editButton }>
-                                <Text style = { styles.exerciseButtonText }>Edit</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style = { styles.removeButton }>
-                                <Text style = { styles.exerciseButtonText }>Remove</Text>
-                            </TouchableOpacity>
+                            </View>
 
                         </View>
 
-                    </View>
+                    ))}
 
-                    <View style = { styles.exerciseCard }>
-
-                        <Text style = { styles.exerciseTitle }>Bench Press Again AGAIN!</Text>
-                        <Text style = { styles.setText }>60kg x 8 - 3sec negative - RPE 7</Text>
-                        <Text style = { styles.setText }>65kg x 6 - Wrist wraps, Pause - RPE 8</Text>
-                        <Text style = { styles.setText }>65kg x 6 - Wrist wraps, Pause - RPE 8</Text>
-                        <Text style = { styles.setText }>60kg x 8 - 3sec negative - RPE 7</Text>
-
-                        <View style = { styles.buttonRow }>
-
-                            <TouchableOpacity style = { styles.addButton }>
-                                <Text style = { styles.exerciseButtonText }>+ Add Set</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style = { styles.editButton }>
-                                <Text style = { styles.exerciseButtonText }>Edit</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style = { styles.removeButton }>
-                                <Text style = { styles.exerciseButtonText }>Remove</Text>
-                            </TouchableOpacity>
-
-                        </View>
-
-                    </View>
-
-                    <TouchableOpacity style = { styles.addExerciseButton }>
+                    <TouchableOpacity
+                        style = { styles.addExerciseButton }
+                        onPress = { () => setShowExerciseSelector(true) }
+                    >
                         <Text style = { styles.buttonText }>+ Add Exercise</Text>
                     </TouchableOpacity>
 
@@ -270,7 +276,7 @@ export default function workoutLogger() {
                 </TouchableOpacity>
             </View>
 
-            {showTemplateDropdown && (
+            { showTemplateDropdown && (
                 <View style = { styles.dropdownMenu }>
                     {templateList.map( (template, index) => (
                         <TouchableOpacity
@@ -285,6 +291,166 @@ export default function workoutLogger() {
                             <Text style = { styles.dropdownItemText }>{template}</Text>
                         </TouchableOpacity>
                     ))}
+
+                </View>
+            )}
+
+            { showExerciseSelector && (
+                <View style = { styles.modalOverlay }>
+
+                    <View style = { styles.modalCard }>
+
+                        <Text style = { styles.headingText }>Add Exercise</Text>
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Search exercises..."
+                            value = { searchQuery }
+                            onChangeText = { setSearchQuery }
+                        />
+
+                        <ScrollView style = {{ maxHeight: 200 }}>
+
+                            { exerciseLibrary
+                                .filter(exercise => exercise.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                .map((exercise, index) => (
+                                    <TouchableOpacity
+                                        key = { index }
+                                        style = { styles.dropdownItem }
+                                        onPress = { () => {
+                                            setExercises([...exercises, exercise]);
+                                            setShowExerciseSelector(false);
+                                        }}
+                                    >
+
+                                        <Text style = { styles.dropdownItemText }>{ exercise.name }</Text>
+                                    </TouchableOpacity>
+
+                            ))}
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style = { styles.addExerciseButton }
+                            onPress = { () => {
+                                setShowExerciseSelector(false);
+                                setShowNewExerciseModal(true);
+                            }}
+                        >
+                            <Text style = { styles.buttonText }>+ Create New Exercise</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style = { styles.cancelButton }
+                            onPress = { () => {
+                                setShowExerciseSelector(false);
+                            }}
+                        >
+                            <Text style = { styles.buttonText }>Cancel</Text>
+                        </TouchableOpacity>
+
+
+                    </View>
+
+                </View>
+
+            )}
+
+            { showNewExerciseModal && (
+                <View style = { styles.modalOverlay }>
+
+                    <View style = { styles.modalCard }>
+
+                        <Text style = { styles.headingText }>New Exercise</Text>
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Exercise Name"
+                            value = { newExerciseName }
+                            onChangeText = { setNewExerciseName }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Difficulty (1-5)"
+                            keyboardType = "numeric"
+                            value = { newDifficulty }
+                            onChangeText = { setNewDifficulty }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Tags (comma separated)"
+                            value = { newTags }
+                            onChangeText = { setNewTags }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Primary Muscle"
+                            value = { newPrimaryMuscle }
+                            onChangeText = { setNewPrimaryMuscle }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Secondary Muscles (comma separated)"
+                            value = { newSecondaryMuscles }
+                            onChangeText = { setNewSecondaryMuscles }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Best For (comma separated)"
+                            value = { newBestFor }
+                            onChangeText = { setNewBestFor }
+                        />
+
+                        <TouchableOpacity
+                            style = { styles.saveExerciseButton }
+                            onPress = { () => {
+
+                                const difficultyValue = Math.max(1, Math.min(5, Number(newDifficulty)));
+
+                                const formattedTags = newTags
+                                    .split(',')
+                                    .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'));
+
+                                const formattedSecondary = newSecondaryMuscles
+                                    .split(',')
+                                    .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'));
+
+                                const formattedBestFor = newBestFor
+                                    .split(',')
+                                    .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'));
+
+                                const newExercise = {
+                                    name: newExerciseName,
+                                    difficulty: difficultyValue,
+                                    tags: formattedTags,
+                                    primaryMuscle: newPrimaryMuscle.toLowerCase().replace(/\s+/g, '_'),
+                                    secondaryMuscles: formattedSecondary,
+                                    bestFor: formattedBestFor,
+                                    createdBy: "user",
+                                    createdAt: new Date(),
+                                };
+
+                                setExercises([...exercises, newExercise]);
+                                setShowNewExerciseModal(false);
+                            }}
+                        >
+                            <Text style = { styles.buttonText }>Save Exercise</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style = { styles.cancelButton }
+                            onPress = { () => {
+                                setShowNewExerciseModal(false);
+                            }}
+                        >
+                            <Text style = { styles.buttonText }>Cancel</Text>
+                        </TouchableOpacity>
+
+                    </View>
 
                 </View>
             )}
@@ -422,6 +588,20 @@ const styles = StyleSheet.create({
     },
     addExerciseButton: {
         backgroundColor: '#58C86D',
+        paddingVertical: 6,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    saveExerciseButton: {
+        backgroundColor: '#58C86D',
+        paddingVertical: 6,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    cancelButton: {
+        backgroundColor: '#E25252',
         paddingVertical: 6,
         borderRadius: 10,
         alignItems: 'center',
@@ -575,4 +755,28 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 6,
     },
+
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 200,
+    },
+    modalCard: {
+        backgroundColor: 'white',
+        width: '85%',
+        borderRadius: 10,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 6,
+    },
+
 });
