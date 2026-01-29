@@ -2,7 +2,7 @@ import { collection, addDoc, query, where, getDocs, doc, updateDoc } from "fireb
 import { db } from "../../src/firebase";
 
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput, Alert } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
@@ -21,6 +21,7 @@ export default function workoutLogger() {
     const [sessionName, setSessionName] = useState("");
     const [sessionNotes, setSessionNotes] = useState("");
     const [sessionLocation, setSessionLocation] = useState("");
+    const [sessionTags, setSessionTags] = useState("");
 
     const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
     const [templateList, setTemplateList] = useState([
@@ -60,6 +61,11 @@ export default function workoutLogger() {
     const router = useRouter();
     const [checkingLogin, setCheckingLogin] = useState(true);
 
+    const [userUid, setUserUid] = useState<string | null>(null);
+
+    const [startedAt, setStartedAt] = useState<Date | null>(new Date());
+    const [endedAt, setEndedAt] = useState<Date | null>(null);
+
     useEffect(() => {
         const checkLogin = async () => {
             const storedUser = await AsyncStorage.getItem('loggedInUser');
@@ -87,6 +93,8 @@ export default function workoutLogger() {
 
                 if (!snapshot.empty) {
                     const userData = snapshot.docs[0].data();
+                    setUserUid(userData.uid);
+
                     if (userData.weightUnitPreference) {
                         setWeightUnit(userData.weightUnitPreference);
                     }
@@ -188,7 +196,12 @@ export default function workoutLogger() {
                             <DateTimePicker
                                 mode = "single"
                                 date = { sessionDate }
-                                onChange = { ({ date }) => { setSessionDate(date); console.log(date); }}
+                                onChange = { ({ date }) => {
+                                    setSessionDate(date);
+                                    if (date) {
+                                        setStartedAt(new Date(date as any));
+                                    }
+                                }}
                                 timePicker = { true }
                                 use12Hours = { true }
                                 containerHeight = {220}
@@ -200,6 +213,7 @@ export default function workoutLogger() {
                                     today: { ...defaultStyles.today, borderColor: '#24C3FF', borderWidth: 1, borderRadius: 999 },
                                 }}
                             />
+
                         </View>
 
                         <TextInput
@@ -215,6 +229,13 @@ export default function workoutLogger() {
                             multiline
                             value = { sessionNotes }
                             onChangeText = { setSessionNotes }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Tags (comma separated)"
+                            value = { sessionTags }
+                            onChangeText = { setSessionTags }
                         />
 
                         <View>
@@ -322,10 +343,6 @@ export default function workoutLogger() {
                                     <Text style = { styles.exerciseButtonText }>+ Add Set</Text>
                                 </TouchableOpacity>
 
-                                <TouchableOpacity style = { styles.editButton }>
-                                    <Text style = { styles.exerciseButtonText }>Edit</Text>
-                                </TouchableOpacity>
-
                                 <TouchableOpacity
                                     style = { styles.removeButton }
                                     onPress = { () => {
@@ -353,7 +370,88 @@ export default function workoutLogger() {
             </ScrollView>
 
             <View style = { styles.fixedButtonRow }>
-                <TouchableOpacity style = { styles.saveButton }>
+
+                <TouchableOpacity
+                    style = { styles.saveButton }
+                    onPress = { async () => {
+
+                        if (!sessionName.trim()) {
+                           Alert.alert("Missing name", "Session must have a name.");
+                        }
+
+                        if (!startedAt) {
+                            Alert.alert("Missing start time", "Session must have a start time.");
+                            return;
+                        }
+
+                        if (!userUid) {
+                            Alert.alert("Error", "Could not determine user ID.");
+                            return;
+                        }
+
+                        if (exercises.length === 0) {
+                            Alert.alert("No exercises", "You must add at least one exercise.");
+                            return;
+                        }
+
+                        const endedAtValue = new Date();
+                        setEndedAt(endedAtValue);
+
+                        const formattedSessionTags = sessionTags
+                            .split(',')
+                            .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'))
+                            .filter(Boolean);
+
+                        try {
+
+                            const sessionRef = await addDoc(collection(db, "sessions"), {
+                                uid: userUid,
+                                startedAt: startedAt,
+                                endedAt: endedAtValue,
+                                location: sessionLocation.trim() || null,
+                                notes: sessionNotes.trim() || null,
+                                exerciseLogs: [],
+                                tags: formattedSessionTags,
+                                templateUsed: selectedTemplate || null,
+                                name: sessionName.trim(),
+                            });
+
+                            const exerciseLogIds = [];
+
+                            for (const exercise of exercises) {
+
+                                const exerciseId =
+                                    exercise.id ||
+                                    exercise.name.toLowerCase().replace(/\s+/g, "_");
+
+                                const logRef = await addDoc(collection(db, "exerciseLogs"), {
+                                    uid: userUid,
+                                    exerciseName: exercise.name,
+                                    exerciseId: exerciseId,
+                                    loggedAt: endedAtValue,
+                                    location: sessionLocation.trim() || null,
+                                    notes: null,
+                                    sets: Array.isArray(exercise.sets) ? exercise.sets : [],
+                                });
+
+                                exerciseLogIds.push(logRef.id);
+                            }
+
+                            await updateDoc(sessionRef, {
+                                exerciseLogs: exerciseLogIds
+                            });
+
+                            Alert.alert("Success", "Workout saved!");
+                            router.push("/(app)/dashboard")
+
+                        } catch (e) {
+                            console.error("Error saving session:", e);
+                            Alert.alert("Error", "There was a problem saving your session.");
+                        }
+
+                    }}
+
+                >
                     <Text style = { styles.buttonText }>Save Session</Text>
                 </TouchableOpacity>
 
@@ -364,6 +462,7 @@ export default function workoutLogger() {
                 <TouchableOpacity style = { styles.deleteButton }>
                     <Text style = { styles.buttonText }>Delete Session</Text>
                 </TouchableOpacity>
+
             </View>
 
             { showTemplateDropdown && (
@@ -501,9 +600,36 @@ export default function workoutLogger() {
 
                         <TouchableOpacity
                             style = { styles.saveExerciseButton }
-                            onPress = { () => {
+                            onPress = { async () => {
 
-                                const difficultyValue = Math.max(1, Math.min(5, Number(newDifficulty)));
+                                if (!newExerciseName.trim()) {
+                                    Alert.alert("Exercise must have a name.");
+                                    return;
+                                }
+
+                                if (!newDifficulty.trim()) {
+                                    Alert.alert("Exercise must have a difficulty rating (1–5).");
+                                    return;
+                                }
+
+                                const rawDifficulty = Number(newDifficulty);
+
+                                if (isNaN(rawDifficulty) || rawDifficulty < 1 || rawDifficulty > 5) {
+                                    Alert.alert("Difficulty must be a number between 1 and 5.");
+                                    return;
+                                }
+
+                                const difficultyValue = rawDifficulty;
+
+                                if (!newPrimaryMuscle.trim()) {
+                                    Alert.alert("Exercise must have a primary muscle.");
+                                    return;
+                                }
+
+                                if (newPrimaryMuscle.includes(",")) {
+                                    Alert.alert("Primary muscle must be a single value, not a list.");
+                                    return;
+                                }
 
                                 const formattedTags = newTags
                                     .split(',')
@@ -528,12 +654,22 @@ export default function workoutLogger() {
                                     createdAt: new Date(),
                                 };
 
-                                const exerciseInstance = {
-                                    ... newExercise,
-                                    sets: []
-                                };
-                                setExercises([...exercises, exerciseInstance]);
-                                setShowNewExerciseModal(false);
+                                try {
+
+                                    const exerciseDoc = await addDoc(collection(db, "exercises"), newExercise);
+                                    const exerciseInstance = {
+                                        id: exerciseDoc.id,
+                                        ... newExercise,
+                                        sets: []
+                                    };
+                                    setExercises([...exercises, exerciseInstance]);
+                                    setShowNewExerciseModal(false);
+
+                                } catch (e) {
+                                    console.error("Error saving new exercise:", e);
+                                    Alert.alert("Error", "There was a problem saving this exercise.");
+                                }
+
                             }}
                         >
                             <Text style = { styles.buttonText }>Save Exercise</Text>
@@ -602,6 +738,17 @@ export default function workoutLogger() {
                             style = { styles.saveExerciseButton }
                             onPress = { () => {
 
+                                if (
+                                    !newSetWeight.trim() &&
+                                    !newSetReps.trim() &&
+                                    !newSetRPE.trim() &&
+                                    !newSetEquipment.trim() &&
+                                    !newSetModifiers.trim()
+                                ) {
+                                    Alert.alert("Set cannot be completely empty.");
+                                    return;
+                                }
+
                                 const numericWeight = parseFloat(newSetWeight.replace(/[^0-9.]/g, ''));
                                 const numericReps = parseInt(newSetReps.replace(/[^0-9.]/g, ''), 10);
                                 const numericRPEraw = parseInt(newSetRPE.replace(/[^0-9]/g, ''), 10);
@@ -609,7 +756,6 @@ export default function workoutLogger() {
                                     isNaN(numericRPEraw)
                                         ? null
                                         : Math.max(1, Math.min(10, numericRPEraw));
-
 
                                 const setObject = {
                                     weight: isNaN(numericWeight) ? 0 : numericWeight,
