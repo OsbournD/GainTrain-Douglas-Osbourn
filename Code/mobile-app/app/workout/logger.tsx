@@ -48,6 +48,15 @@ export default function workoutLogger() {
     const [newSecondaryMuscles, setNewSecondaryMuscles] = useState("");
     const [newBestFor, setNewBestFor] = useState("");
 
+    const [activeExerciseIndex, setActiveExerciseIndex] = useState<number | null>(null);
+    const [showSetModal, setShowSetModal] = useState(false);
+    const [newSetWeight, setNewSetWeight] = useState("");
+    const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
+    const [newSetReps, setNewSetReps] = useState("");
+    const [newSetRPE, setNewSetRPE] = useState("");
+    const [newSetEquipment, setNewSetEquipment] = useState("");
+    const [newSetModifiers, setNewSetModifiers] = useState("");
+
     const router = useRouter();
     const [checkingLogin, setCheckingLogin] = useState(true);
 
@@ -61,6 +70,33 @@ export default function workoutLogger() {
             setCheckingLogin(false);
         };
         checkLogin();
+
+        const fetchUserPreferences = async () => {
+            try {
+                const storedUser = await AsyncStorage.getItem('loggedInUser');
+                if (!storedUser) return;
+
+                const username = storedUser;
+
+                const usersQuery = query(
+                    collection(db, "users"),
+                    where("username", "==", username)
+                );
+
+                const snapshot = await getDocs(usersQuery);
+
+                if (!snapshot.empty) {
+                    const userData = snapshot.docs[0].data();
+                    if (userData.weightUnitPreference) {
+                        setWeightUnit(userData.weightUnitPreference);
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching user preferences:", e);
+            }
+        };
+
+        fetchUserPreferences();
 
         const fetchExercises = async () => {
             try {
@@ -226,9 +262,63 @@ export default function workoutLogger() {
 
                             <Text style = { styles.exerciseTitle }>{ exercise.name }</Text>
 
+                            { exercise.sets && exercise.sets.length > 0 && exercise.sets.map((set, setIndex) => (
+                                <View key = { setIndex } style = {{ marginTop: 4 }}>
+
+                                    <Text style = { styles.setText }>
+                                        { set.weight }{ weightUnit } x { set.reps }
+                                        { set.rpe ? ` — RPE ${set.rpe}` : "" }
+                                    </Text>
+
+                                    { set.equipment && set.equipment.length > 0 && (
+                                        <Text style = { styles.setText }>
+                                            Equipment: { set.equipment.join(', ') }
+                                        </Text>
+                                    )}
+
+                                    { set.modifiers && set.modifiers.length > 0 && (
+                                        <Text style = { styles.setText }>
+                                            Modifiers: { set.modifiers.join(', ') }
+                                        </Text>
+                                    )}
+
+                                    <TouchableOpacity
+                                        style = {{ marginLeft: 10, marginTop: 2 }}
+                                        onPress = { () => {
+                                            const updatedExercises = [...exercises];
+                                            updatedExercises[index].sets = updatedExercises[index].sets.filter((_, i) => i !== setIndex);
+                                            setExercises(updatedExercises);
+                                        }}
+                                    >
+                                        <Text style = {{ color: '#E25252', fontWeight: 'bold' }}>Remove Set</Text>
+                                    </TouchableOpacity>
+
+                                    { setIndex < exercise.sets.length - 1 && (
+                                        <View style = {{
+                                            height: 1,
+                                            backgroundColor: '#D9D9D9',
+                                            marginVertical: 6,
+                                            marginHorizontal: 10,
+                                        }} />
+                                    )}
+
+                                </View>
+                            ))}
+
                             <View style = { styles.buttonRow }>
 
-                                <TouchableOpacity style = { styles.addButton }>
+                                <TouchableOpacity
+                                    style = { styles.addButton }
+                                    onPress = { () => {
+                                        setActiveExerciseIndex(index);
+                                        setNewSetWeight("");
+                                        setNewSetReps("");
+                                        setNewSetRPE("");
+                                        setNewSetEquipment("");
+                                        setNewSetModifiers("");
+                                        setShowSetModal(true)
+                                    }}
+                                >
                                     <Text style = { styles.exerciseButtonText }>+ Add Set</Text>
                                 </TouchableOpacity>
 
@@ -318,7 +408,11 @@ export default function workoutLogger() {
                                         key = { index }
                                         style = { styles.dropdownItem }
                                         onPress = { () => {
-                                            setExercises([...exercises, exercise]);
+                                            const exerciseInstance = {
+                                                ... exercise,
+                                                sets: []
+                                            };
+                                            setExercises([...exercises, exerciseInstance]);
                                             setShowExerciseSelector(false);
                                         }}
                                     >
@@ -434,7 +528,11 @@ export default function workoutLogger() {
                                     createdAt: new Date(),
                                 };
 
-                                setExercises([...exercises, newExercise]);
+                                const exerciseInstance = {
+                                    ... newExercise,
+                                    sets: []
+                                };
+                                setExercises([...exercises, exerciseInstance]);
                                 setShowNewExerciseModal(false);
                             }}
                         >
@@ -454,6 +552,106 @@ export default function workoutLogger() {
 
                 </View>
             )}
+
+            { showSetModal && activeExerciseIndex !== null && (
+                <View style = { styles.modalOverlay }>
+
+                    <View style = { styles.modalCard }>
+
+                        <Text style = { styles.headingText }>Add Set</Text>
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = { `Weight (${weightUnit})` }
+                            keyboardType = "numeric"
+                            value = { newSetWeight }
+                            onChangeText = { setNewSetWeight }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Reps"
+                            keyboardType = "numeric"
+                            value = { newSetReps }
+                            onChangeText = { setNewSetReps }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "RPE (1-10)"
+                            keyboardType = "numeric"
+                            value = { newSetRPE }
+                            onChangeText = { setNewSetRPE }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Equipment (comma separated)"
+                            value = { newSetEquipment }
+                            onChangeText = { setNewSetEquipment }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Modifiers (comma separated)"
+                            value = { newSetModifiers }
+                            onChangeText = { setNewSetModifiers }
+                        />
+
+                        <TouchableOpacity
+                            style = { styles.saveExerciseButton }
+                            onPress = { () => {
+
+                                const numericWeight = parseFloat(newSetWeight.replace(/[^0-9.]/g, ''));
+                                const numericReps = parseInt(newSetReps.replace(/[^0-9.]/g, ''), 10);
+                                const numericRPEraw = parseInt(newSetRPE.replace(/[^0-9]/g, ''), 10);
+                                const numericRPE =
+                                    isNaN(numericRPEraw)
+                                        ? null
+                                        : Math.max(1, Math.min(10, numericRPEraw));
+
+
+                                const setObject = {
+                                    weight: isNaN(numericWeight) ? 0 : numericWeight,
+                                    reps: isNaN(numericReps) ? 0 : numericReps,
+                                    rpe: numericRPE,
+                                    equipment: newSetEquipment
+                                        ? newSetEquipment.split(',').map(e => e.trim()).filter(Boolean)
+                                        : [],
+                                    modifiers: newSetModifiers
+                                        ? newSetModifiers.split(',').map(m => m.trim()).filter(Boolean)
+                                        : [],
+                                };
+
+                                const updatedExercises = [...exercises];
+                                const target = updatedExercises[activeExerciseIndex];
+
+                                const existingSets = target.sets || [];
+                                target.sets = [...existingSets, setObject];
+
+                                setExercises(updatedExercises);
+                                setShowSetModal(false);
+                                setActiveExerciseIndex(null);
+                            }}
+                        >
+                            <Text style = { styles.buttonText }>Save Set</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style = { styles.cancelButton }
+                            onPress = { () => {
+                                setShowSetModal(false);
+                                setActiveExerciseIndex(null);
+                            }}
+                        >
+                            <Text style = { styles.buttonText }>Cancel</Text>
+                        </TouchableOpacity>
+
+                    </View>
+
+                </View>
+            )}
+
 
         </View>
 
