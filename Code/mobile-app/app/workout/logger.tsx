@@ -516,9 +516,53 @@ export default function workoutLogger() {
                     <Text style = { styles.buttonText }>Finish Later</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style = { styles.deleteButton }>
+                <TouchableOpacity
+                    style = { styles.deleteButton }
+                    onPress = { () => {
+
+                        Alert.alert(
+                            "Delete Session",
+                            "Are you sure you want to delete this session?",
+                            [
+                                { text: "Cancel" },
+
+                                {
+                                    text: "Delete",
+                                    onPress: async () => {
+
+                                        try {
+
+                                            if (userUid) {
+                                                await AsyncStorage.removeItem(getDraftKey(userUid));
+                                            }
+
+                                            setSessionName("");
+                                            setSessionNotes("");
+                                            setSessionLocation("");
+                                            setSessionTags("");
+                                            setSelectedTemplate("");
+                                            setStartedAt(new Date());
+                                            setExercises([]);
+                                            setShowSetup(true);
+
+                                            Alert.alert("Deleted", "Your session has been cleared.");
+
+                                        } catch (e) {
+                                            console.error("Error deleting session:", e);
+                                            Alert.alert("Error", "Could not delete your session.");
+                                        }
+
+                                    }
+                                }
+                            ]
+                        );
+
+                    }}
+
+                >
                     <Text style = { styles.buttonText }>Delete Session</Text>
                 </TouchableOpacity>
+
 
             </View>
 
