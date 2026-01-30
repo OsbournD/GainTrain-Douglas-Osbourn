@@ -13,6 +13,8 @@ import dayjs from 'dayjs';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const getDraftKey = (uid: string) => `workout_draft_${uid}`;
+
 export default function workoutLogger() {
 
     const [sessionDate, setSessionDate] = useState<DateType>();
@@ -138,6 +140,32 @@ export default function workoutLogger() {
             </View>
         );
     }
+
+    const loadDraft = async () => {
+        try {
+            if (!userUid) return;
+
+            const saved = await AsyncStorage.getItem(getDraftKey(userUid));
+
+            if (!saved) return;
+
+            const draft = JSON.parse(saved);
+
+            setSessionName(draft.sessionName || "");
+            setSessionNotes(draft.sessionNotes || "");
+            setSessionLocation(draft.sessionLocation || "");
+            setSessionTags(draft.sessionTags || "");
+            setSelectedTemplate(draft.selectedTemplate || "");
+            setStartedAt(draft.startedAt ? new Date(draft.startedAt) : new Date());
+            setExercises(draft.exercises || []);
+
+        } catch (e) {
+            console.error("Error loading draft:", e);
+        }
+    };
+
+    loadDraft();
+
 
     const backToDashboardClicked = async () => {
         try {
@@ -441,6 +469,8 @@ export default function workoutLogger() {
                                 exerciseLogs: exerciseLogIds
                             });
 
+                            await AsyncStorage.removeItem(getDraftKey(userUid));
+
                             Alert.alert("Success", "Workout saved!");
                             router.push("/(app)/dashboard")
 
@@ -455,7 +485,34 @@ export default function workoutLogger() {
                     <Text style = { styles.buttonText }>Save Session</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style = { styles.laterButton }>
+                <TouchableOpacity
+                    style = { styles.laterButton }
+                    onPress = { async () => {
+
+                        try {
+
+                            const draft = {
+                                sessionName,
+                                sessionNotes,
+                                sessionLocation,
+                                sessionTags,
+                                selectedTemplate,
+                                startedAt,
+                                exercises,
+                            };
+
+                            await AsyncStorage.setItem(getDraftKey(userUid), JSON.stringify(draft));
+
+                            Alert.alert("Saved", "Your session draft has been saved.");
+                            router.push("/(app)/dashboard");
+
+                        } catch (e) {
+                            console.error("Error saving draft:", e);
+                            Alert.alert("Error", "Could not save your workout.");
+                        }
+
+                    }}
+                >
                     <Text style = { styles.buttonText }>Finish Later</Text>
                 </TouchableOpacity>
 
@@ -897,7 +954,7 @@ const styles = StyleSheet.create({
         borderColor: 'black',
         borderRadius: 5,
         padding: 6,
-        marginVertical: 10,
+        marginVertical: 6,
         backgroundColor: 'white',
     },
     notesInput: {
