@@ -10,7 +10,8 @@ export const systemExercises = [
         points: 40,
         bestFor: ["strength", "muscle_gain"],
         usageCount: 0,
-        createdBy: "system",
+        type: "system",
+        createdBy: null,
         createdAt: new Date()
     },
     {
@@ -24,7 +25,8 @@ export const systemExercises = [
         points: 50,
         bestFor: ["strength"],
         usageCount: 0,
-        createdBy: "system",
+        type: "system",
+        createdBy: null,
         createdAt: new Date()
     },
     {
@@ -38,7 +40,8 @@ export const systemExercises = [
         points: 50,
         bestFor: ["strength", "muscle_gain"],
         usageCount: 0,
-        createdBy: "system",
+        type: "system",
+        createdBy: null,
         createdAt: new Date()
     },
     {
@@ -52,7 +55,8 @@ export const systemExercises = [
         points: 20,
         bestFor: ["muscle_gain"],
         usageCount: 0,
-        createdBy: "system",
+        type: "system",
+        createdBy: null,
         createdAt: new Date()
     },
     {
@@ -66,7 +70,8 @@ export const systemExercises = [
         points: 20,
         bestFor: ["muscle_gain"],
         usageCount: 0,
-        createdBy: "system",
+        type: "system",
+        createdBy: null,
         createdAt: new Date()
     },
     {
@@ -80,7 +85,8 @@ export const systemExercises = [
         points: 15,
         bestFor: ["muscle_gain"],
         usageCount: 0,
-        createdBy: "system",
+        type: "system",
+        createdBy: null,
         createdAt: new Date()
     },
     {
@@ -94,7 +100,8 @@ export const systemExercises = [
         points: 40,
         bestFor: ["strength", "muscle_gain"],
         usageCount: 0,
-        createdBy: "system",
+        type: "system",
+        createdBy: null,
         createdAt: new Date()
     },
     {
@@ -108,7 +115,8 @@ export const systemExercises = [
         points: 20,
         bestFor: ["muscle_gain"],
         usageCount: 0,
-        createdBy: "system",
+        type: "system",
+        createdBy: null,
         createdAt: new Date()
     },
     {
@@ -122,7 +130,8 @@ export const systemExercises = [
         points: 30,
         bestFor: ["strength", "muscle_gain"],
         usageCount: 0,
-        createdBy: "system",
+        type: "system",
+        createdBy: null,
         createdAt: new Date()
     },
     {
@@ -136,7 +145,8 @@ export const systemExercises = [
         points: 30,
         bestFor: ["strength", "muscle_gain"],
         usageCount: 0,
-        createdBy: "system",
+        type: "system",
+        createdBy: null,
         createdAt: new Date()
     }
 

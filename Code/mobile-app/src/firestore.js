@@ -48,12 +48,17 @@ export async function seedTestData() {
             const existingExercises = await getDocs(existingExercisesQuery);
 
             if (!existingExercises.empty) {
-                console.log("Skipping existing exercise: " + exerciseData.exerciseId);
-                continue;
+                const existingDoc = existingExercises.docs[0];
+                const exerciseRef = doc(db, "exercises", existingDoc.id);
+
+                await updateDoc(exerciseRef, exerciseData);
+
+                console.log("Exercise updated:", exerciseData.exerciseId);
+            } else {
+                const exerciseRef = await addDoc(collection(db, "exercises"), exerciseData);
+                console.log("Exercise created:", exerciseData.exerciseId);
             }
 
-            const exerciseRef = await addDoc(collection(db, "exercises"), exerciseData);
-            console.log("Exercise created:", exerciseRef.id);
         }
 
         const existingUserQuery = query(

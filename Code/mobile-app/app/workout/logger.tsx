@@ -68,6 +68,37 @@ export default function workoutLogger() {
     const [startedAt, setStartedAt] = useState<Date | null>(new Date());
     const [endedAt, setEndedAt] = useState<Date | null>(null);
 
+    const fetchExercises = async () => {
+        try {
+            const exercisesQuery = query(
+                collection(db, "exercises")
+            );
+
+            const querySnapshot = await getDocs(exercisesQuery);
+
+            const list = querySnapshot.docs
+                .map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }))
+                .filter(exercise =>
+                    exercise.type === "system" || (exercise.type === "user" && exercise.createdBy === userUid)
+                );
+
+            setExerciseLibrary(list);
+
+        } catch (e) {
+            console.error("Error fetching exercises: ", e);
+        }
+        setLoadingExercises(false);
+    }
+
+    useEffect(() => {
+        if (userUid) {
+            fetchExercises();
+        }
+    }, [userUid]);
+
     useEffect(() => {
         const checkLogin = async () => {
             const storedUser = await AsyncStorage.getItem('loggedInUser');
@@ -108,30 +139,34 @@ export default function workoutLogger() {
 
         fetchUserPreferences();
 
-        const fetchExercises = async () => {
+    }, []);
+
+    useEffect(() => {
+        const loadDraft = async () => {
             try {
-                const exercisesQuery = query(
-                    collection(db, "exercises")
-                );
+                if (!userUid) return;
 
-                const querySnapshot = await getDocs(exercisesQuery);
+                const saved = await AsyncStorage.getItem(getDraftKey(userUid));
 
-                const list = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                if (!saved) return;
 
-                setExerciseLibrary(list);
+                const draft = JSON.parse(saved);
+
+                setSessionName(draft.sessionName || "");
+                setSessionNotes(draft.sessionNotes || "");
+                setSessionLocation(draft.sessionLocation || "");
+                setSessionTags(draft.sessionTags || "");
+                setSelectedTemplate(draft.selectedTemplate || "");
+                setStartedAt(draft.startedAt ? new Date(draft.startedAt) : new Date());
+                setExercises(draft.exercises || []);
 
             } catch (e) {
-                console.error("Error fetching exercises: ", e);
+                console.error("Error loading draft:", e);
             }
-            setLoadingExercises(false);
-        }
+        };
 
-        fetchExercises();
-
-    }, []);
+       loadDraft();
+    }, [userUid]);
 
     if (checkingLogin) {
         return (
@@ -140,32 +175,6 @@ export default function workoutLogger() {
             </View>
         );
     }
-
-    const loadDraft = async () => {
-        try {
-            if (!userUid) return;
-
-            const saved = await AsyncStorage.getItem(getDraftKey(userUid));
-
-            if (!saved) return;
-
-            const draft = JSON.parse(saved);
-
-            setSessionName(draft.sessionName || "");
-            setSessionNotes(draft.sessionNotes || "");
-            setSessionLocation(draft.sessionLocation || "");
-            setSessionTags(draft.sessionTags || "");
-            setSelectedTemplate(draft.selectedTemplate || "");
-            setStartedAt(draft.startedAt ? new Date(draft.startedAt) : new Date());
-            setExercises(draft.exercises || []);
-
-        } catch (e) {
-            console.error("Error loading draft:", e);
-        }
-    };
-
-    loadDraft();
-
 
     const backToDashboardClicked = async () => {
         try {
@@ -746,12 +755,14 @@ export default function workoutLogger() {
 
                                 const newExercise = {
                                     name: newExerciseName,
+                                    exerciseId: newExerciseName.toLowerCase().replace(/\s+/g, "_"),
                                     difficulty: difficultyValue,
                                     tags: formattedTags,
                                     primaryMuscle: newPrimaryMuscle.toLowerCase().replace(/\s+/g, '_'),
                                     secondaryMuscles: formattedSecondary,
                                     bestFor: formattedBestFor,
-                                    createdBy: "user",
+                                    type: "user",
+                                    createdBy: userUid,
                                     createdAt: new Date(),
                                 };
 
@@ -765,6 +776,7 @@ export default function workoutLogger() {
                                     };
                                     setExercises([...exercises, exerciseInstance]);
                                     setShowNewExerciseModal(false);
+                                    await fetchExercises();
 
                                 } catch (e) {
                                     console.error("Error saving new exercise:", e);
