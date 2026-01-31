@@ -1,3 +1,6 @@
+import { collection, addDoc, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { db } from "../../src/firebase";
+
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
@@ -12,36 +15,36 @@ export default function workoutDiary() {
     const router = useRouter();
     const [checkingLogin, setCheckingLogin] = useState(true);
 
-    const sessions = [
+    const [sessions, setSessions] = useState([]);
+    const [loadingSessions, setLoadingSessions] = useState(true);
 
-        {
-            id: 'BREUo6F8koKefOFjsJRC',
-            uid: 'uid_testUser',
-            sessionName: 'Push Day',
-            templateUsed: null,
-            tags: ['upper_body', 'chest_day'],
-            endedAt: new Date('2026-01-13T16:37:34Z'),
-            startedAt: new Date('2026-01-13T15:37:34Z'),
-            location: 'gym',
-            notes: 'TEST SESSION!',
-            exerciseLogs: ['Tzhvxy6TNkryk5VboDaZ'],
-        },
-        {
-            id: 'madeUpId',
-            uid: 'madeUpUser',
-            sessionName: 'Pull Day',
-            templateUsed: null,
-            tags: ['upper_body', 'back_day'],
-            endedAt: new Date('2026-01-26T17:37:34Z'),
-            startedAt: new Date('2026-01-26T16:42:34Z'),
-            location: 'gym',
-            notes: '',
-            exerciseLogs: ['madeUpExerciseLogId'],
-        },
+    const [userUid, setUserUid] = useState<string | null>(null);
 
+    useEffect(() => {
+        const fetchSessions = async () => {
+            if (!userUid) return;
 
-    ];
+            const sessionsQuery = query(
+                collection(db, "sessions"),
+                where("uid", "==", userUid)
+            );
 
+            const snapshot = await getDocs(sessionsQuery);
+
+            const sessionsList = snapshot.docs
+                .map(doc => ({
+                    id: doc.id,
+                    ... doc.data()
+                }))
+                .sort((a, b) => b.startedAt.toDate() - a.startedAt.toDate());
+
+            setSessions(sessionsList);
+            setLoadingSessions(false);
+        }
+
+        fetchSessions();
+
+    }, [userUid]);
 
     useEffect(() => {
         const checkLogin = async () => {
@@ -50,10 +53,34 @@ export default function workoutDiary() {
                 router.replace('/(auth)/login');
                 return;
             }
+
+            const username = storedUser;
+
+            const usersQuery = query(
+                collection(db, "users"),
+                where("username", "==", username)
+            );
+
+            const snapshot = await getDocs(usersQuery);
+
+            if (!snapshot.empty) {
+                const userData = snapshot.docs[0].data();
+                setUserUid(userData.uid);
+            }
+
             setCheckingLogin(false);
         };
+
         checkLogin();
     }, []);
+
+    if (loadingSessions) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" />
+            </View>
+        );
+    }
 
     if (checkingLogin) {
         return (
@@ -110,8 +137,8 @@ export default function workoutDiary() {
 
                     { sessions.map(session => {
 
-                        const started = new Date(session.startedAt);
-                        const ended = new Date(session.endedAt);
+                        const started = session.startedAt.toDate();
+                        const ended = session.endedAt.toDate();
 
                         const durationMs = ended - started;
                         const durationMin = Math.floor(durationMs / 60000);
@@ -122,13 +149,19 @@ export default function workoutDiary() {
 
                                 <Text style = { styles.sessionDate }>
                                     { started.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' - ' }
-                                    { session.templateUsed ? ` - ${session.templateUsed}` : session.sessionName }
+                                    { session.templateUsed ? ` - ${session.templateUsed}` : session.name }
                                 </Text>
 
-                                <Text style = { styles.sessionDetail }>Location: { session.location }</Text>
+                                { session.location && (
+                                    <Text style = { styles.sessionDetail }>Location: { session.location }</Text>
+                                )}
+
                                 <Text style = { styles.sessionDetail }>Notes: { session.notes ? session.notes : 'No Notes' }</Text>
                                 <Text style = { styles.sessionDetail }>Duration: { durationStr }</Text>
-                                <Text style = { styles.sessionDetail }>Tags: { session.tags.join(', ') }</Text>
+
+                                { session.tags && session.tags.length > 0 && (
+                                    <Text style = { styles.sessionDetail }>Tags: { session.tags.join(', ') }</Text>
+                                )}
 
                                 <TouchableOpacity
                                     style = { styles.viewButton }
