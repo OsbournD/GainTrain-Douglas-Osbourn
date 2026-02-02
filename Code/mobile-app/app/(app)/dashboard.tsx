@@ -87,15 +87,21 @@ export default function welcomeDashboard() {
 
             <View style = { styles.spacer }/>
 
+            <TouchableOpacity
+                style = { styles.primaryButton }
+                onPress = { () => router.push('../(onboarding)') }
+            >
+                <Text>Test Onboarding</Text>
+            </TouchableOpacity>
+
             <ThemedView style = { styles.card }>
                 <ThemedText style = { styles.welcomeText }>Welcome, {username}</ThemedText>
             </ThemedView>
 
             <ThemedView style = { styles.card }>
                 <ThemedText style = { styles.headingText }>Recently You...</ThemedText>
-                <ThemedText style = { styles.recentText }>Logged 3 workouts.</ThemedText>
-                <ThemedText style = { styles.recentText }>Made 2 new friends.</ThemedText>
-                <ThemedText style = { styles.recentText }>Hit a PR of 75kg for 6 reps on {"\n"} Barbell Bench Press.</ThemedText>
+                <ThemedText style = { styles.recentText }>Work in progress...</ThemedText>
+
             </ThemedView>
 
             <ThemedView style = { styles.card }>
