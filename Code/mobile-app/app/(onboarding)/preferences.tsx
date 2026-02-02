@@ -9,8 +9,6 @@ export default function ExercisePreferences() {
     const params = useLocalSearchParams();
     const { q1, q2, q3, level } = params;
 
-    const [selected, setSelected] = useState<string | null>(null);
-
     const muscleGroups = [
         "Chest",
         "Back",
@@ -110,7 +108,7 @@ export default function ExercisePreferences() {
 
             <Text style = { styles.title }>Your Training Preferences</Text>
 
-            <ScrollView>
+            <ScrollView contentContainerStyle = {{ paddingBottom: 40 }}>
 
                 <Text style = { styles.sectionTitle }>Muscle Groups You Enjoy Training</Text>
 
@@ -271,7 +269,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 12,
         alignItems: 'center',
-        marginTop: 30,
+        marginTop: 20,
         marginBottom: 10,
     },
     nextButtonText: {
