@@ -1,8 +1,8 @@
-import { collection, addDoc, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../src/firebase";
 
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput, Alert } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
@@ -145,6 +145,51 @@ export default function workoutDiary() {
 
         setLoadingLogs(false);
     };
+
+    const deleteSession = async () => {
+
+        if (!selectedSession) return;
+
+        Alert.alert(
+            "Delete Session",
+            "Are you sure you want to delete this session?",
+            [
+                { text: "Cancel" },
+
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+
+                        try {
+
+                            if (selectedSession.exerciseLogs && selectedSession.exerciseLogs.length > 0) {
+                                for (const logId of selectedSession.exerciseLogs) {
+                                    const logRef = doc(db, "exerciseLogs", logId);
+                                    await deleteDoc(logRef);
+                                }
+                            }
+
+                            const sessionRef = doc(db, "sessions", selectedSession.id);
+                            await deleteDoc(sessionRef);
+
+                            setShowSessionModal(false);
+
+                            setSessions(sessions.filter(session => session.id !== selectedSession.id));
+
+                            Alert.alert("Deleted", "Session has been removed.");
+
+                        } catch (e) {
+                            console.error("Error deleting session:", e);
+                            Alert.alert("Error", "Could not delete this session.");
+                        }
+
+                    }
+                }
+            ]
+        );
+
+    }
 
     return(
 
@@ -304,6 +349,13 @@ export default function workoutDiary() {
                                 ))}
 
                             </ScrollView>
+
+                            <TouchableOpacity
+                                style = { styles.deleteButton }
+                                onPress = { deleteSession }
+                            >
+                                <Text style = { styles.closeButtonText }>Delete Session</Text>
+                            </TouchableOpacity>
 
                             <TouchableOpacity
                                 style = { styles.closeButton }
@@ -527,11 +579,28 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: 'center',
         marginTop: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 4,
     },
     closeButtonText: {
         fontSize: 16,
         fontWeight: 'bold',
         color: 'white',
+    },
+    deleteButton: {
+        backgroundColor: '#E25252',
+        paddingVertical: 10,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginTop: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 4,
     },
 
 });
