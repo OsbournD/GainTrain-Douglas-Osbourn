@@ -18,6 +18,11 @@ export default function workoutDiary() {
     const [sessions, setSessions] = useState([]);
     const [loadingSessions, setLoadingSessions] = useState(true);
 
+    const [showSessionModal, setShowSessionModal] = useState(false);
+    const [selectedSession, setSelectedSession] = useState(null);
+    const [exerciseLogs, setExerciseLogs] = useState([]);
+    const [loadingLogs, setLoadingLogs] = useState(false);
+
     const [userUid, setUserUid] = useState<string | null>(null);
 
     useEffect(() => {
@@ -108,6 +113,39 @@ export default function workoutDiary() {
 
     }
 
+    const openSessionModal = async (session) => {
+
+        setSelectedSession(session);
+        setLoadingLogs(true);
+        setShowSessionModal(true);
+
+        if (!session.exerciseLogs || session.exerciseLogs.length === 0) {
+            setExerciseLogs([]);
+            setLoadingLogs(false);
+            return;
+        }
+
+        try {
+            const logsQuery = query(
+                collection(db, "exerciseLogs"),
+                where("__name__", "in", session.exerciseLogs)
+            );
+
+            const snapshot = await getDocs(logsQuery);
+
+            const logs = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            setExerciseLogs(logs);
+        } catch (e) {
+            console.error("Error fetching exercise logs:", e);
+        }
+
+        setLoadingLogs(false);
+    };
+
     return(
 
             <View style={ [styles.appBackground, { position: 'relative' }] }>
@@ -165,7 +203,7 @@ export default function workoutDiary() {
 
                                 <TouchableOpacity
                                     style = { styles.viewButton }
-                                    onPress = { () => console.log("view session with id: " + session.id) }
+                                    onPress = { () => openSessionModal(session) }
                                 >
                                     <Text style = { styles.viewButtonText }>View Session</Text>
                                 </TouchableOpacity>
@@ -178,6 +216,107 @@ export default function workoutDiary() {
                     <Text style = { styles.endText }>You've reached the end!</Text>
 
                 </ScrollView>
+
+                { showSessionModal && selectedSession && (
+
+                    <View style = { styles.modalOverlay }>
+
+                        <View style = { styles.modalCard }>
+
+                            <Text style = { styles.modalTitle }>Session Details</Text>
+
+                            <ScrollView style = {{ maxHeight: 400 }}>
+
+                                <Text style = { styles.modalLabel }>Name</Text>
+                                <Text style = { styles.modalValue }>{ selectedSession.name }</Text>
+
+                                <Text style = { styles.modalLabel }>Date</Text>
+                                <Text style = { styles.modalValue }>
+                                    { selectedSession.startedAt.toDate().toLocaleString() }
+                                </Text>
+
+                                <Text style = { styles.modalLabel }>Location</Text>
+                                <Text style = { styles.modalValue }>
+                                    { selectedSession.location || "None entered" }
+                                </Text>
+
+                                <Text style = { styles.modalLabel }>Notes</Text>
+                                <Text style = { styles.modalValue }>
+                                    { selectedSession.notes || "None entered" }
+                                </Text>
+
+                                <Text style = { styles.modalLabel }>Tags</Text>
+                                <Text style = { styles.modalValue }>
+                                    { selectedSession.tags && selectedSession.tags.length > 0
+                                        ? selectedSession.tags.join(', ')
+                                        : "None entered"
+                                    }
+                                </Text>
+
+                                <Text style = { styles.modalLabel }>Template</Text>
+                                <Text style = { styles.modalValue }>
+                                    { selectedSession.templateUsed || "None entered" }
+                                </Text>
+
+                                <Text style = { styles.modalLabel }>Exercises</Text>
+
+                                { loadingLogs && (
+                                    <ActivityIndicator size = "small" style = {{ marginTop: 10 }} />
+                                )}
+
+                                { !loadingLogs && exerciseLogs.length === 0 && (
+                                    <Text style = { styles.modalValue }>No exercises logged</Text>
+                                )}
+
+                                { !loadingLogs && exerciseLogs.map( (log) => (
+
+                                    <View key = { log.id } style = { styles.exerciseBlock }>
+
+                                        <Text style = { styles.exerciseName }>{ log.exerciseName }</Text>
+
+                                        { log.sets.map( (set, idx) => (
+
+                                            <View key = { idx } style = {{ marginBottom: 6 }}>
+
+                                                <Text style = { styles.setText }>
+                                                    { set.weight }{ set.unit || "kg" } x { set.reps }
+                                                    { set.rpe ? ` — RPE ${ set.rpe }` : "" }
+                                                </Text>
+
+                                                { set.equipment && set.equipment.length > 0 && (
+                                                    <Text style = { styles.setText }>
+                                                        Equipment: { set.equipment.join(', ') }
+                                                    </Text>
+                                                )}
+
+                                                { set.modifiers && set.modifiers.length > 0 && (
+                                                    <Text style = { styles.setText }>
+                                                        Modifiers: { set.modifiers.join(', ') }
+                                                    </Text>
+                                                )}
+
+                                            </View>
+
+                                        )) }
+
+                                    </View>
+
+                                ))}
+
+                            </ScrollView>
+
+                            <TouchableOpacity
+                                style = { styles.closeButton }
+                                onPress = { () => setShowSessionModal(false) }
+                            >
+                                <Text style = { styles.closeButtonText }>Return</Text>
+                            </TouchableOpacity>
+
+                        </View>
+
+                    </View>
+
+                ) }
 
             </View>
 
@@ -322,6 +461,77 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'center',
         lineHeight: 30,
+    },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        zIndex: 999,
+    },
+    modalCard: {
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 20,
+        width: '100%',
+        maxHeight: '80%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        elevation: 6,
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+    modalLabel: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+        marginTop: 10,
+    },
+    modalValue: {
+        fontSize: 14,
+        color: '#646262',
+        marginBottom: 6,
+    },
+    exerciseBlock: {
+        backgroundColor: '#E6F3FF',
+        padding: 10,
+        borderRadius: 8,
+        marginTop: 10,
+    },
+    exerciseName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+        marginBottom: 4,
+    },
+    setText: {
+        fontSize: 14,
+        color: '#646262',
+        marginLeft: 10,
+    },
+    closeButton: {
+        backgroundColor: '#52ABFF',
+        paddingVertical: 10,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginTop: 15,
+    },
+    closeButtonText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: 'white',
     },
 
 });
