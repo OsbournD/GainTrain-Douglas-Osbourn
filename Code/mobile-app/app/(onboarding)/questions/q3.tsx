@@ -12,7 +12,7 @@ export default function Question3() {
     const [selected, setSelected] = useState<string | null>(null);
 
     const options = [
-        "I don’t",
+        "I don’t weight train",
         "Machines only",
         "Machines + free-weights",
         "Free weights only (dumbbells, barbells, kettlebells)",
@@ -23,7 +23,7 @@ export default function Question3() {
 
         <View style = { styles.container }>
 
-            <Text style = { styles.title }>What type of weight training do you usually do?</Text>
+            <Text style = { styles.title }>What style of weight training do you usually do?</Text>
 
             { options.map( (option, index) => (
 

@@ -2,6 +2,37 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
+const questionScoring = (q1: string, q2: string, q3: string) => {
+
+    let score = 0;
+
+    if (q1 === "Never") score += 0;
+    else if (q1 === "< 6 months") score += 1;
+    else if (q1 === "< 6-18 months") score += 2;
+    else if (q1 === "1.5-3 years") score += 3;
+    else if (q1 === "3+ years") score += 4;
+
+    if (q2 === "Not at all / I don’t know what those are") score += 0;
+    else if (q2 === "Somewhat") score += 1;
+    else if (q2 === "Comfortable") score += 2;
+    else if (q2 === "Very comfortable / I could do them in my sleep") score += 3;
+
+    if (q3 === "I don’t weight train") score += 0;
+    else if (q3 === "Machines only") score += 1;
+    else if (q3 === "Machines + free-weights") score += 2;
+    else if (q3 === "Free weights only (dumbbells, barbells, kettlebells)") score += 3;
+    else if (q3 === "Barbell focused training (powerlifting style)") score += 4;
+
+    return score;
+}
+
+const mapScoreToLevel = (score: number) => {
+    if (score <= 3) return "Beginner";
+    if (score <= 6) return "Intermediate";
+    if (score <= 9) return "Advanced";
+    return "Expert";
+}
+
 export default function ExperienceLevel() {
 
     const router = useRouter();
@@ -9,7 +40,8 @@ export default function ExperienceLevel() {
     const params = useLocalSearchParams();
     const { q1, q2, q3 } = params;
 
-    const placeholderLevel = "Intermediate";
+    const score = questionScoring(q1 as string, q2 as string, q3 as string);
+    const calculatedLevel = mapScoreToLevel(score);
 
     return (
 
@@ -19,20 +51,37 @@ export default function ExperienceLevel() {
             <Text style = { styles.title }>experience level</Text>
 
             <View style = { styles.card }>
-                <Text style = { styles.levelText }>{ placeholderLevel }</Text>
+                <Text style = { styles.levelText }>{ calculatedLevel }</Text>
             </View>
 
             <TouchableOpacity
                 style = { styles.nextButton }
-                onPress = { () => router.push({
-                    pathname: '/preferences',
-                    params: {
-                        q1: q1,
-                        q2: q2,
-                        q3: q3,
-                        level: placeholderLevel
+                onPress = { () => {
+
+                    if (score === 0) {
+                        router.push({
+                            pathname: '/summary',
+                            params: {
+                                q1: q1,
+                                q2: q2,
+                                q3: q3,
+                                level: calculatedLevel,
+                                score: score.toString(),
+                            }
+                        });
+                    } else {
+                        router.push({
+                            pathname: '/preferences',
+                            params: {
+                                q1: q1,
+                                q2: q2,
+                                q3: q3,
+                                level: calculatedLevel,
+                                score: score.toString(),
+                            }
+                        });
                     }
-                }) }
+                }}
             >
                 <Text style = { styles.nextButtonText }>Continue</Text>
             </TouchableOpacity>

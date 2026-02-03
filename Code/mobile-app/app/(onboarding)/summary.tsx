@@ -7,7 +7,7 @@ export default function OnboardingSummary() {
     const router = useRouter();
 
     const params = useLocalSearchParams();
-    const { q1, q2, q3, level, muscles, likes, dislikes } = params;
+    const { q1, q2, q3, level, muscles, likes, dislikes, calculatedLevel, score } = params;
 
     const parsedMuscles = muscles ? JSON.parse(muscles as string) : [];
     const parsedLikes = likes ? JSON.parse(likes as string) : [];
@@ -40,43 +40,47 @@ export default function OnboardingSummary() {
                     <Text style = { styles.valueText }>{ q3 }</Text>
                 </View>
 
-                <Text style = { styles.sectionTitle }>Muscle Groups You Enjoy Training</Text>
+                { score !== "0" && (
+                    <>
+                        <Text style = { styles.sectionTitle }>Muscle Groups You Enjoy Training</Text>
 
-                <View style = { styles.card }>
-                    { parsedMuscles.length > 0 ? (
-                        parsedMuscles.map( (muscleGroup: string, index: number) => (
-                            <Text key = { index } style = { styles.valueText }>{ muscleGroup }</Text>
-                        ))
-                    ) : (
-                        <Text style = { styles.placeholder }>None selected</Text>
-                    ) }
-                </View>
+                        <View style = { styles.card }>
+                            { parsedMuscles.length > 0 ? (
+                                parsedMuscles.map( (muscleGroup: string, index: number) => (
+                                    <Text key = { index } style = { styles.valueText }>{ muscleGroup }</Text>
+                                ))
+                            ) : (
+                                <Text style = { styles.placeholder }>None selected</Text>
+                            ) }
+                        </View>
 
-                <Text style = { styles.sectionTitle }>Exercise Preferences</Text>
+                        <Text style = { styles.sectionTitle }>Exercise Preferences</Text>
 
-                <View style = { styles.card }>
+                        <View style = { styles.card }>
 
-                    <Text style = { styles.label }>Liked Exercises:</Text>
+                            <Text style = { styles.label }>Liked Exercises:</Text>
 
-                    { parsedLikes.length > 0 ? (
-                        parsedLikes.map( (exercise: string, index: number) => (
-                            <Text key = { index } style = { styles.valueText }>{ exercise }</Text>
-                        ))
-                    ) : (
-                        <Text style = { styles.placeholder }>None selected</Text>
-                    ) }
+                            { parsedLikes.length > 0 ? (
+                                parsedLikes.map( (exercise: string, index: number) => (
+                                    <Text key = { index } style = { styles.valueText }>{ exercise }</Text>
+                                ))
+                            ) : (
+                                <Text style = { styles.placeholder }>None selected</Text>
+                            ) }
 
-                    <Text style = { [styles.label, { marginTop: 10 }] }>Disliked Exercises:</Text>
+                            <Text style = { [styles.label, { marginTop: 10 }] }>Disliked Exercises:</Text>
 
-                    { parsedDislikes.length > 0 ? (
-                        parsedDislikes.map( (exercise: string, index: number) => (
-                            <Text key = { index } style = { styles.valueText }>{ exercise }</Text>
-                        ))
-                    ) : (
-                        <Text style = { styles.placeholder }>None selected</Text>
-                    ) }
+                            { parsedDislikes.length > 0 ? (
+                                parsedDislikes.map( (exercise: string, index: number) => (
+                                    <Text key = { index } style = { styles.valueText }>{ exercise }</Text>
+                                ))
+                            ) : (
+                                <Text style = { styles.placeholder }>None selected</Text>
+                            ) }
 
-                </View>
+                        </View>
+                    </>
+                ) }
 
             </ScrollView>
 
