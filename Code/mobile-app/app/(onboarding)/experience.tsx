@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 const questionScoring = (q1: string, q2: string, q3: string) => {
@@ -43,6 +43,9 @@ export default function ExperienceLevel() {
     const score = questionScoring(q1 as string, q2 as string, q3 as string);
     const calculatedLevel = mapScoreToLevel(score);
 
+    const [overrideLevel, setOverrideLevel] = React.useState<string | null>(null);
+    const finalLevel = overrideLevel ?? calculatedLevel;
+
     return (
 
         <View style = { styles.container }>
@@ -51,36 +54,78 @@ export default function ExperienceLevel() {
             <Text style = { styles.title }>experience level</Text>
 
             <View style = { styles.card }>
-                <Text style = { styles.levelText }>{ calculatedLevel }</Text>
+                <Text style = { styles.levelText }>{ finalLevel }</Text>
+
+                <Text style = { styles.description }>
+                    Adjust if this doesn’t feel accurate.
+                </Text>
+
+                <View style = {{ marginTop: 20 }}>
+                    { ["Beginner", "Intermediate", "Advanced", "Expert"].map( (level) => (
+                        <TouchableOpacity
+                            key = { level }
+                            style = { [
+                                styles.levelOption,
+                                finalLevel === level && styles.levelOptionSelected
+                            ] }
+                            onPress = { () => setOverrideLevel(level) }
+                        >
+                            <Text
+                                style = { [
+                                    styles.levelOptionText,
+                                    finalLevel === level && styles.levelOptionTextSelected
+                                ] }
+                            >
+                                { level }
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
             </View>
 
             <TouchableOpacity
                 style = { styles.nextButton }
                 onPress = { () => {
 
-                    if (score === 0) {
-                        router.push({
-                            pathname: '/summary',
-                            params: {
-                                q1: q1,
-                                q2: q2,
-                                q3: q3,
-                                level: calculatedLevel,
-                                score: score.toString(),
-                            }
-                        });
-                    } else {
-                        router.push({
-                            pathname: '/preferences',
-                            params: {
-                                q1: q1,
-                                q2: q2,
-                                q3: q3,
-                                level: calculatedLevel,
-                                score: score.toString(),
-                            }
-                        });
+                    const navigate = () => {
+                        if (score === 0) {
+                            router.push({
+                                pathname: '/summary',
+                                params: {
+                                    q1: q1,
+                                    q2: q2,
+                                    q3: q3,
+                                    level: finalLevel,
+                                    score: score.toString(),
+                                }
+                            });
+                        } else {
+                            router.push({
+                                pathname: '/preferences',
+                                params: {
+                                    q1: q1,
+                                    q2: q2,
+                                    q3: q3,
+                                    level: finalLevel,
+                                    score: score.toString(),
+                                }
+                            });
+                        }
                     }
+
+                    if (overrideLevel && overrideLevel !== calculatedLevel) {
+                        Alert.alert(
+                            "Confirm change",
+                            "Adjusting your recommended experience level may result in a training experience that doesn’t feel accurate.",
+                            [
+                                { text: "Cancel", style: "cancel" },
+                                { text: "Continue", style: "destructive", onPress: navigate }
+                            ]
+                        );
+                    } else {
+                        navigate();
+                    }
+
                 }}
             >
                 <Text style = { styles.nextButtonText }>Continue</Text>
@@ -141,6 +186,27 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'white',
         paddingHorizontal: 10,
+    },
+    levelOption: {
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: "#ccc",
+        marginBottom: 10,
+    },
+    levelOptionSelected: {
+        backgroundColor: "#52ABFF",
+        borderColor: "#52ABFF",
+    },
+    levelOptionText: {
+        fontSize: 16,
+        color: "#333",
+        textAlign: "center",
+    },
+    levelOptionTextSelected: {
+        color: "white",
+        fontWeight: "bold",
     },
 });
 
