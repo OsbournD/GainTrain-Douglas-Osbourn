@@ -12,18 +12,18 @@ export default function Question3() {
     const [selected, setSelected] = useState<string | null>(null);
 
     const options = [
-        "I don’t weight train",
-        "Machines only",
-        "Machines + free-weights",
-        "Free weights only (dumbbells, barbells, kettlebells)",
-        "Barbell focused training (powerlifting style)",
+        "I’m new to resistance training",
+        "I know basic exercises but still learning proper form",
+        "I can train independently and understand most gym movements",
+        "I’m confident with all major lifts and can structure my own workouts",
+        "I train with advanced techniques (RPE, periodisation, progression tracking)"
     ];
 
     return (
 
         <View style = { styles.container }>
 
-            <Text style = { styles.title }>What style of weight training do you usually do?</Text>
+            <Text style = { styles.title }>Which option best describes your experience with resistance training?</Text>
 
             { options.map( (option, index) => (
 

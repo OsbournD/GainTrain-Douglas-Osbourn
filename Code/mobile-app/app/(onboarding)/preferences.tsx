@@ -7,7 +7,7 @@ export default function ExercisePreferences() {
     const router = useRouter();
 
     const params = useLocalSearchParams();
-    const { q1, q2, q3, level } = params;
+    const { q1, q2, q3, level, score } = params;
 
     const muscleGroups = [
         "Chest",
@@ -31,9 +31,12 @@ export default function ExercisePreferences() {
         "Barbell Curl",
     ];
 
+    const [weightUnit, setWeightUnit] = useState<"kg" | "lbs" | null>(null);
     const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
     const [likedExercises, setLikedExercises] = useState<string[]>([]);
     const [dislikedExercises, setDislikedExercises] = useState<string[]>([]);
+
+    const showPreferences = score !== "0";
 
     const toggleMuscle = (muscle: string) => {
         if (selectedMuscles.includes(muscle)) {
@@ -69,7 +72,12 @@ export default function ExercisePreferences() {
 
         const noPreferences = noMuscles && noLikes && noDislikes;
 
-        if (noPreferences) {
+        if (!weightUnit) {
+            Alert.alert("Select Weight Unit", "Please choose kg or lbs before continuing.");
+            return;
+        }
+
+        if (showPreferences && noPreferences) {
             Alert.alert(
                 "No Preferences Selected",
                 "Selecting preferences helps tailor your training recommendations. Are you sure you want to continue?",
@@ -97,7 +105,8 @@ export default function ExercisePreferences() {
                 level,
                 muscles: JSON.stringify(selectedMuscles),
                 likes: JSON.stringify(likedExercises),
-                dislikes: JSON.stringify(dislikedExercises)
+                dislikes: JSON.stringify(dislikedExercises),
+                unit: weightUnit
             }
         });
     };
@@ -110,60 +119,98 @@ export default function ExercisePreferences() {
 
             <ScrollView contentContainerStyle = {{ paddingBottom: 40 }}>
 
-                <Text style = { styles.sectionTitle }>Muscle Groups You Enjoy Training</Text>
+                <Text style = { styles.sectionTitle }>Weight Unit Preference</Text>
 
-                <Text style = { styles.subtitle }>Can choose multiple!</Text>
+                <Text style = { styles.subtitle }>Can change later in settings!</Text>
 
-                { muscleGroups.map( (muscle, index) => (
+                <View style = { styles.card }>
+                    <View style = { styles.unitButtons }>
 
-                    <TouchableOpacity
-                        key = { index }
-                        style = { [
-                            styles.optionButton,
-                            selectedMuscles.includes(muscle) && styles.optionSelected
-                        ] }
-                        onPress = { () => toggleMuscle(muscle) }
-                    >
-                        <Text style = { styles.optionText }>{ muscle }</Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                            style = {[
+                                styles.unitButton,
+                                weightUnit === "kg" && styles.likeSelected
+                            ]}
+                            onPress = { () => setWeightUnit("kg") }
+                        >
+                            <Text style = { styles.unitText }>kg</Text>
+                        </TouchableOpacity>
 
-                )) }
-
-                <Text style = { styles.sectionTitle }>Exercise Preferences</Text>
-
-                { exercises.map( (exercise, index) => (
-
-                    <View key = { index } style = { styles.exerciseRow }>
-
-                        <Text style = { styles.exerciseText }>{ exercise }</Text>
-
-                        <View style = { styles.exerciseButtons }>
-
-                            <TouchableOpacity
-                                style = { [
-                                    styles.likeButton,
-                                    likedExercises.includes(exercise) && styles.likeSelected
-                                ] }
-                                onPress = { () => toggleLike(exercise) }
-                            >
-                                <Text style = { styles.likeDislikeText }>Like</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style = { [
-                                    styles.dislikeButton,
-                                    dislikedExercises.includes(exercise) && styles.dislikeSelected
-                                ] }
-                                onPress = { () => toggleDislike(exercise) }
-                            >
-                                <Text style = { styles.likeDislikeText }>Dislike</Text>
-                            </TouchableOpacity>
-
-                        </View>
+                        <TouchableOpacity
+                            style = {[
+                                styles.unitButton,
+                                weightUnit === "lbs" && styles.likeSelected
+                            ]}
+                            onPress = {() => setWeightUnit("lbs") }
+                        >
+                            <Text style = { styles.unitText }>lbs</Text>
+                        </TouchableOpacity>
 
                     </View>
 
-                )) }
+                </View>
+
+                { showPreferences && (
+                    <>
+
+                        <Text style = { styles.sectionTitle }>Muscle Groups You Enjoy Training</Text>
+
+                        <Text style = { styles.subtitle }>Can choose multiple!</Text>
+
+                        { muscleGroups.map( (muscle, index) => (
+
+                            <TouchableOpacity
+                                key = { index }
+                                style = { [
+                                    styles.optionButton,
+                                    selectedMuscles.includes(muscle) && styles.optionSelected
+                                ] }
+                                onPress = { () => toggleMuscle(muscle) }
+                            >
+                                <Text style = { styles.optionText }>{ muscle }</Text>
+                            </TouchableOpacity>
+
+                        )) }
+
+                        <Text style = { styles.sectionTitle }>Exercise Preferences</Text>
+
+                        <Text style = { styles.subtitle }>Helps get a better idea of what you like</Text>
+
+                        { exercises.map( (exercise, index) => (
+
+                            <View key = { index } style = { styles.exerciseRow }>
+
+                                <Text style = { styles.exerciseText }>{ exercise }</Text>
+
+                                <View style = { styles.exerciseButtons }>
+
+                                    <TouchableOpacity
+                                        style = { [
+                                            styles.likeButton,
+                                            likedExercises.includes(exercise) && styles.likeSelected
+                                        ] }
+                                        onPress = { () => toggleLike(exercise) }
+                                    >
+                                        <Text style = { styles.likeDislikeText }>Like</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style = { [
+                                            styles.dislikeButton,
+                                            dislikedExercises.includes(exercise) && styles.dislikeSelected
+                                        ] }
+                                        onPress = { () => toggleDislike(exercise) }
+                                    >
+                                        <Text style = { styles.likeDislikeText }>Dislike</Text>
+                                    </TouchableOpacity>
+
+                                </View>
+
+                            </View>
+
+                        )) }
+                    </>
+                )}
 
             </ScrollView>
 
@@ -276,5 +323,30 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: 'white',
+    },
+    card: {
+        backgroundColor: 'white',
+        padding: 14,
+        borderRadius: 10,
+        marginVertical: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    unitButtons: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    unitButton: {
+        padding: 10,
+        flex: 1,
+        borderRadius: 8,
+        backgroundColor: '#E6F3FF',
+    },
+    unitText: {
+        fontSize: 18,
+        textAlign: "center",
     },
 });

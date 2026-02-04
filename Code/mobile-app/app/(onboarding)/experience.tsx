@@ -17,11 +17,11 @@ const questionScoring = (q1: string, q2: string, q3: string) => {
     else if (q2 === "Comfortable") score += 2;
     else if (q2 === "Very comfortable / I could do them in my sleep") score += 3;
 
-    if (q3 === "I don’t weight train") score += 0;
-    else if (q3 === "Machines only") score += 1;
-    else if (q3 === "Machines + free-weights") score += 2;
-    else if (q3 === "Free weights only (dumbbells, barbells, kettlebells)") score += 3;
-    else if (q3 === "Barbell focused training (powerlifting style)") score += 4;
+    if (q3 === "I’m new to resistance training") score += 0;
+    else if (q3 === "I know basic exercises but still learning proper form") score += 1;
+    else if (q3 === "I can train independently and understand most gym movements") score += 2;
+    else if (q3 === "I’m confident with all major lifts and can structure my own workouts") score += 3;
+    else if (q3 === "I train with advanced techniques (RPE, periodisation, progression tracking)") score += 4;
 
     return score;
 }
@@ -88,29 +88,18 @@ export default function ExperienceLevel() {
                 onPress = { () => {
 
                     const navigate = () => {
-                        if (score === 0) {
-                            router.push({
-                                pathname: '/summary',
-                                params: {
-                                    q1: q1,
-                                    q2: q2,
-                                    q3: q3,
-                                    level: finalLevel,
-                                    score: score.toString(),
-                                }
-                            });
-                        } else {
-                            router.push({
-                                pathname: '/preferences',
-                                params: {
-                                    q1: q1,
-                                    q2: q2,
-                                    q3: q3,
-                                    level: finalLevel,
-                                    score: score.toString(),
-                                }
-                            });
-                        }
+
+                        router.push({
+                            pathname: '/preferences',
+                            params: {
+                                q1: q1,
+                                q2: q2,
+                                q3: q3,
+                                level: finalLevel,
+                                score: score.toString(),
+                            }
+                        });
+
                     }
 
                     if (overrideLevel && overrideLevel !== calculatedLevel) {

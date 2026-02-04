@@ -1,17 +1,100 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useState }  from 'react';
+
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+
+import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../../src/firebase";
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OnboardingSummary() {
 
     const router = useRouter();
 
     const params = useLocalSearchParams();
-    const { q1, q2, q3, level, muscles, likes, dislikes, calculatedLevel, score } = params;
+    const { q1, q2, q3, level, muscles, likes, dislikes, calculatedLevel, score, unit } = params;
 
     const parsedMuscles = muscles ? JSON.parse(muscles as string) : [];
     const parsedLikes = likes ? JSON.parse(likes as string) : [];
     const parsedDislikes = dislikes ? JSON.parse(dislikes as string) : [];
+
+    const [userUid, setUserUid] = useState<string | null>(null);
+
+    const [checkingLogin, setCheckingLogin] = useState(true);
+
+    useEffect(() => {
+
+        const checkLogin = async () => {
+            const storedUser = await AsyncStorage.getItem('loggedInUser');
+            if (!storedUser) {
+                router.replace('/(auth)/login');
+                return;
+            }
+            setCheckingLogin(false);
+        };
+
+        const fetchUserUid = async () => {
+            try {
+                const storedUser = await AsyncStorage.getItem('loggedInUser');
+                if (!storedUser) return;
+
+                const usersQuery = query(
+                    collection(db, "users"),
+                    where("username", "==", storedUser)
+                );
+
+                const snapshot = await getDocs(usersQuery);
+
+                if (!snapshot.empty) {
+                    const userData = snapshot.docs[0];
+                    setUserUid(userData.id);
+                }
+
+            } catch (e) {
+                console.error("Error fetching user UID:", e);
+            }
+        };
+
+        checkLogin();
+        fetchUserUid();
+
+    }, []);
+
+    const saveOnboardingData = async () => {
+
+        if (!userUid) {
+            Alert.alert("Error", "Could not determine user ID.");
+            return;
+        }
+
+        try {
+            await setDoc(
+                doc(db, "users", userUid),
+                {
+                    onboardingCompleted: true,
+                    experienceLevel: level,
+                    likedBodyParts: score !== "0" ? parsedMuscles : null,
+                    likedExercises: score !== "0" ? parsedLikes : null,
+                    dislikedExercises: score !== "0" ? parsedDislikes : null,
+                    weightUnitPreferences: unit,
+                },
+                { merge: true }
+            );
+
+        } catch (e) {
+            console.error("Error saving onboarding:", e);
+            Alert.alert("Error", "There was a problem saving your onboarding data.")
+        }
+    }
+
+    if (checkingLogin || !userUid) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" />
+            </View>
+        );
+    }
 
     return (
 
@@ -33,11 +116,17 @@ export default function OnboardingSummary() {
                     <Text style = { styles.label }>Training Duration:</Text>
                     <Text style = { styles.valueText }>{ q1 }</Text>
 
-                    <Text style = { styles.label }>Comfort with Compounds:</Text>
+                    <Text style = { styles.label }>Comfort With Compounds:</Text>
                     <Text style = { styles.valueText }>{ q2 }</Text>
 
-                    <Text style = { styles.label }>Training Style:</Text>
+                    <Text style = { styles.label }>Training Experience:</Text>
                     <Text style = { styles.valueText }>{ q3 }</Text>
+                </View>
+
+                <Text style = { styles.sectionTitle }>Your Unit Preference</Text>
+
+                <View style = { styles.card }>
+                    <Text style = { styles.valueText }>{ unit }</Text>
                 </View>
 
                 { score !== "0" && (
@@ -86,7 +175,12 @@ export default function OnboardingSummary() {
 
             <TouchableOpacity
                 style = { styles.finishButton }
-                onPress = { () => router.replace('/dashboard') }
+                onPress = { async () => {
+
+                    await saveOnboardingData();
+                    router.replace('/dashboard');
+
+                }}
             >
                 <Text style = { styles.finishButtonText }>Finish</Text>
             </TouchableOpacity>
