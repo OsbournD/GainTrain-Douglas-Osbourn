@@ -87,13 +87,6 @@ export default function welcomeDashboard() {
 
             <View style = { styles.spacer }/>
 
-            <TouchableOpacity
-                style = { styles.primaryButton }
-                onPress = { () => router.push('../(onboarding)') }
-            >
-                <Text>Test Onboarding</Text>
-            </TouchableOpacity>
-
             <ThemedView style = { styles.card }>
                 <ThemedText style = { styles.welcomeText }>Welcome, {username}</ThemedText>
             </ThemedView>

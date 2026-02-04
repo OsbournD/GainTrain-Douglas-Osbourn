@@ -52,7 +52,7 @@ export default function SignUpScreen() {
               await AsyncStorage.setItem('loggedInUser', username);
 
               router.push({
-                  pathname: '/(app)/dashboard',
+                  pathname: '/(onboarding)',
               })
 
               setUsername('');

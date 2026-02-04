@@ -190,6 +190,8 @@ export async function addUser(username, password) { // to sign up with custom us
             username,
             uid: userCredentials.user.uid,
             createdAt: new Date(),
+            experienceLevel: null,
+            onboardingCompleted: false,
         });
 
         console.log('User ' + username + ' created successfully!');

@@ -28,6 +28,8 @@ export default function LoginScreen() {
 
             await AsyncStorage.setItem('loggedInUser', username);
 
+            let onboardingCompleted = false;
+
             try {
                 const tokenData = await Notifications.getExpoPushTokenAsync(); // get expo push token.
                 const token = tokenData.data;
@@ -44,6 +46,10 @@ export default function LoginScreen() {
                     await updateDoc(userRef, { // save token to firestore.
                         pushToken: token
                     });
+
+                    const userData = userDocs.docs[0].data();
+                    onboardingCompleted = userData.onboardingCompleted === true;
+
                     console.log("Stored push token for: ", username);
                 } else {
                     console.log("No Firestore user found for: ", username);
@@ -53,9 +59,15 @@ export default function LoginScreen() {
                 console.log("Error saving push token after login: ", e);
             }
 
+            if (!onboardingCompleted) {
+                router.push({
+                    pathname: '/(onboarding)',
+                });
+                return;
+            }
+
             router.push({
                 pathname: '/(app)/dashboard',
-
             });
 
         } else {
