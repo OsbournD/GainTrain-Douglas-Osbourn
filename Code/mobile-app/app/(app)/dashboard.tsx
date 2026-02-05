@@ -46,7 +46,7 @@ export default function welcomeDashboard() {
 
     const startWorkoutClicked = async () => {
     try {
-        router.push('/workout/logger');
+        router.push('/(workout)/logger');
 
         } catch (e) {
             console.error("Navigation error: ", e);
@@ -56,7 +56,7 @@ export default function welcomeDashboard() {
 
     const workoutDiaryClicked = async () => {
     try {
-        router.push('/workout/diary');
+        router.push('/(workout)/diary');
 
         } catch (e) {
             console.error("Navigation error: ", e);

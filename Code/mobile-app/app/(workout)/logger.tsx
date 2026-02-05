@@ -6,7 +6,6 @@ import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, Sc
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
-import { logoutUser } from '../src/firestore';
 
 import DateTimePicker, { useDefaultStyles, DateType } from 'react-native-ui-datepicker';
 import dayjs from 'dayjs';
@@ -64,6 +63,7 @@ export default function workoutLogger() {
     const [checkingLogin, setCheckingLogin] = useState(true);
 
     const [userUid, setUserUid] = useState<string | null>(null);
+    const [userExperienceLevel, setUserExperienceLevel] = useState<string | null>(null);
 
     const [startedAt, setStartedAt] = useState<Date | null>(new Date());
     const [endedAt, setEndedAt] = useState<Date | null>(null);
@@ -130,6 +130,10 @@ export default function workoutLogger() {
 
                     if (userData.weightUnitPreference) {
                         setWeightUnit(userData.weightUnitPreference);
+                    }
+
+                    if (userData.experienceLevel) {
+                        setUserExperienceLevel(userData.experienceLevel);
                     }
                 }
             } catch (e) {
