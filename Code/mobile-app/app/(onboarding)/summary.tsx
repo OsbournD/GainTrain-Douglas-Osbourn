@@ -61,7 +61,7 @@ export default function OnboardingSummary() {
 
     }, []);
 
-    const saveOnboardingData = async () => {
+    const saveOnboardingData = async () => {    // Saves all onboarding data to firestore.
 
         if (!userUid) {
             Alert.alert("Error", "Could not determine user ID.");
@@ -79,7 +79,7 @@ export default function OnboardingSummary() {
                     dislikedExercises: score !== "0" ? parsedDislikes : null,
                     weightUnitPreferences: unit,
                 },
-                { merge: true }
+                { merge: true } // Only update onboarding fields.
             );
 
         } catch (e) {

@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Generates a unique key for user session draft state.
 const getDraftKey = (uid: string) => `workout_draft_${uid}`;
 
 export default function workoutLogger() {
@@ -68,7 +69,7 @@ export default function workoutLogger() {
     const [startedAt, setStartedAt] = useState<Date | null>(new Date());
     const [endedAt, setEndedAt] = useState<Date | null>(null);
 
-    const fetchExercises = async () => {
+    const fetchExercises = async () => { // Fetch exercises from firestore
         try {
             const exercisesQuery = query(
                 collection(db, "exercises")
@@ -76,7 +77,7 @@ export default function workoutLogger() {
 
             const querySnapshot = await getDocs(exercisesQuery);
 
-            const list = querySnapshot.docs
+            const list = querySnapshot.docs // Only show system or user specific exercises.
                 .map(doc => ({
                     id: doc.id,
                     ...doc.data()
@@ -99,7 +100,7 @@ export default function workoutLogger() {
         }
     }, [userUid]);
 
-    useEffect(() => {
+    useEffect(() => { // Checks login and loads experience level and weight unit.
         const checkLogin = async () => {
             const storedUser = await AsyncStorage.getItem('loggedInUser');
             if (!storedUser) {
@@ -145,7 +146,7 @@ export default function workoutLogger() {
 
     }, []);
 
-    useEffect(() => {
+    useEffect(() => { // Loads a saved user-specific draft session.
         const loadDraft = async () => {
             try {
                 if (!userUid) return;
@@ -220,6 +221,7 @@ export default function workoutLogger() {
 
             <View>
 
+                {/* Session setup card */}
                 { showSetup && (
 
                     <View style = { styles.card }>
@@ -308,7 +310,9 @@ export default function workoutLogger() {
 
             </View>
 
-            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+            <ScrollView contentContainerStyle = {{ paddingBottom: 40 }}>
+
+                {/* Exercise list. */}
 
                 <View style = { styles.card }>
 
@@ -318,12 +322,14 @@ export default function workoutLogger() {
                         <Text style = { styles.setText }>No exercises added yet.</Text>
                     )}
 
+                    {/* Render each exercise and sets. */}
                     { exercises.map((exercise, index) => (
 
                         <View key = { index } style = { styles.exerciseCard }>
 
                             <Text style = { styles.exerciseTitle }>{ exercise.name }</Text>
 
+                            {/* First render the sets per exercise. */}
                             { exercise.sets && exercise.sets.length > 0 && exercise.sets.map((set, setIndex) => (
                                 <View key = { setIndex } style = {{ marginTop: 4 }}>
 
@@ -438,12 +444,12 @@ export default function workoutLogger() {
                         const endedAtValue = new Date();
                         setEndedAt(endedAtValue);
 
-                        const formattedSessionTags = sessionTags
+                        const formattedSessionTags = sessionTags // Format and clean session tags.
                             .split(',')
                             .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'))
                             .filter(Boolean);
 
-                        try {
+                        try { // Create session document.
 
                             const sessionRef = await addDoc(collection(db, "sessions"), {
                                 uid: userUid,
@@ -459,7 +465,7 @@ export default function workoutLogger() {
 
                             const exerciseLogIds = [];
 
-                            for (const exercise of exercises) {
+                            for (const exercise of exercises) { // Create exercise logs per exercise.
 
                                 const exerciseId =
                                     exercise.id ||
@@ -482,7 +488,7 @@ export default function workoutLogger() {
                                 exerciseLogs: exerciseLogIds
                             });
 
-                            await AsyncStorage.removeItem(getDraftKey(userUid));
+                            await AsyncStorage.removeItem(getDraftKey(userUid)); // Remove draft (if session was draft).
 
                             Alert.alert("Success", "Workout saved!");
                             router.push("/(app)/dashboard")
@@ -499,6 +505,8 @@ export default function workoutLogger() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
+
+                    { /* Saving draft. */ }
                     style = { styles.laterButton }
                     onPress = { async () => {
 
@@ -530,6 +538,8 @@ export default function workoutLogger() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
+
+                    { /* Deleting session. */ }
                     style = { styles.deleteButton }
                     onPress = { () => {
 
@@ -581,7 +591,7 @@ export default function workoutLogger() {
 
             { showTemplateDropdown && (
                 <View style = { styles.dropdownMenu }>
-                    {templateList.map( (template, index) => (
+                    { templateList.map( (template, index) => (
                         <TouchableOpacity
                             key = { index }
                             style = { styles.dropdownItem }
@@ -591,7 +601,7 @@ export default function workoutLogger() {
                             }}
                         >
 
-                            <Text style = { styles.dropdownItemText }>{template}</Text>
+                            <Text style = { styles.dropdownItemText }>{ template }</Text>
                         </TouchableOpacity>
                     ))}
 
@@ -612,6 +622,7 @@ export default function workoutLogger() {
                             onChangeText = { setSearchQuery }
                         />
 
+                        { /* Scrollable list of search results. */ }
                         <ScrollView style = {{ maxHeight: 200 }}>
 
                             { exerciseLibrary
@@ -621,6 +632,7 @@ export default function workoutLogger() {
                                         key = { index }
                                         style = { styles.dropdownItem }
                                         onPress = { () => {
+                                            // Creates a new instance of the exercise with sets.
                                             const exerciseInstance = {
                                                 ... exercise,
                                                 sets: []
@@ -716,6 +728,9 @@ export default function workoutLogger() {
                             style = { styles.saveExerciseButton }
                             onPress = { async () => {
 
+                                // Exercise details input validation, formatting and creation.
+                                // Then adds the exercise to the current session.
+
                                 if (!newExerciseName.trim()) {
                                     Alert.alert("Exercise must have a name.");
                                     return;
@@ -745,6 +760,8 @@ export default function workoutLogger() {
                                     return;
                                 }
 
+                                // Formatting comma separated fields (tags, secondaryMuscles, bestFor)
+                                // into clean arrays.
                                 const formattedTags = newTags
                                     .split(',')
                                     .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'));
@@ -757,7 +774,7 @@ export default function workoutLogger() {
                                     .split(',')
                                     .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'));
 
-                                const newExercise = {
+                                const newExercise = {   // Makes the exercise object for firestore storage.
                                     name: newExerciseName,
                                     exerciseId: newExerciseName.toLowerCase().replace(/\s+/g, "_"),
                                     difficulty: difficultyValue,
@@ -770,7 +787,7 @@ export default function workoutLogger() {
                                     createdAt: new Date(),
                                 };
 
-                                try {
+                                try {   // Save new exercise in firestore, add it to the session and refresh library.
 
                                     const exerciseDoc = await addDoc(collection(db, "exercises"), newExercise);
                                     const exerciseInstance = {
@@ -855,7 +872,7 @@ export default function workoutLogger() {
                             style = { styles.saveExerciseButton }
                             onPress = { () => {
 
-                                if (
+                                if (    // Stop COMPLETELY empty sets.
                                     !newSetWeight.trim() &&
                                     !newSetReps.trim() &&
                                     !newSetRPE.trim() &&
@@ -866,15 +883,18 @@ export default function workoutLogger() {
                                     return;
                                 }
 
+                                // Clean num inputs. (Only allows numbers 0-9 and removes any text).
                                 const numericWeight = parseFloat(newSetWeight.replace(/[^0-9.]/g, ''));
                                 const numericReps = parseInt(newSetReps.replace(/[^0-9.]/g, ''), 10);
                                 const numericRPEraw = parseInt(newSetRPE.replace(/[^0-9]/g, ''), 10);
+
+                                // RPE restricted from 1-10.
                                 const numericRPE =
                                     isNaN(numericRPEraw)
                                         ? null
                                         : Math.max(1, Math.min(10, numericRPEraw));
 
-                                const setObject = {
+                                const setObject = {     // Make the set object.
                                     weight: isNaN(numericWeight) ? 0 : numericWeight,
                                     reps: isNaN(numericReps) ? 0 : numericReps,
                                     rpe: numericRPE,

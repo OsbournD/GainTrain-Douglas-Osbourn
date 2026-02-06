@@ -26,7 +26,7 @@ export default function workoutDiary() {
     const [userUid, setUserUid] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchSessions = async () => {
+        const fetchSessions = async () => { // Fetch logged in users sessions.
             if (!userUid) return;
 
             const sessionsQuery = query(
@@ -36,7 +36,7 @@ export default function workoutDiary() {
 
             const snapshot = await getDocs(sessionsQuery);
 
-            const sessionsList = snapshot.docs
+            const sessionsList = snapshot.docs  // Sort newest to oldest.
                 .map(doc => ({
                     id: doc.id,
                     ... doc.data()
@@ -68,7 +68,7 @@ export default function workoutDiary() {
 
             const snapshot = await getDocs(usersQuery);
 
-            if (!snapshot.empty) {
+            if (!snapshot.empty) {  // Get users uid.
                 const userData = snapshot.docs[0].data();
                 setUserUid(userData.uid);
             }
@@ -113,7 +113,7 @@ export default function workoutDiary() {
 
     }
 
-    const openSessionModal = async (session) => {
+    const openSessionModal = async (session) => {   // Opens session modal and loads logs.
 
         setSelectedSession(session);
         setLoadingLogs(true);
@@ -146,7 +146,7 @@ export default function workoutDiary() {
         setLoadingLogs(false);
     };
 
-    const deleteSession = async () => {
+    const deleteSession = async () => { // Deletes a session and its logs.
 
         if (!selectedSession) return;
 
@@ -161,7 +161,7 @@ export default function workoutDiary() {
                     style: "destructive",
                     onPress: async () => {
 
-                        try {
+                        try { // Deletes logs first and then the session.
 
                             if (selectedSession.exerciseLogs && selectedSession.exerciseLogs.length > 0) {
                                 for (const logId of selectedSession.exerciseLogs) {
@@ -175,6 +175,7 @@ export default function workoutDiary() {
 
                             setShowSessionModal(false);
 
+                            // Removes session from ui.
                             setSessions(sessions.filter(session => session.id !== selectedSession.id));
 
                             Alert.alert("Deleted", "Session has been removed.");
@@ -218,6 +219,7 @@ export default function workoutDiary() {
                         <Text style = { styles.summary }>Work in progress...</Text>
                     </View>
 
+                    { /* Renders all sessions. */ }
                     { sessions.map(session => {
 
                         const started = session.startedAt.toDate();
@@ -262,6 +264,7 @@ export default function workoutDiary() {
 
                 </ScrollView>
 
+                { /* Session details modal. */ }
                 { showSessionModal && selectedSession && (
 
                     <View style = { styles.modalOverlay }>
@@ -313,6 +316,7 @@ export default function workoutDiary() {
                                     <Text style = { styles.modalValue }>No exercises logged</Text>
                                 )}
 
+                                { /* Render exercise logs. */ }
                                 { !loadingLogs && exerciseLogs.map( (log) => (
 
                                     <View key = { log.id } style = { styles.exerciseBlock }>

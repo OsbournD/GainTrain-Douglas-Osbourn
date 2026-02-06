@@ -3,12 +3,12 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, on
 import { db, auth } from "./firebase";
 import { systemExercises } from "./data/exercises";
 
-export async function addTestUser() { // for testing only.
+export async function addTestUser() { // For testing only.
     try {
         const existingTestUsersQuery = query(
             collection(db, "users"),
             where("username", ">=", "firestoreTestUser_"),
-            where("username", "<=", "firestoreTestUser_\uf8ff") // just so it doesnt accidentally grab other users.
+            where("username", "<=", "firestoreTestUser_\uf8ff") // Just so it doesnt accidentally grab other users.
         );
 
         const existingTestUsers = await getDocs(existingTestUsersQuery);
@@ -35,10 +35,13 @@ export async function addTestUser() { // for testing only.
     }
 }
 
+// Seeds firestore with system exercises, a test user, session and exercise log.
+// For development only.
 export async function seedTestData() {
     try {
         console.log("Seeding test data...");
 
+        // Ensure all system exercises exist, update if present.
         for (const exerciseData of systemExercises) {
             const existingExercisesQuery = query(
                 collection(db, "exercises"),
@@ -168,17 +171,18 @@ export async function usernameCheck(username) {
     const usersQuery = query(usersRef, where("username", "==", username));
     const queryResult = await getDocs(usersQuery);
 
-    return !queryResult.empty; // returns true if username is taken.
+    return !queryResult.empty; // Returns true if username is taken.
 }
 
-export async function addUser(username, password) { // to sign up with custom username and password (uses fake email for auth).
+// To sign up with custom username and password (uses fake email alias for firebase auth).
+export async function addUser(username, password) {
     try {
         if (await usernameCheck(username)) {
             console.log('Username ' + username + ' already taken.');
             return { success: false, message: "Username already taken."};
         }
 
-        // creating firebase auth account.
+        // Creating firebase auth account.
         const emailAlias = `${username}@example.com`;
         const userCredentials = await createUserWithEmailAndPassword(
             auth,
@@ -186,7 +190,7 @@ export async function addUser(username, password) { // to sign up with custom us
             password
         );
 
-        await addDoc(collection(db, "users"),{ // add data to firestore.
+        await addDoc(collection(db, "users"),{ // Add document to firestore.
             username,
             uid: userCredentials.user.uid,
             createdAt: new Date(),
@@ -204,6 +208,7 @@ export async function addUser(username, password) { // to sign up with custom us
 
 }
 
+// Logs a user in using username and password with fake email alias as signup.
 export async function verifyUserLogin(username, password) {
 
     try {
@@ -235,6 +240,7 @@ export async function logoutUser() {
     }
 }
 
+// Sends a friend request with full validation.
 export async function sendFriendRequest(from, to) {
     try {
 
@@ -283,6 +289,8 @@ export async function sendFriendRequest(from, to) {
             sentAt: new Date(),
         });
 
+        // For push notifications.
+
         const usersRef = collection(db, "users");
         const recipientQuery = query(usersRef, where("username", "==", to));
         const recipientDocs = await getDocs(recipientQuery);
@@ -328,6 +336,7 @@ export async function sendFriendRequest(from, to) {
     }
 }
 
+// Fetch all pending friend requests sent to user.
 export async function getIncomingRequests(username) {
     try {
         const friendRequestsQuery = query(collection(db, "friendRequests"), where("to", "==", username), where("status", "==", "pending"));
@@ -347,6 +356,7 @@ export async function getIncomingRequests(username) {
 
 }
 
+// Marks request as denied.
 export async function denyFriendRequest(requestId) {
     try {
         const requestRef = doc(db, "friendRequests", requestId);
@@ -365,6 +375,7 @@ export async function denyFriendRequest(requestId) {
     }
 }
 
+// Accepts friend request and adds each user to the others friends list.
 export async function acceptFriendRequest(requestId, userA, userB) {
     try {
         const usersRef = collection(db, "users");
@@ -407,6 +418,7 @@ export async function acceptFriendRequest(requestId, userA, userB) {
 
 }
 
+// Removes both users from each others friends list.
 export async function removeFriend(userA, userB) {
     try {
 
@@ -442,7 +454,6 @@ export async function removeFriend(userA, userB) {
     }
 }
 
-
-export function onAuthStateChange(callback) {
+export function onAuthStateChange(callback) {  // Listener for firebase auth state changes.
     return onAuthStateChanged(auth, callback);
 }

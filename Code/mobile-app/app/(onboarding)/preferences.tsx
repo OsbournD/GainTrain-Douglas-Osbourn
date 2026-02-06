@@ -36,8 +36,10 @@ export default function ExercisePreferences() {
     const [likedExercises, setLikedExercises] = useState<string[]>([]);
     const [dislikedExercises, setDislikedExercises] = useState<string[]>([]);
 
-    const showPreferences = score !== "0";
+    const showPreferences = score !== "0"; // Dont show preferences section if user scored 0.
 
+    // Toggle muscle group and like/dislike selection.
+    // removes other selected button if toggle.
     const toggleMuscle = (muscle: string) => {
         if (selectedMuscles.includes(muscle)) {
             setSelectedMuscles(selectedMuscles.filter(m => m !== muscle));
@@ -64,7 +66,7 @@ export default function ExercisePreferences() {
         }
     };
 
-    const handleContinue = () => {
+    const handleContinue = () => {  // Validates preferences before continuing.
 
         const noMuscles = selectedMuscles.length === 0;
         const noLikes = likedExercises.length === 0;
@@ -150,6 +152,7 @@ export default function ExercisePreferences() {
 
                 </View>
 
+                { /* Only show if user has training experience (not score 0). */}
                 { showPreferences && (
                     <>
 

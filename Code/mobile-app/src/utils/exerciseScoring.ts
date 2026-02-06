@@ -1,6 +1,9 @@
 export function normaliseMuscleName(rawMuscle: string | null | undefined): string {
 
-    if (!rawMuscle) return "other"; // fallback
+    // Normalises the muscle names to ensure that user created exercises are consistent and map to
+    // a key. (e.g. "Side delt", "side delts" and "lateral deltoid" all map to "side_delts")
+
+    if (!rawMuscle) return "other"; // Fallback for if no muscle is present.
 
     const muscleName = rawMuscle.trim().toLowerCase();
 
@@ -40,10 +43,14 @@ export function normaliseMuscleName(rawMuscle: string | null | undefined): strin
     if (muscleName.includes("adductor") || muscleName.includes("inner")) return "adductors";
     if (muscleName.includes("abductor") || muscleName.includes("outer")) return "abductors";
 
-    return muscleName;
+    return muscleName; // If nothing matches, just return the cleaned string.
 }
 
 export function mapToBroadGroup(muscle: string): string {
+
+    // Maps normalised muscles to broader training categories.
+    // Used for different types of goals (i.e. do 10 pull exercises)
+    // and potentially for session balancing with recommendation??
 
     if (muscle === "biceps") return "pull";
     if (muscle === "triceps") return "push";
@@ -78,13 +85,18 @@ export function mapToBroadGroup(muscle: string): string {
 
 export function getBasePointsFromDifficulty(difficultyValue: number | null | undefined): number {
 
+    // Converts exercise difficulty (1-5) into a base score.
+    // Gives harder exercises a higher starting value before multipliers are added.
     const difficultyNumber = Number(difficultyValue);
+
+    // Fallback for invalid or missing values.
     if (isNaN(difficultyNumber) || difficultyNumber < 1 || difficultyNumber > 5) return 10; // default value.
-    return 6 + difficultyNumber * 2;
+    return 6 + difficultyNumber * 2; // Linear scaling by 2 points per difficulty level.
 }
 
 export function getMuscleWeight(muscle: string): number {
 
+    // Weighting system for muscle groups, larger muscle = higher score, smaller = less.
     const muscleWeightMap: Record<string, number> = {
         quads: 1.0,
         hamstrings: 1.0,
@@ -114,11 +126,13 @@ export function getMuscleWeight(muscle: string): number {
         other: 0.5
     };
 
+    // Unknown muscles default to 0.5 to avoid breaking scoring.
     return muscleWeightMap[muscle] ?? 0.5;
 }
 
 export function getExperienceMultiplier(experienceLevel: string | null | undefined): number {
 
+    // Adjusts scoring based on user experience.
     if (!experienceLevel) return 1.0;
 
     const level = experienceLevel.toLowerCase();
@@ -128,16 +142,20 @@ export function getExperienceMultiplier(experienceLevel: string | null | undefin
     if (level === "advanced") return 0.95;
     if (level === "expert") return 0.9;
 
-    return 1.0; // fallback if weird level i.e. "Beginar".
+    return 1.0; // Fallback if irregular level i.e. "Beginar".
 }
 
 export function getVolumeFactor(numberOfSets: number): number {
 
+    // More sets = slight boost.
     if (!numberOfSets || numberOfSets <= 1) return 1.0;
     return 1 + (numberOfSets - 1) * 0.1;
 }
 
 export function calculatePointsAwarded(
+
+    // Main scoring pipeline, combines difficulty, muscle weighting, experience and volume
+    // into a single score.
 
     difficulty: number,
     primaryMuscle: string,
@@ -159,8 +177,8 @@ export function calculatePointsAwarded(
         const normalisedSecondary = secondaryMuscles.map(normaliseMuscleName);
         const secondaryWeights = normalisedSecondary.map(getMuscleWeight);
 
-        const averageSecondaryWeight =
-            secondaryWeights.reduce((total, weight) => total + weight, 0) / secondaryWeights.length;
+        // Secondary muscles are weighed half.
+        const averageSecondaryWeight = secondaryWeights.reduce((total, weight) => total + weight, 0) / secondaryWeights.length;
 
         secondaryWeight = averageSecondaryWeight * 0.5;
     }
@@ -168,7 +186,9 @@ export function calculatePointsAwarded(
     const experienceMultiplier = getExperienceMultiplier(experienceLevel);
     const volumeFactor = getVolumeFactor(numberOfSets);
 
+    // Combine exercise specific components.
     const weightedPoints = basePoints * (primaryWeight + secondaryWeight);
 
+    // Combine all components and round.
     return Math.round(weightedPoints * experienceMultiplier * volumeFactor);
 }

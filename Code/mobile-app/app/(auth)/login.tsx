@@ -31,7 +31,7 @@ export default function LoginScreen() {
             let onboardingCompleted = false;
 
             try {
-                const tokenData = await Notifications.getExpoPushTokenAsync(); // get expo push token.
+                const tokenData = await Notifications.getExpoPushTokenAsync(); // Get expo push token.
                 const token = tokenData.data;
 
                 console.log("Saving push token after login: ", token);
@@ -43,7 +43,7 @@ export default function LoginScreen() {
                 if (!userDocs.empty) {
                     const userRef = doc(db, "users", userDocs.docs[0].id);
 
-                    await updateDoc(userRef, { // save token to firestore.
+                    await updateDoc(userRef, { // Save token to firestore.
                         pushToken: token
                     });
 

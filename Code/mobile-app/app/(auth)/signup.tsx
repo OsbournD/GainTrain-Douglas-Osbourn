@@ -24,7 +24,7 @@ export default function SignUpScreen() {
           }
 
           try {
-              const exists = await usernameCheck(username); // check if username taken.
+              const exists = await usernameCheck(username); // Check if username taken.
 
               if (exists) {
                   console.log("Username: " + username + " already taken");
@@ -32,7 +32,7 @@ export default function SignUpScreen() {
                   return;
               }
 
-              const createAccountResult = await addUser(username, password); // create user account.
+              const createAccountResult = await addUser(username, password); // Create user account.
               if (!createAccountResult.success) {
                   Alert.alert('Error: ', createAccountResult.message);
                   return;

@@ -40,7 +40,7 @@ export default function communityPage() {
 
         <View style={ styles.appBackground }>
 
-            <ThemedView style={styles.headerContainer}>
+            <ThemedView style = { styles.headerContainer }>
 
                     <TouchableOpacity style = { styles.backButton } onPress = { backToDashboardClicked } >
                         <Text style = { styles.headerButtonText }> BACK </Text>
@@ -95,7 +95,7 @@ function FeedContent() {
 
     const filters = ['Latest', 'Popular', 'Sessions', 'Friends'];
 
-    const activities = [
+    const activities = [  // MOCK DATA!!
         {
             id: '1',
             type: 'session',
@@ -163,7 +163,7 @@ function FeedContent() {
 
                 </View>
 
-                {showFilterMenu && (
+                { showFilterMenu && (
                     <View style = { styles.dropdownMenu }>
                         {filters.map( option => (
                             <TouchableOpacity
@@ -183,7 +183,7 @@ function FeedContent() {
             </View>
 
             <ScrollView style = {{ marginTop: 10 }}>
-                {activities.map(activity => (
+                { activities.map(activity => (
                     <ActivityCard key = { activity.id } activity = { activity } />
                 ))}
                 <View>
@@ -198,9 +198,9 @@ function FeedContent() {
 function ActivityCard({ activity }: { activity: any}) {
     return (
         <View style = { styles.activityCard }>
-            <Text style={styles.activityUser}>{activity.user}</Text>
+            <Text style = { styles.activityUser }>{ activity.user }</Text>
 
-                {activity.type === 'session' && (
+                { activity.type === 'session' && (
                     <>
                         <Text style = { styles.activityTitle }>Logged a session: { activity.title }</Text>
                         <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
@@ -210,7 +210,7 @@ function ActivityCard({ activity }: { activity: any}) {
                     </>
                 )}
 
-                {activity.type === 'newFriendExercise' && (
+                { activity.type === 'newFriendExercise' && (
                     <>
                         <Text style = { styles.activityTitle }>Tried a new exercise</Text>
                         <Text style = { styles.activitySubtitle }>{ activity.title }</Text>
@@ -218,14 +218,14 @@ function ActivityCard({ activity }: { activity: any}) {
                     </>
                 )}
 
-                {activity.type === 'newFriend' && (
+                { activity.type === 'newFriend' && (
                     <>
                         <Text style = { styles.activityTitle }>New Friend!</Text>
                         <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
                     </>
                 )}
 
-                {activity.type === 'friendPR' && (
+                { activity.type === 'friendPR' && (
                     <>
                         <Text style = { styles.activityTitle }>New PR!</Text>
                         <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
@@ -259,7 +259,7 @@ function ChallengesContent() {
     );
 }
 
-function FriendsContent() {
+function FriendsContent() {     // Loads username and listens for incoming friend requests.
 
     const [username, setUsername] = useState<string | null>(null);
     const [targetUser, setTargetUser] = useState("");
@@ -281,7 +281,7 @@ function FriendsContent() {
     useEffect(() => {
         if (!username) return;
 
-        const requestsQuery = query( // listen for incoming requests.
+        const requestsQuery = query( // Listen for incoming requests.
             collection(db, "friendRequests"),
             where("to", "==", username),
             where("status", "==", "pending")
@@ -295,7 +295,7 @@ function FriendsContent() {
             setIncoming(updated);
         });
 
-        const userQuery = query( // listen for friend list change.
+        const userQuery = query( // Listen for friend list change.
             collection(db, "users"),
             where("username", "==", username)
         );
@@ -403,13 +403,13 @@ function FriendsContent() {
                             <View style = { styles.buttonRow}>
                                 <View style = { styles.buttonWrapper }>
                                     <TouchableOpacity style = { styles.acceptButton } onPress = { () => acceptClicked(item.id, item.from) }>
-                                        <Text style = {styles.friendButtonText}>ACCEPT</Text>
+                                        <Text style = { styles.friendButtonText }>ACCEPT</Text>
                                     </TouchableOpacity>
                                 </View>
 
                                 <View style = { styles.buttonWrapper }>
                                     <TouchableOpacity style = { styles.denyButton } onPress = { () => denyClicked(item.id) }>
-                                        <Text style = {styles.friendButtonText}>DENY</Text>
+                                        <Text style = { styles.friendButtonText }>DENY</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
