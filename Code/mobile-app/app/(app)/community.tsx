@@ -252,9 +252,340 @@ function ActivityCard({ activity }: { activity: any}) {
 }
 
 function ChallengesContent() {
+
+    const [username, setUsername] = useState<string | null>(null);
+    const [activeChallenges, setActiveChallenges] = useState([]);
+    const [invites, setInvites] = useState([]);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+
+    useEffect(() => {
+        const loadUsername = async () => {
+            const storedUser = await AsyncStorage.getItem('loggedInUser');
+            setUsername(storedUser);
+        };
+
+        loadUsername();
+    }, []);
+
     return (
-        <View style = { styles.card }>
-            <ThemedText style = { styles.welcomeText }>Challenges</ThemedText>
+        <View style = {{ flex: 1 }}>
+
+            <ScrollView contentContainerStyle = {{ paddingBottom: 20 }}>
+
+                <View style = { styles.spacer }/>
+
+                <View style = { styles.card }>
+
+                    <ThemedText type = "subtitle" padding = "10" >Challenge Invites</ThemedText>
+
+                    { invites.length === 0 ? (
+                        <Text style = { styles.placeholderText } > No pending invites </Text>
+                    ) : (
+                        invites.map((invite) => (
+                            <ChallengeInviteCard key = { invite.id } invite = { invite } />
+                        ))
+                    )}
+
+                </View>
+
+                <View style = { styles.card }>
+
+                    <ThemedText type = "subtitle" padding = "10" >Active Challenges</ThemedText>
+
+                    { activeChallenges.length === 0 ? (
+                        <Text style = { styles.placeholderText } > No active challenges </Text>
+                    ) : (
+                        activeChallenges.map((challenge) => (
+                            <ChallengeCard key = { challenge.id } challenge = { challenge } />
+                        ))
+                    )}
+
+                </View>
+
+                <TouchableOpacity
+                    style = { styles.createChallengeButton }
+                    onPress = { () => setShowCreateModal(true) }
+                >
+                    <Text style = { styles.friendButtonText }>Create Challenge</Text>
+                </TouchableOpacity>
+
+            </ScrollView>
+
+            { showCreateModal && (
+                <CreateChallengeModal onClose = { () => setShowCreateModal(false) } />
+            )}
+
+        </View>
+    );
+}
+
+function ChallengeInviteCard({ invite }) {
+    return (
+        <View style = { styles.requestBox }>
+
+            <Text style = { styles.friendName }> Challenge Invite </Text>
+            <Text>Description: { invite?.description ?? "Placeholder challenge" }</Text>
+            <Text>From: { invite?.ownerUid ?? "Unknown" }</Text>
+
+            <View style = { styles.buttonRow }>
+
+                <View style = { styles.buttonWrapper }>
+                    <TouchableOpacity style = { styles.acceptButton }>
+                        <Text style = { styles.friendButtonText }>ACCEPT</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style = { styles.buttonWrapper }>
+                    <TouchableOpacity style = { styles.denyButton }>
+                        <Text style = { styles.friendButtonText }>DENY</Text>
+                    </TouchableOpacity>
+                </View>
+
+            </View>
+
+        </View>
+    );
+}
+
+function ChallengeCard({ challenge }) {
+    return (
+        <View style = { styles.requestBox }>
+
+            <Text style = { styles.friendName }> Active Challenge </Text>
+            <Text>Description: { challenge?.description ?? "Placeholder challenge" }</Text>
+            <Text>Progress: 0 / { challenge?.target ?? "?" }</Text>
+
+            <TouchableOpacity style = { styles.sendButton }>
+                <Text style = { styles.friendButtonText }>View</Text>
+            </TouchableOpacity>
+
+        </View>
+    );
+}
+
+function CreateChallengeModal({ onClose }) {
+
+    const [type, setType] = useState<'points' | 'muscle' | 'volume' | 'sessions' | null>('points');
+    const [target, setTarget] = useState('');
+    const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'once' | null>(null);
+    const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
+    const [showMuscleDropdown, setShowMuscleDropdown] = useState(false);
+    const [muscleGroup, setMuscleGroup] = useState<'pull' | 'push' | 'legs' | 'core' | null>(null);
+    const [friendInput, setFriendInput] = useState('');
+    const [invitedFriends, setInvitedFriends] = useState<string[]>([]);
+
+    // Full muscle list from exerciseScoring.ts.
+    const muscleList = [
+        "biceps", "triceps", "forearms",
+        "side_delts", "rear_delts", "front_delts",
+        "lats", "traps", "shoulders",
+        "chest", "lower_back", "upper_back", "mid_back", "back",
+        "core",
+        "quads", "hamstrings", "glutes", "calves",
+        "adductors", "abductors",
+        "other"
+    ];
+
+    const addFriend = () => {
+        if (!friendInput.trim()) return;
+        if (invitedFriends.includes(friendInput.trim())) return;
+
+        setInvitedFriends([...invitedFriends, friendInput.trim()]);
+        setFriendInput('');
+    };
+
+    const removeFriend = (name: string) => {
+        setInvitedFriends(invitedFriends.filter(f => f !== name));
+    };
+
+    return (
+        <View style = { styles.modalOverlay }>
+
+            <View style = { styles.modalContainer }>
+
+                <TouchableOpacity style = { styles.closeButton } onPress = { onClose }>
+                    <Text style = { styles.friendButtonText }>Close</Text>
+                </TouchableOpacity>
+
+                <Text style = { styles.modalTitle }>Create Challenge</Text>
+
+                <ScrollView style = {{ maxHeight: '90%' }}>
+
+                    {/* Type selector. */}
+                    <Text style = { styles.modalLabel }>Type</Text>
+
+                    <View style = { styles.modalButtonRow }>
+                        { ['points', 'muscle', 'group', 'sessions'].map(option => (
+                            <TouchableOpacity
+                                key = { option }
+                                style = {[
+                                    styles.modalOptionButton,
+                                    type === option && styles.modalOptionButtonActive
+                                ]}
+                                onPress = { () => setType(option as any) }
+                            >
+                                <Text style = { styles.modalOptionText }>
+                                    { option.charAt(0).toUpperCase() + option.slice(1) }
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    {/* Explanation for selected type. */}
+                    { type && (
+                        <Text>
+                            { type === 'points' && "Earn a general target number of total points." }
+                            { type === 'muscle' && "Earn points for a specific muscle." }
+                            { type === 'group' && "Earn points for a broad movement group (push, pull, legs, core)." }
+                            { type === 'sessions' && "Complete a target number of workout sessions." }
+                        </Text>
+                    )}
+
+                    {/* Muscle selector dropdown list (only for individual muscle challenges). */}
+                    { type === 'muscle' && (
+                        <>
+                            <Text style = { styles.modalLabel }>Muscle</Text>
+
+                            <TouchableOpacity
+                                style = { styles.modalInput }
+                                onPress = { () => setShowMuscleDropdown(!showMuscleDropdown)}
+                            >
+                                <Text>
+                                    { selectedMuscle
+                                        ? selectedMuscle.replace(/_/g, " ")
+                                        : "Select a muscle"}
+                                </Text>
+                            </TouchableOpacity>
+
+                            { showMuscleDropdown && (
+                                <View style = { styles.modalDropdown }>
+                                    { muscleList.map(muscle => (
+                                        <TouchableOpacity
+                                            key = { muscle }
+                                            style = {[
+                                                styles.modalDropdownItem,
+                                                selectedMuscle === muscle && styles.modalDropdownItemActive
+                                            ]}
+                                            onPress = { () => {
+                                                setSelectedMuscle(muscle);
+                                                setShowMuscleDropdown(false);
+                                            }}
+                                        >
+                                            <Text style = { styles.modalDropdownText }>
+                                                { muscle.replace(/_/g, " ") }
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            )}
+
+                        </>
+                    )}
+
+                    {/* Group selector (only for muscle group challenges). */}
+                    { type === 'group' && (
+                        <>
+                            <Text style = { styles.modalLabel }>Group</Text>
+
+                            <View style = { styles.modalButtonRow }>
+                                { ['pull', 'push', 'legs', 'core'].map(option => (
+                                    <TouchableOpacity
+                                        key = { option }
+                                        style = {[
+                                            styles.modalOptionButton,
+                                            muscleGroup === option && styles.modalOptionButtonActive
+                                        ]}
+                                        onPress = { () => setMuscleGroup(option as any) }
+                                    >
+                                        <Text style = { styles.modalOptionText }>
+                                            { option.charAt(0).toUpperCase() + option.slice(1) }
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </>
+                    )}
+
+                    {/* Target input. */}
+                    <Text style = { styles.modalLabel }>Target</Text>
+
+                    <TextInput
+                        style = { styles.modalInput }
+                        placeholder = "Enter target number"
+                        keyboardType = "numeric"
+                        value = { target }
+                        onChangeText={(text) => {
+                            const cleaned = text.replace(/[^0-9]/g, "");    // Stops non-integer inputs.
+                            setTarget(cleaned);
+                        }}
+                    />
+
+                    {/* Time period selector. */}
+                    <Text style = { styles.modalLabel }>Period</Text>
+
+                    <View style = { styles.modalButtonRow }>
+                        {[
+                            { key: 'daily', label: 'One Day' },
+                            { key: 'weekly', label: 'A Week' },
+                            { key: 'monthly', label: 'A Month' },
+                            { key: 'once', label: 'One Time' }
+                        ].map(option => (
+                            <TouchableOpacity
+                                key = { option.key }
+                                style = {[
+                                    styles.modalOptionButton,
+                                    period === option.key && styles.modalOptionButtonActive
+                                ]}
+                                onPress = { () => setPeriod(option.key as any) }
+                            >
+                                <Text style = { styles.modalOptionText }>{ option.label }</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    {/* Invite friends input. */}
+                    <Text style = { styles.modalLabel }>Invite Friends (optional)</Text>
+
+                    <View style = {{ flexDirection: 'row', alignItems: 'center', columnGap: 10, marginBottom: 10 }}>
+                        <TextInput
+                            style = {[ styles.modalInput, { flex: 1 } ]}
+                            placeholder = "Enter friend's username"
+                            value = { friendInput }
+                            onChangeText = { setFriendInput }
+                        />
+                        <TouchableOpacity style = { styles.addFriendButton } onPress = { addFriend }>
+                            <Text style = { styles.friendButtonText }>Add</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Invited friends list. */}
+                    { invitedFriends.length > 0 && (
+                        <>
+                            <Text style = { styles.modalLabel }>Invited</Text>
+
+                            { invitedFriends.map(name => (
+                                <View key = { name } style = { styles.friendRow }>
+                                    <Text style = { styles.friendName }>{ name }</Text>
+
+                                    <TouchableOpacity
+                                        style = { styles.removeButton }
+                                        onPress = { () => removeFriend(name) }
+                                    >
+                                        <Text style = { styles.friendButtonText }>Remove</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                        </>
+                    )}
+
+                </ScrollView>
+
+                <TouchableOpacity style = { styles.createChallengeButton2 }>
+                    <Text style = { styles.friendButtonText }>Create</Text>
+                </TouchableOpacity>
+
+            </View>
+
         </View>
     );
 }
@@ -769,6 +1100,19 @@ const styles = StyleSheet.create({
         elevation: 3,
         alignItems: 'center',
     },
+    createChallengeButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        margin: 20,
+        backgroundColor: '#52ABFF',
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        alignItems: 'center',
+    },
     friendButtonText: {
         fontSize: 16,
         fontWeight: 'bold',
@@ -809,6 +1153,123 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 3,
         alignItems: 'center',
-},
+    },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        zIndex: 999,
+    },
+    modalContainer: {
+        width: '95%',
+        maxHeight: '90%',
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 15,
+        position: 'relative',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        textAlign: 'center',
+    },
+    modalLabel: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginTop: 10,
+        marginBottom: 6,
+    },
+    modalInput: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 6,
+        padding: 10,
+        backgroundColor: 'white',
+
+    },
+    modalButtonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+    },
+    modalOptionButton: {
+        flex: 1,
+        paddingVertical: 8,
+        marginHorizontal: 4,
+        backgroundColor: '#D9D9D9',
+        borderRadius: 6,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    modalOptionButtonActive: {
+        backgroundColor: '#52ABFF',
+    },
+    modalOptionText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    closeButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 16,
+        backgroundColor: 'red',
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        position: 'absolute',
+        top: 10,
+        left: 10,
+        zIndex: 10,
+    },
+    createChallengeButton2: {
+        paddingVertical: 8,
+        paddingHorizontal: 8,
+        marginTop: 14,
+        backgroundColor: '#52ABFF',
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        alignItems: 'center',
+    },
+    modalDropdown: {
+        borderWidth: 1,
+        borderColor: '#D9D9D9',
+        borderRadius: 8,
+        marginTop: 5,
+        backgroundColor: 'white',
+    },
+    modalDropdownItem: {
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    modalDropdownItemActive: {
+        backgroundColor: '#E6F3FF',
+    },
+    modalDropdownText: {
+        fontSize: 16,
+    },
+    addFriendButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        backgroundColor: 'green',
+        borderRadius: 6,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
 });
 

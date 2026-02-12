@@ -504,9 +504,10 @@ export default function workoutLogger() {
                     <Text style = { styles.buttonText }>Save Session</Text>
                 </TouchableOpacity>
 
+                { /* Saving draft. */ }
+
                 <TouchableOpacity
 
-                    { /* Saving draft. */ }
                     style = { styles.laterButton }
                     onPress = { async () => {
 
@@ -537,9 +538,10 @@ export default function workoutLogger() {
                     <Text style = { styles.buttonText }>Finish Later</Text>
                 </TouchableOpacity>
 
+                { /* Deleting session. */ }
+
                 <TouchableOpacity
 
-                    { /* Deleting session. */ }
                     style = { styles.deleteButton }
                     onPress = { () => {
 
