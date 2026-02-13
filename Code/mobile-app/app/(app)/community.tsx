@@ -8,7 +8,7 @@ import { useIsFocused } from '@react-navigation/native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot, doc, addDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../src/firebase";
 import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriendRequest, removeFriend } from '../../src/firestore';
 
@@ -398,7 +398,118 @@ function CreateChallengeModal({ onClose }) {
         setInvitedFriends(invitedFriends.filter(f => f !== name));
     };
 
+    const generateDescription = () => {     // Generating challenge description.
+        const periodText =
+            period === "daily" ? "in one day" :
+            period === "weekly" ? "in a week" :
+            period === "monthly" ? "in a month" :
+            ""; // No text for "once".
+
+        const suffix = periodText ? ` ${periodText}` : "";
+
+        switch (type) {
+            case "points":
+                return `Earn ${target} total points${suffix}.`;
+
+            case "muscle":
+                return `Earn ${target} points for ${selectedMuscle?.replace(/_/g, " ")}${suffix}.`;
+
+            case "group":
+                return `Earn ${target} points for ${muscleGroup} exercises${suffix}.`;
+
+            case "sessions":
+                return `Complete ${target} workout session${target === "1" ? "" : "s"}${suffix}.`;
+
+            default:
+                return null;
+        }
+    };
+
+    const createChallenge = async () => {
+        try {
+            const ownerUid = await AsyncStorage.getItem("loggedInUser");
+            if (!ownerUid) {
+                Alert.alert("Error", "No logged in user found.");
+                return;
+            }
+
+            if (!target || isNaN(Number(target))) {
+                Alert.alert("Error", "Please enter a valid target number.");
+                return;
+            }
+
+            if (!period) {
+                Alert.alert("Error", "Please select a time period.");
+                return;
+            }
+
+            if (type === "muscle" && !selectedMuscle) {
+                Alert.alert("Error", "Please select a muscle for this challenge.");
+                return;
+            }
+
+            if (type === "group" && !muscleGroup) {
+                Alert.alert("Error", "Please select a muscle group.");
+                return;
+            }
+
+            // Build start and end dates.
+            const startDate = Timestamp.now();
+            let endDate;
+
+            switch (period) {
+                case "daily":
+                    endDate = Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
+                    break;
+                case "weekly":
+                    endDate = Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+                    break;
+                case "monthly":
+                    endDate = Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+                    break;
+                case "once":
+                    endDate = startDate;
+                    break;
+            }
+
+            // Build participants + invited.
+            const participants = [ownerUid];
+            const invited = invitedFriends;
+
+            // Build challenge object.
+            const challengeData = {
+                ownerUid,
+                type,
+                description: generateDescription(),
+                target: Number(target),
+                period,
+                startDate,
+                endDate,
+                muscleGroup: type === "group" ? muscleGroup : null,
+                selectedMuscle: type === "muscle" ? selectedMuscle : null,
+                isChallenge: true,
+                progress: { [ownerUid]: 0 },
+                participants,
+                invited,
+                status: invited.length > 0 ? "pending" : "active",
+                createdAt: Timestamp.now(),
+                lastUpdated: Timestamp.now(),
+            };
+
+            // Write to Firestore.
+            await addDoc(collection(db, "challenges"), challengeData);
+
+            Alert.alert("Success", "Challenge created!");
+            onClose();
+
+        } catch (e) {
+            console.error("Error creating challenge:", e);
+            Alert.alert("Error", "Failed to create challenge.");
+        }
+    };
+
     return (
+
         <View style = { styles.modalOverlay }>
 
             <View style = { styles.modalContainer }>
@@ -580,7 +691,10 @@ function CreateChallengeModal({ onClose }) {
 
                 </ScrollView>
 
-                <TouchableOpacity style = { styles.createChallengeButton2 }>
+                <TouchableOpacity
+                    style = { styles.createChallengeButton2 }
+                    onPress = { createChallenge }
+                >
                     <Text style = { styles.friendButtonText }>Create</Text>
                 </TouchableOpacity>
 
@@ -1164,7 +1278,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
-        zIndex: 999,
     },
     modalContainer: {
         width: '95%',

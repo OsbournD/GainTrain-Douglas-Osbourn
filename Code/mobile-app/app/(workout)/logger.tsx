@@ -219,98 +219,100 @@ export default function workoutLogger() {
 
             <View style = { styles.spacer }/>
 
-            <View>
+            <ScrollView contentContainerStyle = {{ paddingBottom: 40 }}>
 
-                {/* Session setup card */}
-                { showSetup && (
+                <View>
 
-                    <View style = { styles.card }>
+                    {/* Session setup card */}
+                    { showSetup && (
 
-                        <ThemedText style = { styles.headingText }>Session Setup</ThemedText>
+                        <View style = { styles.card }>
 
-                        <TextInput
-                            style = { styles.input }
-                            placeholder = "Session Name"
-                            value = { sessionName }
-                            onChangeText = { setSessionName }
-                        />
+                            <ThemedText style = { styles.headingText }>Session Setup</ThemedText>
 
-                        <View style = { styles.input }>
-                            <DateTimePicker
-                                mode = "single"
-                                date = { sessionDate }
-                                onChange = { ({ date }) => {
-                                    setSessionDate(date);
-                                    if (date) {
-                                        setStartedAt(new Date(date as any));
-                                    }
-                                }}
-                                timePicker = { true }
-                                use12Hours = { true }
-                                containerHeight = {220}
-                                weekdaysHeight = {20}
-                                styles = {{
-                                    ...defaultStyles,
-                                    selected: { ...defaultStyles.selected, backgroundColor: '#24C3FF', borderRadius: 999 },
-                                    selected_label: { ...defaultStyles.selected_label, color: 'white', fontWeight: 'bold' },
-                                    today: { ...defaultStyles.today, borderColor: '#24C3FF', borderWidth: 1, borderRadius: 999 },
-                                }}
+                            <TextInput
+                                style = { styles.input }
+                                placeholder = "Session Name"
+                                value = { sessionName }
+                                onChangeText = { setSessionName }
                             />
 
-                        </View>
+                            <View style = { styles.input }>
+                                <DateTimePicker
+                                    mode = "single"
+                                    date = { sessionDate }
+                                    onChange = { ({ date }) => {
+                                        setSessionDate(date);
+                                        if (date) {
+                                            setStartedAt(new Date(date as any));
+                                        }
+                                    }}
+                                    timePicker = { true }
+                                    use12Hours = { true }
+                                    containerHeight = {220}
+                                    weekdaysHeight = {20}
+                                    styles = {{
+                                        ...defaultStyles,
+                                        selected: { ...defaultStyles.selected, backgroundColor: '#24C3FF', borderRadius: 999 },
+                                        selected_label: { ...defaultStyles.selected_label, color: 'white', fontWeight: 'bold' },
+                                        today: { ...defaultStyles.today, borderColor: '#24C3FF', borderWidth: 1, borderRadius: 999 },
+                                    }}
+                                />
 
-                        <TextInput
-                            style = { styles.input }
-                            placeholder = "Location (optional)"
-                            value = { sessionLocation }
-                            onChangeText = { setSessionLocation }
-                        />
+                            </View>
 
-                        <TextInput
-                            style = { styles.notesInput }
-                            placeholder = "Session Notes (optional)"
-                            multiline
-                            value = { sessionNotes }
-                            onChangeText = { setSessionNotes }
-                        />
-
-                        <TextInput
-                            style = { styles.input }
-                            placeholder = "Tags (comma separated)"
-                            value = { sessionTags }
-                            onChangeText = { setSessionTags }
-                        />
-
-                        <View>
-
-                            <TouchableOpacity
+                            <TextInput
                                 style = { styles.input }
-                                onPress = {() => setShowTemplateDropdown(!showTemplateDropdown)}
-                            >
-                                <Text style = {{ color: selectedTemplate ? 'black' : '#24C3FF' }}>
-                                    { selectedTemplate || "Choose Template (optional)..." }
-                                </Text>
-                            </TouchableOpacity>
+                                placeholder = "Location (optional)"
+                                value = { sessionLocation }
+                                onChangeText = { setSessionLocation }
+                            />
 
+                            <TextInput
+                                style = { styles.notesInput }
+                                placeholder = "Session Notes (optional)"
+                                multiline
+                                value = { sessionNotes }
+                                onChangeText = { setSessionNotes }
+                            />
+
+                            <TextInput
+                                style = { styles.input }
+                                placeholder = "Tags (comma separated)"
+                                value = { sessionTags }
+                                onChangeText = { setSessionTags }
+                            />
+
+                            <View>
+
+                                <TouchableOpacity
+                                    style = { styles.input }
+                                    onPress = {() => setShowTemplateDropdown(!showTemplateDropdown)}
+                                >
+                                    <Text style = {{ color: selectedTemplate ? 'black' : '#24C3FF' }}>
+                                        { selectedTemplate || "Choose Template (optional)..." }
+                                    </Text>
+                                </TouchableOpacity>
+
+                            </View>
                         </View>
-                    </View>
 
-                )}
+                    )}
 
-                <TouchableOpacity style = { styles.hideButton }
-                    onPress = {() => {
-                        setShowSetup(!showSetup);
-                        setShowTemplateDropdown(false);
-                    }}>
-                    <Text style = { styles.collapseText }>
-                        {showSetup ? '- Hide Session Setup' : '+ Show Session Setup'}
-                    </Text>
-                </TouchableOpacity>
+                    <TouchableOpacity style = { styles.hideButton }
+                        onPress = {() => {
+                            setShowSetup(!showSetup);
+                            setShowTemplateDropdown(false);
+                        }}>
+                        <Text style = { styles.collapseText }>
+                            {showSetup ? '- Hide Session Setup' : '+ Show Session Setup'}
+                        </Text>
+                    </TouchableOpacity>
 
 
-            </View>
+                </View>
 
-            <ScrollView contentContainerStyle = {{ paddingBottom: 40 }}>
+
 
                 {/* Exercise list. */}
 

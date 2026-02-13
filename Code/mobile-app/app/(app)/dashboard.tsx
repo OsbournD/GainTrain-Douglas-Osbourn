@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
@@ -85,40 +85,45 @@ export default function welcomeDashboard() {
 
             </ThemedView>
 
-            <View style = { styles.spacer }/>
+            <ScrollView>
 
-            <ThemedView style = { styles.card }>
-                <ThemedText style = { styles.welcomeText }>Welcome, {username}</ThemedText>
-            </ThemedView>
+                <View style = { styles.spacer }/>
 
-            <ThemedView style = { styles.card }>
-                <ThemedText style = { styles.headingText }>Recently You...</ThemedText>
-                <ThemedText style = { styles.recentText }>Work in progress...</ThemedText>
+                <ThemedView style = { styles.card }>
+                    <ThemedText style = { styles.welcomeText }>Welcome, {username}</ThemedText>
+                </ThemedView>
 
-            </ThemedView>
+                <ThemedView style = { styles.card }>
+                    <ThemedText style = { styles.headingText }>Recently You...</ThemedText>
+                    <ThemedText style = { styles.recentText }>Work in progress...</ThemedText>
 
-            <ThemedView style = { styles.card }>
-                <ThemedText style = { styles.headingText }>Smart Suggestions</ThemedText>
-                <TouchableOpacity style = { styles.suggestionCard } onPress = { () => console.log("Smart suggestion clicked")} >
-                    <Text style = { styles.suggestionText }> Barbell Romanian Deadlift </Text>
+                </ThemedView>
+
+                <ThemedView style = { styles.card }>
+                    <ThemedText style = { styles.headingText }>Smart Suggestions</ThemedText>
+                    <TouchableOpacity style = { styles.suggestionCard } onPress = { () => console.log("Smart suggestion clicked")} >
+                        <Text style = { styles.suggestionText }> Barbell Romanian Deadlift </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style = { styles.suggestionCard } onPress = { () => console.log("Smart suggestion clicked")} >
+                        <Text style = { styles.suggestionText }> Lying Leg Curl </Text>
+                    </TouchableOpacity>
+                </ThemedView>
+
+                <TouchableOpacity style = { styles.primaryButton } onPress = { () => startWorkoutClicked() } >
+                    <Text style = { styles.primaryButtonText }> Start Workout </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style = { styles.suggestionCard } onPress = { () => console.log("Smart suggestion clicked")} >
-                    <Text style = { styles.suggestionText }> Lying Leg Curl </Text>
-                </TouchableOpacity>
-            </ThemedView>
+                <View style = { styles.buttonRow }>
+                    <TouchableOpacity style = { styles.secondaryButton } onPress = { () => workoutDiaryClicked()} >
+                        <Text style = { styles.buttonText }> Workout Diary </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style = { styles.secondaryButton } onPress = { () => console.log("Exercise discovery clicked")} >
+                        <Text style = { styles.buttonText }>Exercise Discovery</Text>
+                    </TouchableOpacity>
+                </View>
 
+                <View style = { styles.spacer }/>
 
-            <TouchableOpacity style = { styles.primaryButton } onPress = { () => startWorkoutClicked() } >
-                <Text style = { styles.primaryButtonText }> Start Workout </Text>
-            </TouchableOpacity>
-            <View style = { styles.buttonRow }>
-                <TouchableOpacity style = { styles.secondaryButton } onPress = { () => workoutDiaryClicked()} >
-                    <Text style = { styles.buttonText }> Workout Diary </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style = { styles.secondaryButton } onPress = { () => console.log("Exercise discovery clicked")} >
-                    <Text style = { styles.buttonText }>Exercise Discovery</Text>
-                </TouchableOpacity>
-            </View>
+            </ScrollView>
 
         </View>
     );
