@@ -8,7 +8,7 @@ import { useIsFocused } from '@react-navigation/native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { collection, query, where, getDocs, onSnapshot, doc, addDoc, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot, doc, addDoc, Timestamp, orderBy } from "firebase/firestore";
 import { db } from "../../src/firebase";
 import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriendRequest, removeFriend } from '../../src/firestore';
 
@@ -267,6 +267,47 @@ function ChallengesContent() {
         loadUsername();
     }, []);
 
+    const [friends, setFriends] = useState([]);
+
+    useEffect(() => {   // Retrieving friends list from firestore.
+        if (!username) return;
+
+        const userQuery = query(
+            collection(db, "users"),
+            where("username", "==", username)
+        );
+
+        const stopFriendsListening = onSnapshot(userQuery, snapshot => {
+            if (!snapshot.empty) {
+                const data = snapshot.docs[0].data();
+                setFriends(data.friends || []);
+            }
+        });
+
+        return () => stopFriendsListening();
+    }, [username]);
+
+    useEffect(() => {   // Retrieving challenges from firestore.
+        if (!username) return;
+
+        const challengesQuery = query(
+            collection(db, "challenges"),
+            where("participants", "array-contains", username),
+            where("status", "in", ["active", "pending"]),
+            orderBy("endDate", "asc")
+        );
+
+        const stopListening = onSnapshot(challengesQuery, snapshot => {
+            const list = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setActiveChallenges(list);
+        });
+
+        return () => stopListening();
+    }, [username]);
+
     return (
         <View style = {{ flex: 1 }}>
 
@@ -302,17 +343,20 @@ function ChallengesContent() {
 
                 </View>
 
-                <TouchableOpacity
-                    style = { styles.createChallengeButton }
-                    onPress = { () => setShowCreateModal(true) }
-                >
-                    <Text style = { styles.friendButtonText }>Create Challenge</Text>
-                </TouchableOpacity>
-
             </ScrollView>
 
+            <TouchableOpacity
+                style = { styles.createChallengeButton }
+                onPress = { () => setShowCreateModal(true) }
+            >
+                <Text style = { styles.friendButtonText }>Create Challenge</Text>
+            </TouchableOpacity>
+
             { showCreateModal && (
-                <CreateChallengeModal onClose = { () => setShowCreateModal(false) } />
+                <CreateChallengeModal
+                    onClose = { () => setShowCreateModal(false) }
+                    friends = { friends }
+                />
             )}
 
         </View>
@@ -348,24 +392,66 @@ function ChallengeInviteCard({ invite }) {
 }
 
 function ChallengeCard({ challenge }) {
-    return (
-        <View style = { styles.requestBox }>
+   const progress = challenge.progress || {};
+   const ownerProgress = progress[challenge.ownerUid] ?? 0;
 
-            <Text style = { styles.friendName }> Active Challenge </Text>
-            <Text>Description: { challenge?.description ?? "Placeholder challenge" }</Text>
-            <Text>Progress: 0 / { challenge?.target ?? "?" }</Text>
+   const getChallengeTitle = (challenge) => {
+       switch (challenge.type) {
+           case "points":
+               return "Points Challenge";
 
-            <TouchableOpacity style = { styles.sendButton }>
-                <Text style = { styles.friendButtonText }>View</Text>
-            </TouchableOpacity>
+           case "muscle":
+               // Capitalise each word of the muscle name.
+               const muscleName = challenge.selectedMuscle
+                   .replace(/_/g, " ")
+                   .replace(/\b\w/g, c => c.toUpperCase());
+               return `${muscleName} Challenge`;
 
-        </View>
-    );
+           case "group":
+               // e.g. "Pull Exercises Challenge".
+               return `${challenge.muscleGroup.charAt(0).toUpperCase()
+                   + challenge.muscleGroup.slice(1)} Exercises Challenge`;
+
+           case "sessions":
+               return "Session Challenge";
+
+           default:
+               return "Challenge";
+       }
+   };
+
+   return (
+       <View style = { styles.requestBox }>
+           <Text style ={ styles.friendName }>{ getChallengeTitle(challenge) }</Text>
+
+           <Text>{ challenge.description }</Text>
+
+           <Text>
+               Progress: { ownerProgress } / { challenge.target }
+           </Text>
+
+           <View style = { styles.buttonRow }>
+
+               <View style = { styles.buttonWrapper }>
+                   <TouchableOpacity style = { styles.viewChallengeButton }>
+                       <Text style = { styles.friendButtonText }>View</Text>
+                   </TouchableOpacity>
+               </View>
+
+               <View style = { styles.buttonWrapper }>
+                   <TouchableOpacity style = { styles.removeChallengeButton }>
+                      <Text style = { styles.friendButtonText }>Remove</Text>
+                  </TouchableOpacity>
+               </View>
+
+           </View>
+       </View>
+   );
 }
 
-function CreateChallengeModal({ onClose }) {
+function CreateChallengeModal({ onClose, friends }) {
 
-    const [type, setType] = useState<'points' | 'muscle' | 'volume' | 'sessions' | null>('points');
+    const [type, setType] = useState<'points' | 'muscle' | 'group' | 'sessions' | null>('points');
     const [target, setTarget] = useState('');
     const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'once' | null>(null);
     const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
@@ -387,12 +473,25 @@ function CreateChallengeModal({ onClose }) {
     ];
 
     const addFriend = () => {
-        if (!friendInput.trim()) return;
-        if (invitedFriends.includes(friendInput.trim())) return;
+        const trimmed = friendInput.trim();
 
-        setInvitedFriends([...invitedFriends, friendInput.trim()]);
+        if (!trimmed) return;
+
+        // Validate friend exists in user's friend list.
+        if (!friends.includes(trimmed)) {
+            Alert.alert("Error", "You can only invite users you are already friends with.");
+            return;
+        }
+
+        if (invitedFriends.includes(trimmed)) {
+            Alert.alert("Error", "This friend is already invited.");
+            return;
+        }
+
+        setInvitedFriends([...invitedFriends, trimmed]);
         setFriendInput('');
     };
+
 
     const removeFriend = (name: string) => {
         setInvitedFriends(invitedFriends.filter(f => f !== name));
@@ -1215,9 +1314,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     createChallengeButton: {
-        paddingVertical: 8,
+        paddingVertical: 12,
         paddingHorizontal: 16,
-        margin: 20,
+        margin: 16,
         backgroundColor: '#52ABFF',
         borderRadius: 8,
         shadowColor: '#000',
@@ -1383,6 +1482,29 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-
+    viewChallengeButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: '#52ABFF',
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        alignItems: 'center',
+    },
+    removeChallengeButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: '#E25252',
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        alignItems: 'center',
+    },
 });
 
