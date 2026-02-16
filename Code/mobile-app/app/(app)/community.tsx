@@ -624,11 +624,33 @@ function ChallengeCard({ challenge, setViewChallenge, removeChallenge, cancelCha
 
    };
 
+   const getTimeRemaining = (endDate) => {
+       if (!endDate) return "";
+
+       const now = new Date();
+       const end = endDate.toDate();
+       const diff = end.getTime() - now.getTime();
+
+       if (diff <= 0) return "Expired";
+
+       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+       const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+
+       if (days > 0) return `${days} day${days === 1 ? "" : "s"} remaining`;
+       return `${hours} hour${hours === 1 ? "" : "s"} remaining`;
+   };
+
    return (
        <View style = { styles.requestBox }>
            <Text style ={ styles.friendName }>{ getChallengeTitle(challenge) }</Text>
 
            <Text>{ challenge.description }</Text>
+
+           { challenge.status === "active" && challenge.period !== "once" && (
+               <Text style = {{ marginTop: 4 }}>
+                   { getTimeRemaining(challenge.endDate) }
+               </Text>
+           )}
 
            {/* Shared progress. */}
            <Text style = {{ marginTop: 6 }}>
@@ -692,6 +714,16 @@ function ChallengeCard({ challenge, setViewChallenge, removeChallenge, cancelCha
 
 function CreateChallengeModal({ onClose, friends }) {
 
+    const [username, setUsername] = useState<string | null>(null);
+
+    useEffect(() => {
+        const loadUsername = async () => {
+            const storedUser = await AsyncStorage.getItem("loggedInUser");
+            setUsername(storedUser);
+        };
+        loadUsername();
+    }, []);
+
     const [type, setType] = useState<'points' | 'muscle' | 'group' | 'sessions' | null>('points');
     const [target, setTarget] = useState('');
     const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'once' | null>(null);
@@ -713,10 +745,16 @@ function CreateChallengeModal({ onClose, friends }) {
         "other"
     ];
 
-    const addFriend = () => {
+    const addFriend = () => {   // For adding friends to challenges.
         const trimmed = friendInput.trim();
 
         if (!trimmed) return;
+
+        // Prevent user from inviting themselves.
+        if (trimmed === username) {
+            Alert.alert("Error", "You cannot invite yourself to a challenge.");
+            return;
+        }
 
         // Validate friend exists in user's friend list.
         if (!friends.includes(trimmed)) {

@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove, Timestamp } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from "./firebase";
 import { systemExercises } from "./data/exercises";
@@ -471,12 +471,43 @@ export async function acceptChallenge(challengeId, username) {
 
         const newStatus = updatedInvited.length === 0 ? "active" : "pending";
 
-        await updateDoc(challengeRef, {
+        let updates = {
             invited: updatedInvited,
             participants: updatedParticipants,
             status: newStatus,
             lastUpdated: new Date()
-        });
+        };
+
+        // If this is a group challenge AND it is becoming active now,
+        // recalculate the end date based on the time period (unless one off challenge).
+        if (challengeData.mode === "group" && newStatus === "active") {
+
+            let newEndDate;
+
+            switch (challengeData.period) {
+                case "daily":
+                    newEndDate = Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
+                    break;
+
+                case "weekly":
+                    newEndDate = Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+                    break;
+
+                case "monthly":
+                    newEndDate = Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+                    break;
+
+                case "once":
+                    newEndDate = Timestamp.now();
+                    break;
+            }
+
+            updates.startDate = Timestamp.now();
+            updates.endDate = newEndDate;
+        }
+
+        await updateDoc(challengeRef, updates);
+
 
         console.log(`Challenge ${challengeId} accepted by ${username}.`);
         return { success: true };
