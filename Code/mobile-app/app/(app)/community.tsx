@@ -8,7 +8,7 @@ import { useIsFocused } from '@react-navigation/native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { collection, query, where, getDocs, onSnapshot, doc, addDoc, Timestamp, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot, doc, addDoc, Timestamp, orderBy, deleteDoc } from "firebase/firestore";
 import { db } from "../../src/firebase";
 import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriendRequest, removeFriend } from '../../src/firestore';
 
@@ -257,6 +257,7 @@ function ChallengesContent() {
     const [activeChallenges, setActiveChallenges] = useState([]);
     const [invites, setInvites] = useState([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [viewChallenge, setViewChallenge] = useState(null);
 
     useEffect(() => {
         const loadUsername = async () => {
@@ -308,6 +309,28 @@ function ChallengesContent() {
         return () => stopListening();
     }, [username]);
 
+    const removeChallenge = async (id) => {
+        Alert.alert(
+            "Remove Challenge",
+            "Are you sure you want to remove this challenge?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Remove",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deleteDoc(doc(db, "challenges", id));
+                        } catch (e) {
+                            console.error("Error removing challenge:", e);
+                            Alert.alert("Error", "Failed to remove challenge.");
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     return (
         <View style = {{ flex: 1 }}>
 
@@ -337,7 +360,12 @@ function ChallengesContent() {
                         <Text style = { styles.placeholderText } > No active challenges </Text>
                     ) : (
                         activeChallenges.map((challenge) => (
-                            <ChallengeCard key = { challenge.id } challenge = { challenge } />
+                            <ChallengeCard
+                                key = { challenge.id }
+                                challenge = { challenge }
+                                removeChallenge = { removeChallenge }
+                                setViewChallenge = { setViewChallenge }
+                            />
                         ))
                     )}
 
@@ -356,6 +384,13 @@ function ChallengesContent() {
                 <CreateChallengeModal
                     onClose = { () => setShowCreateModal(false) }
                     friends = { friends }
+                />
+            )}
+
+            { viewChallenge && (
+                <ViewChallengeModal
+                    challenge = { viewChallenge }
+                    onClose = { () => setViewChallenge(null) }
                 />
             )}
 
@@ -391,7 +426,7 @@ function ChallengeInviteCard({ invite }) {
     );
 }
 
-function ChallengeCard({ challenge }) {
+function ChallengeCard({ challenge, setViewChallenge, removeChallenge }) {
    const progress = challenge.progress || {};
    const ownerProgress = progress[challenge.ownerUid] ?? 0;
 
@@ -408,7 +443,7 @@ function ChallengeCard({ challenge }) {
                return `${muscleName} Challenge`;
 
            case "group":
-               // e.g. "Pull Exercises Challenge".
+               // i.e. "Pull Exercises Challenge".
                return `${challenge.muscleGroup.charAt(0).toUpperCase()
                    + challenge.muscleGroup.slice(1)} Exercises Challenge`;
 
@@ -433,13 +468,19 @@ function ChallengeCard({ challenge }) {
            <View style = { styles.buttonRow }>
 
                <View style = { styles.buttonWrapper }>
-                   <TouchableOpacity style = { styles.viewChallengeButton }>
+                   <TouchableOpacity
+                       style = { styles.viewChallengeButton }
+                       onPress = { () => setViewChallenge(challenge) }
+                   >
                        <Text style = { styles.friendButtonText }>View</Text>
                    </TouchableOpacity>
                </View>
 
                <View style = { styles.buttonWrapper }>
-                   <TouchableOpacity style = { styles.removeChallengeButton }>
+                   <TouchableOpacity
+                      style = { styles.removeChallengeButton }
+                      onPress = { () => removeChallenge(challenge.id) }
+                   >
                       <Text style = { styles.friendButtonText }>Remove</Text>
                   </TouchableOpacity>
                </View>
@@ -796,6 +837,69 @@ function CreateChallengeModal({ onClose, friends }) {
                 >
                     <Text style = { styles.friendButtonText }>Create</Text>
                 </TouchableOpacity>
+
+            </View>
+
+        </View>
+    );
+}
+
+function ViewChallengeModal({ challenge, onClose }) {
+
+    const muscleName = challenge.selectedMuscle
+        ?.replace(/_/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+
+    const groupName = challenge.muscleGroup
+        ? challenge.muscleGroup.charAt(0).toUpperCase() + challenge.muscleGroup.slice(1)
+        : null;
+
+    return (
+
+        <View style = { styles.modalOverlay }>
+
+            <View style = { styles.modalContainer }>
+
+                <TouchableOpacity style = { styles.closeButton } onPress = { onClose }>
+                    <Text style = { styles.friendButtonText }>Back</Text>
+                </TouchableOpacity>
+
+                <Text style = { styles.modalTitle }>Challenge Details</Text>
+
+                <ScrollView style = {{ maxHeight: '90%' }}>
+
+                    <Text style = { styles.modalLabel }>Type</Text>
+                    <Text style = { styles.modalValue }>
+                        { challenge.type === 'points' && "Points" }
+                        { challenge.type === 'muscle' && muscleName }
+                        { challenge.type === 'group' && `${groupName} Exercises` }
+                        { challenge.type === 'sessions' && "Sessions" }
+                    </Text>
+
+                    <Text style = { styles.modalLabel }>Description</Text>
+                    <Text style = { styles.modalValue }>{ challenge.description }</Text>
+
+                    <Text style = { styles.modalLabel }>Target</Text>
+                    <Text style = { styles.modalValue }>{ challenge.target }</Text>
+
+                    <Text style = { styles.modalLabel }>Period</Text>
+                    <Text style = { styles.modalValue }>{ challenge.period }</Text>
+
+                    <Text style = { styles.modalLabel }>Participants</Text>
+                    { challenge.participants.map(name => (
+                        <Text key = { name } style = { styles.modalValue }>{ name }</Text>
+                    ))}
+
+                    { challenge.invited?.length > 0 && (
+                        <>
+                            <Text style = { styles.modalLabel }>Invited</Text>
+                            { challenge.invited.map(name => (
+                                <Text key = { name } style = { styles.modalValue }>{ name }</Text>
+                            ))}
+                        </>
+                    )}
+
+                </ScrollView>
 
             </View>
 
