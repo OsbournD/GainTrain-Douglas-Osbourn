@@ -454,6 +454,69 @@ export async function removeFriend(userA, userB) {
     }
 }
 
+// Accepting a challenge.
+export async function acceptChallenge(challengeId, username) {
+    try {
+        const challengeRef = doc(db, "challenges", challengeId);
+        const snap = await getDocs(query(collection(db, "challenges"), where("__name__", "==", challengeId)));
+
+        if (snap.empty) {
+            return { success: false, message: "Challenge not found." };
+        }
+
+        const challengeData = snap.docs[0].data();
+
+        const updatedInvited = (challengeData.invited || []).filter(u => u !== username);
+        const updatedParticipants = [...(challengeData.participants || []), username];
+
+        const newStatus = updatedInvited.length === 0 ? "active" : "pending";
+
+        await updateDoc(challengeRef, {
+            invited: updatedInvited,
+            participants: updatedParticipants,
+            status: newStatus,
+            lastUpdated: new Date()
+        });
+
+        console.log(`Challenge ${challengeId} accepted by ${username}.`);
+        return { success: true };
+
+    } catch (e) {
+        console.error("Error accepting challenge:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+// Denying a challenge.
+export async function denyChallenge(challengeId, username) {
+    try {
+        const challengeRef = doc(db, "challenges", challengeId);
+        const snap = await getDocs(query(collection(db, "challenges"), where("__name__", "==", challengeId)));
+
+        if (snap.empty) {
+            return { success: false, message: "Challenge not found." };
+        }
+
+        const challengeData = snap.docs[0].data();
+
+        const updatedInvited = (challengeData.invited || []).filter(u => u !== username);
+
+        await updateDoc(challengeRef, {
+            invited: updatedInvited,
+            status: "cancelled",
+            cancelledBy: username,
+            lastUpdated: new Date()
+        });
+
+        console.log(`Challenge ${challengeId} denied by ${username}.`);
+        return { success: true };
+
+    } catch (e) {
+        console.error("Error denying challenge:", e);
+        return { success: false, message: e.message };
+    }
+}
+
 export function onAuthStateChange(callback) {  // Listener for firebase auth state changes.
     return onAuthStateChanged(auth, callback);
 }

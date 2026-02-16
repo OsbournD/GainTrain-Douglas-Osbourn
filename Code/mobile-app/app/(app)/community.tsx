@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { collection, query, where, getDocs, onSnapshot, doc, addDoc, Timestamp, orderBy, deleteDoc } from "firebase/firestore";
 import { db } from "../../src/firebase";
-import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriendRequest, removeFriend } from '../../src/firestore';
+import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriendRequest, removeFriend, acceptChallenge, denyChallenge } from '../../src/firestore';
 
 export default function communityPage() {
 
@@ -309,6 +309,26 @@ function ChallengesContent() {
         return () => stopListening();
     }, [username]);
 
+    useEffect(() => {   // Retrieving challenge invites.
+        if (!username) return;
+
+        const invitesQuery = query(
+            collection(db, "challenges"),
+            where("invited", "array-contains", username),
+            where("status", "==", "pending")
+        );
+
+        const stopListening = onSnapshot(invitesQuery, snapshot => {
+            const list = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setInvites(list);
+        });
+
+        return () => stopListening();
+    }, [username]);
+
     const removeChallenge = async (id) => {
         Alert.alert(
             "Remove Challenge",
@@ -346,7 +366,7 @@ function ChallengesContent() {
                         <Text style = { styles.placeholderText } > No pending invites </Text>
                     ) : (
                         invites.map((invite) => (
-                            <ChallengeInviteCard key = { invite.id } invite = { invite } />
+                            <ChallengeInviteCard key = { invite.id } invite = { invite } username = { username } />
                         ))
                     )}
 
@@ -398,24 +418,90 @@ function ChallengesContent() {
     );
 }
 
-function ChallengeInviteCard({ invite }) {
+function ChallengeInviteCard({ invite, username }) {
+
+    const getInviteTitle = (invite) => {
+       switch (invite.type) {
+           case "points":
+               return "Points Challenge";
+
+           case "muscle":
+               // Capitalise each word of the muscle name.
+               const muscleName = invite.selectedMuscle
+                   .replace(/_/g, " ")
+                   .replace(/\b\w/g, c => c.toUpperCase());
+               return `${muscleName} Challenge`;
+
+           case "group":
+               // i.e. "Pull Exercises Challenge".
+               return `${invite.muscleGroup.charAt(0).toUpperCase()
+                   + invite.muscleGroup.slice(1)} Exercises Challenge`;
+
+           case "sessions":
+               return "Session Challenge";
+
+           default:
+               return "Challenge";
+       }
+    };
+
+    const acceptChallengeClicked = async () => {
+
+        const result = await acceptChallenge(invite.id, username);
+
+        if(result.success) {
+            Alert.alert("Challenge request accepted.");
+        } else {
+            Alert.alert("Error", "Failed to accept challenge request.");
+        }
+    }
+
+    const denyChallengeClicked = async () => {
+
+        Alert.alert(
+            "Decline Challenge Invite",
+            "Are you sure you want to decline this challenge invite?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Decline invite",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await denyChallenge(invite.id, username);
+                        } catch (e) {
+                            console.error("Error declining challenge invite:", e);
+                            Alert.alert("Error", "Failed to decline challenge invite.");
+                        }
+                    }
+                }
+            ]
+        );
+    }
+
     return (
         <View style = { styles.requestBox }>
 
-            <Text style = { styles.friendName }> Challenge Invite </Text>
+            <Text style ={ styles.friendName }>{ getInviteTitle(invite) }</Text>
             <Text>Description: { invite?.description ?? "Placeholder challenge" }</Text>
             <Text>From: { invite?.ownerUid ?? "Unknown" }</Text>
 
             <View style = { styles.buttonRow }>
 
                 <View style = { styles.buttonWrapper }>
-                    <TouchableOpacity style = { styles.acceptButton }>
+                    <TouchableOpacity
+                        style = { styles.acceptButton }
+                        onPress = { acceptChallengeClicked }
+                    >
                         <Text style = { styles.friendButtonText }>ACCEPT</Text>
                     </TouchableOpacity>
                 </View>
 
                 <View style = { styles.buttonWrapper }>
-                    <TouchableOpacity style = { styles.denyButton }>
+                    <TouchableOpacity
+                        style = { styles.denyButton }
+                        onPress = { denyChallengeClicked }
+                    >
                         <Text style = { styles.friendButtonText }>DENY</Text>
                     </TouchableOpacity>
                 </View>
