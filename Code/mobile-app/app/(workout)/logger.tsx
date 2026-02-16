@@ -1,5 +1,7 @@
-import { collection, addDoc, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../src/firebase";
+
+import { normaliseMuscleName, mapToBroadGroup, calculatePointsAwarded } from "../../src/utils/exerciseScoring";
 
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput, Alert } from 'react-native';
@@ -69,6 +71,8 @@ export default function workoutLogger() {
     const [startedAt, setStartedAt] = useState<Date | null>(new Date());
     const [endedAt, setEndedAt] = useState<Date | null>(null);
 
+    const [username, setUsername] = useState<string | null>(null);
+
     const fetchExercises = async () => { // Fetch exercises from firestore
         try {
             const exercisesQuery = query(
@@ -107,6 +111,10 @@ export default function workoutLogger() {
                 router.replace('/(auth)/login');
                 return;
             }
+
+            setUsername(storedUser);
+            const username = storedUser;
+
             setCheckingLogin(false);
         };
         checkLogin();
@@ -451,6 +459,10 @@ export default function workoutLogger() {
                             .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'))
                             .filter(Boolean);
 
+                        let totalPoints = 0;
+                        let musclePointsMap = {}; // i.e. { biceps: 40, quads: 20, etc }.
+                        let groupPointsMap = {};
+
                         try { // Create session document.
 
                             const sessionRef = await addDoc(collection(db, "sessions"), {
@@ -467,7 +479,66 @@ export default function workoutLogger() {
 
                             const exerciseLogIds = [];
 
-                            for (const exercise of exercises) { // Create exercise logs per exercise.
+                            for (const exercise of exercises) { // Create exercise logs and challenge points per exercise.
+
+                                console.log("Processing exercise:", {
+                                    name: exercise.name,
+                                    primaryMuscle: exercise.primaryMuscle,
+                                    secondaryMuscles: exercise.secondaryMuscles,
+                                    difficulty: exercise.difficulty,
+                                    sets: exercise.sets?.length || 0
+                                });
+
+                                const primary = normaliseMuscleName(exercise.primaryMuscle);
+                                const secondary = Array.isArray(exercise.secondaryMuscles)
+                                    ? exercise.secondaryMuscles.map(m => normaliseMuscleName(m.trim()))
+                                    : typeof exercise.secondaryMuscles === "string"
+                                        ? exercise.secondaryMuscles.split(',').map(m => normaliseMuscleName(m.trim()))
+                                        : [];
+                                const difficulty = Number(exercise.difficulty) || 3;
+                                const setsCount = exercise.sets?.length || 1;
+
+                                const points = calculatePointsAwarded(
+                                    difficulty,
+                                    primary,
+                                    secondary,
+                                    userExperienceLevel,
+                                    setsCount
+                                );
+
+                                console.log("Points for exercise:", {
+                                    primary,
+                                    secondary,
+                                    difficulty,
+                                    setsCount,
+                                    points
+                                });
+
+                                totalPoints += points;
+
+                                // Track muscle totals. Primary gets full points, secondary gets half.
+                                musclePointsMap[primary] = (musclePointsMap[primary] || 0) + points;
+
+                                for (const sec of secondary) {
+                                    const secondaryPoints = Math.round(points * 0.5);
+                                    musclePointsMap[sec] = (musclePointsMap[sec] || 0) + secondaryPoints;
+                                }
+
+                                // Track group totals. Primary gets full points, secondary gets half.
+                                const primaryGroup = mapToBroadGroup(primary);
+                                groupPointsMap[primaryGroup] = (groupPointsMap[primaryGroup] || 0) + points;
+
+                                for (const sec of secondary) {
+                                    const secondaryGroup = mapToBroadGroup(sec);
+                                    const secondaryPoints = Math.round(points * 0.5);
+                                    groupPointsMap[secondaryGroup] = (groupPointsMap[secondaryGroup] || 0) + secondaryPoints;
+                                }
+
+                                console.log("Session totals:", {
+                                    totalPoints,
+                                    musclePointsMap,
+                                    groupPointsMap
+                                });
 
                                 const exerciseId =
                                     exercise.id ||
@@ -498,6 +569,65 @@ export default function workoutLogger() {
                         } catch (e) {
                             console.error("Error saving session:", e);
                             Alert.alert("Error", "There was a problem saving your session.");
+                        }
+
+                        // Fetch active challenges for this user.
+                        if (!username) {
+                            console.log("No username found, skipping challenge update");
+                            return;
+                        }
+
+                        const challengesQuery = query(
+                            collection(db, "challenges"),
+                            where("participants", "array-contains", username),
+                            where("status", "==", "active")
+                        );
+
+                        const snapshot = await getDocs(challengesQuery);
+
+                        for (const docSnap of snapshot.docs) {
+                            const challenge = docSnap.data();
+                            const challengeRef = doc(db, "challenges", docSnap.id);
+
+                            let newProgress = challenge.progress || {};
+                            let current = newProgress[username] || 0;
+
+                            newProgress[username] = current;
+
+                            await updateDoc(challengeRef, {
+                                progress: newProgress,
+                                lastUpdated: Timestamp.now()
+                            });
+
+                            switch (challenge.type) {
+
+                                case "points":
+                                    current += totalPoints;
+                                    break;
+
+                                case "muscle":
+                                    const muscle = challenge.selectedMuscle;
+                                    current += musclePointsMap[muscle] || 0;
+                                    break;
+
+                                case "group":
+                                    const group = challenge.muscleGroup;
+                                    current += groupPointsMap[group] || 0;
+                                    break;
+
+                                case "sessions":
+                                    current += 1;
+                                    break;
+                            }
+
+                            console.log("New progress value:", current);
+
+                            newProgress[username] = current;
+
+                            await updateDoc(challengeRef, {
+                                progress: newProgress,
+                                lastUpdated: Timestamp.now()
+                            });
                         }
 
                     }}

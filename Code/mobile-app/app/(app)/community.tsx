@@ -465,6 +465,18 @@ function ChallengeCard({ challenge, setViewChallenge, removeChallenge }) {
                Progress: { ownerProgress } / { challenge.target }
            </Text>
 
+           <Text style = {{
+               marginTop: 4,
+               color:
+                   challenge.status === "active" ? "#24C3FF" :
+                   challenge.status === "pending" ? "#FFA500" :
+                   challenge.status === "completed" ? "green" :
+                   (challenge.status === "expired" || challenge.status === "cancelled") ? "red" :
+                   undefined
+           }}>
+               { challenge.status.charAt(0).toUpperCase() + challenge.status.slice(1) }
+           </Text>
+
            <View style = { styles.buttonRow }>
 
                <View style = { styles.buttonWrapper }>
