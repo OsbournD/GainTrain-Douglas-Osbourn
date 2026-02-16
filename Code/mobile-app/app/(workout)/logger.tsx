@@ -590,44 +590,36 @@ export default function workoutLogger() {
                             const challengeRef = doc(db, "challenges", docSnap.id);
 
                             let newProgress = challenge.progress || {};
-                            let current = newProgress[username] || 0;
+                            let sharedCurrent = newProgress.shared || 0;
 
-                            newProgress[username] = current;
-
-                            await updateDoc(challengeRef, {
-                                progress: newProgress,
-                                lastUpdated: Timestamp.now()
-                            });
+                            let pointsToAdd = 0;
 
                             switch (challenge.type) {
-
                                 case "points":
-                                    current += totalPoints;
+                                    pointsToAdd = totalPoints;
                                     break;
 
                                 case "muscle":
-                                    const muscle = challenge.selectedMuscle;
-                                    current += musclePointsMap[muscle] || 0;
+                                    pointsToAdd = musclePointsMap[challenge.selectedMuscle] || 0;
                                     break;
 
                                 case "group":
-                                    const group = challenge.muscleGroup;
-                                    current += groupPointsMap[group] || 0;
+                                    pointsToAdd = groupPointsMap[challenge.muscleGroup] || 0;
                                     break;
 
                                 case "sessions":
-                                    current += 1;
+                                    pointsToAdd = 1;
                                     break;
                             }
 
-                            console.log("New progress value:", current);
-
-                            newProgress[username] = current;
+                            // Only update shared progress.
+                            newProgress.shared = sharedCurrent + pointsToAdd;
 
                             await updateDoc(challengeRef, {
                                 progress: newProgress,
                                 lastUpdated: Timestamp.now()
                             });
+
                         }
 
                     }}

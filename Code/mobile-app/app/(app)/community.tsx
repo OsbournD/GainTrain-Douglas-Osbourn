@@ -8,7 +8,7 @@ import { useIsFocused } from '@react-navigation/native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { collection, query, where, getDocs, onSnapshot, doc, addDoc, Timestamp, orderBy, deleteDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot, doc, addDoc, Timestamp, orderBy, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../src/firebase";
 import { sendFriendRequest, getIncomingRequests, denyFriendRequest, acceptFriendRequest, removeFriend, acceptChallenge, denyChallenge } from '../../src/firestore';
 
@@ -258,6 +258,7 @@ function ChallengesContent() {
     const [invites, setInvites] = useState([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [viewChallenge, setViewChallenge] = useState(null);
+    const [expiredChallenges, setExpiredChallenges] = useState([]);
 
     useEffect(() => {
         const loadUsername = async () => {
@@ -329,6 +330,27 @@ function ChallengesContent() {
         return () => stopListening();
     }, [username]);
 
+    useEffect(() => {   // Retrieving expired or cancelled challenges from firestore.
+        if (!username) return;
+
+        const expiredQuery = query(
+            collection(db, "challenges"),
+            where("participants", "array-contains", username),
+            where("status", "in", ["expired", "cancelled"]),
+            orderBy("endDate", "desc")
+        );
+
+        const stopListening = onSnapshot(expiredQuery, snapshot => {
+            const list = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setExpiredChallenges(list);
+        });
+
+        return () => stopListening();
+    }, [username]);
+
     const removeChallenge = async (id) => {
         Alert.alert(
             "Remove Challenge",
@@ -344,6 +366,35 @@ function ChallengesContent() {
                         } catch (e) {
                             console.error("Error removing challenge:", e);
                             Alert.alert("Error", "Failed to remove challenge.");
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const cancelChallenge = async (challenge) => {
+        Alert.alert(
+            "Cancel Challenge",
+            "Are you sure you want to cancel this challenge?",
+            [
+                { text: "Close", style: "cancel" },
+                {
+                    text: "Yes, cancel Challenge",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            const challengeRef = doc(db, "challenges", challenge.id);
+
+                            await updateDoc(challengeRef, {
+                                status: "cancelled",
+                                cancelledBy: username,
+                                lastUpdated: new Date()
+                            });
+
+                        } catch (e) {
+                            console.error("Error cancelling challenge:", e);
+                            Alert.alert("Error", "Failed to cancel challenge.");
                         }
                     }
                 }
@@ -384,7 +435,30 @@ function ChallengesContent() {
                                 key = { challenge.id }
                                 challenge = { challenge }
                                 removeChallenge = { removeChallenge }
+                                cancelChallenge = { cancelChallenge }
                                 setViewChallenge = { setViewChallenge }
+                                username = { username }
+                            />
+                        ))
+                    )}
+
+                </View>
+
+                <View style = { styles.card }>
+
+                    <ThemedText type="subtitle" padding="10"> Expired / Cancelled Challenges </ThemedText>
+
+                    { expiredChallenges.length === 0 ? (
+                        <Text style = { styles.placeholderText }> No expired or cancelled challenges </Text>
+                    ) : (
+                        expiredChallenges.map(challenge => (
+                            <ChallengeCard
+                                key = { challenge.id }
+                                challenge = {challenge }
+                                removeChallenge = { removeChallenge }
+                                cancelChallenge = { cancelChallenge }
+                                setViewChallenge = { setViewChallenge }
+                                username = { username }
                             />
                         ))
                     )}
@@ -512,33 +586,42 @@ function ChallengeInviteCard({ invite, username }) {
     );
 }
 
-function ChallengeCard({ challenge, setViewChallenge, removeChallenge }) {
+function ChallengeCard({ challenge, setViewChallenge, removeChallenge, cancelChallenge, username }) {
    const progress = challenge.progress || {};
-   const ownerProgress = progress[challenge.ownerUid] ?? 0;
 
    const getChallengeTitle = (challenge) => {
+
+       const isGroup = challenge.mode === "group";
+
+       let baseTitle = "";
+
        switch (challenge.type) {
            case "points":
-               return "Points Challenge";
+               baseTitle = "Points Challenge";
+               break;
 
            case "muscle":
-               // Capitalise each word of the muscle name.
                const muscleName = challenge.selectedMuscle
                    .replace(/_/g, " ")
                    .replace(/\b\w/g, c => c.toUpperCase());
-               return `${muscleName} Challenge`;
+               baseTitle = `${muscleName} Challenge`;
+               break;
 
            case "group":
-               // i.e. "Pull Exercises Challenge".
-               return `${challenge.muscleGroup.charAt(0).toUpperCase()
-                   + challenge.muscleGroup.slice(1)} Exercises Challenge`;
+               baseTitle =
+                   `${challenge.muscleGroup.charAt(0).toUpperCase() + challenge.muscleGroup.slice(1)} Exercises Challenge`;
+               break;
 
            case "sessions":
-               return "Session Challenge";
+               baseTitle = "Session Challenge";
+               break;
 
            default:
-               return "Challenge";
+               baseTitle = "Challenge";
        }
+
+       return isGroup ? `Group ${baseTitle}` : baseTitle;
+
    };
 
    return (
@@ -547,8 +630,12 @@ function ChallengeCard({ challenge, setViewChallenge, removeChallenge }) {
 
            <Text>{ challenge.description }</Text>
 
-           <Text>
-               Progress: { ownerProgress } / { challenge.target }
+           {/* Shared progress. */}
+           <Text style = {{ marginTop: 6 }}>
+               { challenge.mode === "group"
+                   ? `Group Progress: ${progress.shared ?? 0} / ${challenge.target}`
+                   : `Progress: ${progress.shared ?? 0} / ${challenge.target}`
+               }
            </Text>
 
            <Text style = {{
@@ -560,8 +647,14 @@ function ChallengeCard({ challenge, setViewChallenge, removeChallenge }) {
                    (challenge.status === "expired" || challenge.status === "cancelled") ? "red" :
                    undefined
            }}>
-               { challenge.status.charAt(0).toUpperCase() + challenge.status.slice(1) }
+               Status: { challenge.status.charAt(0).toUpperCase() + challenge.status.slice(1) }
            </Text>
+
+           { challenge.status === "cancelled" && challenge.cancelledBy && (
+               <Text style={{ marginTop: 4, color: "red" }}>
+                   Cancelled by: { challenge.cancelledBy === username ? "You" : challenge.cancelledBy }
+               </Text>
+           )}
 
            <View style = { styles.buttonRow }>
 
@@ -575,12 +668,21 @@ function ChallengeCard({ challenge, setViewChallenge, removeChallenge }) {
                </View>
 
                <View style = { styles.buttonWrapper }>
-                   <TouchableOpacity
-                      style = { styles.removeChallengeButton }
-                      onPress = { () => removeChallenge(challenge.id) }
-                   >
-                      <Text style = { styles.friendButtonText }>Remove</Text>
-                  </TouchableOpacity>
+                   { challenge.status === "active" ? (
+                       <TouchableOpacity
+                           style = { styles.removeChallengeButton }
+                           onPress = { () => cancelChallenge(challenge) }
+                       >
+                           <Text style = { styles.friendButtonText }>Cancel</Text>
+                       </TouchableOpacity>
+                   ) : (
+                       <TouchableOpacity
+                           style = { styles.removeChallengeButton }
+                           onPress = { () => removeChallenge(challenge.id) }
+                       >
+                           <Text style = { styles.friendButtonText }>Remove</Text>
+                       </TouchableOpacity>
+                   )}
                </View>
 
            </View>
@@ -714,10 +816,14 @@ function CreateChallengeModal({ onClose, friends }) {
             const participants = [ownerUid];
             const invited = invitedFriends;
 
+            // Determine individual or group challenge.
+            const mode = invited.length > 0 ? "group" : "individual";
+
             // Build challenge object.
             const challengeData = {
                 ownerUid,
                 type,
+                mode,
                 description: generateDescription(),
                 target: Number(target),
                 period,
@@ -726,7 +832,7 @@ function CreateChallengeModal({ onClose, friends }) {
                 muscleGroup: type === "group" ? muscleGroup : null,
                 selectedMuscle: type === "muscle" ? selectedMuscle : null,
                 isChallenge: true,
-                progress: { [ownerUid]: 0 },
+                progress: { shared: 0 },
                 participants,
                 invited,
                 status: invited.length > 0 ? "pending" : "active",
