@@ -586,7 +586,13 @@ export default function workoutLogger() {
                         const snapshot = await getDocs(challengesQuery);
 
                         for (const docSnap of snapshot.docs) {
+
                             const challenge = docSnap.data();
+
+                             if (challenge.status === "completed") {    // Skip challenge if already completed.
+                                continue;
+                             }
+
                             const challengeRef = doc(db, "challenges", docSnap.id);
 
                             let newProgress = challenge.progress || {};
@@ -615,11 +621,73 @@ export default function workoutLogger() {
                             // Only update shared progress.
                             newProgress.shared = sharedCurrent + pointsToAdd;
 
-                            await updateDoc(challengeRef, {
-                                progress: newProgress,
-                                lastUpdated: Timestamp.now()
-                            });
+                            // Check for challenge completion.
+                            let newStatus = challenge.status;
 
+                            if (newProgress.shared >= challenge.target) {
+                                newStatus = "completed";
+                            }
+
+                            // Build updates object.
+                            let updates = {
+                                progress: newProgress,
+                                status: newStatus,
+                                lastUpdated: Timestamp.now()
+                            };
+
+                            // Notify all participants when challenge is completed.
+                            if (newStatus === "completed" && !challenge.completionNotified) {
+
+                                const participants = challenge.participants || [];
+
+                                for (const participant of participants) {
+
+                                    // In app alert for the user currently logging the workout.
+                                    if (participant === username) {
+                                        Alert.alert("Challenge Completed!", `${challenge.description}`);
+                                    }
+
+                                    // Fetch participant user data for push notifications.
+                                    const usersRef = collection(db, "users");
+                                    const recipientQuery = query(usersRef, where("username", "==", participant));
+                                    const recipientDocs = await getDocs(recipientQuery);
+
+                                    if (!recipientDocs.empty) {
+                                        const recipient = recipientDocs.docs[0].data();
+
+                                        if (recipient.pushToken) {
+                                            try {
+                                                const response = await fetch("https://exp.host/--/api/v2/push/send", {
+                                                    method: "POST",
+                                                    headers: {
+                                                        "Accept": "application/json",
+                                                        "Content-Type": "application/json"
+                                                    },
+                                                    body: JSON.stringify({
+                                                        to: recipient.pushToken,
+                                                        sound: "default",
+                                                        title: "Challenge Completed!",
+                                                        body: `${challenge.description}`,
+                                                        data: {
+                                                            challengeId: docSnap.id,
+                                                            type: "challengeCompleted"
+                                                        }
+                                                    })
+                                                });
+
+                                                const result = await response.json();
+                                                console.log("Expo push response: ", result);
+
+                                            } catch (e) {
+                                                console.log("Push notification fetch failed: ", e);
+                                            }
+                                        }
+                                    }
+                                }
+                                updates.completionNotified = true;  // Mark notifications as sent.
+                            }
+
+                            await updateDoc(challengeRef, updates);
                         }
 
                     }}

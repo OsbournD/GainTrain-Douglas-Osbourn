@@ -311,7 +311,10 @@ export async function sendFriendRequest(from, to) {
                             sound: "default",
                             title: "New Friend Request",
                             body: `${from} sent you a friend request!`,
-                            data: { sender: from }
+                            data: {
+                                sender: from,
+                                type: "friendRequest"
+                            }
 
                         })
                     });

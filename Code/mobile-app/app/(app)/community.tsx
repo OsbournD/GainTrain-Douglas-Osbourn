@@ -259,6 +259,7 @@ function ChallengesContent() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [viewChallenge, setViewChallenge] = useState(null);
     const [expiredChallenges, setExpiredChallenges] = useState([]);
+    const [completedChallenges, setCompletedChallenges] = useState([]);
 
     useEffect(() => {
         const loadUsername = async () => {
@@ -351,6 +352,27 @@ function ChallengesContent() {
         return () => stopListening();
     }, [username]);
 
+    useEffect(() => {   // Retrieving completed challenges from firestore.
+        if (!username) return;
+
+        const completedQuery = query(
+            collection(db, "challenges"),
+            where("participants", "array-contains", username),
+            where("status", "==", "completed"),
+            orderBy("endDate", "desc")
+        );
+
+        const stopListening = onSnapshot(completedQuery, snapshot => {
+            const list = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setCompletedChallenges(list);
+        });
+
+        return () => stopListening();
+    }, [username]);
+
     const removeChallenge = async (id) => {
         Alert.alert(
             "Remove Challenge",
@@ -431,6 +453,27 @@ function ChallengesContent() {
                         <Text style = { styles.placeholderText } > No active challenges </Text>
                     ) : (
                         activeChallenges.map((challenge) => (
+                            <ChallengeCard
+                                key = { challenge.id }
+                                challenge = { challenge }
+                                removeChallenge = { removeChallenge }
+                                cancelChallenge = { cancelChallenge }
+                                setViewChallenge = { setViewChallenge }
+                                username = { username }
+                            />
+                        ))
+                    )}
+
+                </View>
+
+                <View style = { styles.card }>
+
+                    <ThemedText type="subtitle" padding="10"> Completed Challenges </ThemedText>
+
+                    { completedChallenges.length === 0 ? (
+                        <Text style = { styles.placeholderText }> No completed challenges </Text>
+                    ) : (
+                        completedChallenges.map(challenge => (
                             <ChallengeCard
                                 key = { challenge.id }
                                 challenge = { challenge }
@@ -558,7 +601,7 @@ function ChallengeInviteCard({ invite, username }) {
 
             <Text style ={ styles.friendName }>{ getInviteTitle(invite) }</Text>
             <Text>Description: { invite?.description ?? "Placeholder challenge" }</Text>
-            <Text>From: { invite?.ownerUid ?? "Unknown" }</Text>
+            <Text>From: { invite?.ownerUsername ?? "Unknown" }</Text>
 
             <View style = { styles.buttonRow }>
 
@@ -805,8 +848,8 @@ function CreateChallengeModal({ onClose, friends }) {
 
     const createChallenge = async () => {
         try {
-            const ownerUid = await AsyncStorage.getItem("loggedInUser");
-            if (!ownerUid) {
+            const ownerUsername = await AsyncStorage.getItem("loggedInUser");
+            if (!ownerUsername) {
                 Alert.alert("Error", "No logged in user found.");
                 return;
             }
@@ -851,7 +894,7 @@ function CreateChallengeModal({ onClose, friends }) {
             }
 
             // Build participants + invited.
-            const participants = [ownerUid];
+            const participants = [ownerUsername];
             const invited = invitedFriends;
 
             // Determine individual or group challenge.
@@ -859,7 +902,7 @@ function CreateChallengeModal({ onClose, friends }) {
 
             // Build challenge object.
             const challengeData = {
-                ownerUid,
+                ownerUsername,
                 type,
                 mode,
                 description: generateDescription(),
@@ -876,6 +919,7 @@ function CreateChallengeModal({ onClose, friends }) {
                 status: invited.length > 0 ? "pending" : "active",
                 createdAt: Timestamp.now(),
                 lastUpdated: Timestamp.now(),
+                completionNotified: false,
             };
 
             // Write to Firestore.
