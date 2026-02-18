@@ -300,7 +300,55 @@ function ChallengesContent() {
             orderBy("endDate", "asc")
         );
 
-        const stopListening = onSnapshot(challengesQuery, snapshot => {
+        const stopListening = onSnapshot(challengesQuery, async snapshot => {
+            const now = new Date();
+
+            for (const docSnap of snapshot.docs) {
+                const challenge = docSnap.data();
+                const id = docSnap.id;
+
+                // Check expiration.
+                if (challenge.status === "active" && challenge.endDate.toDate() <= now) {
+
+                    // Mark expired in Firestore.
+                    await updateDoc(doc(db, "challenges", id), {
+                        status: "expired",
+                        expiredAt: new Date(),
+                        lastUpdated: new Date()
+                    });
+
+                    // Notify all users in challenge.
+                    for (const user of challenge.participants) {
+                        const userQuery = query(collection(db, "users"), where("username", "==", user));
+                        const userDocs = await getDocs(userQuery);
+
+                        if (!userDocs.empty) {
+                            const userData = userDocs.docs[0].data();
+
+                            if (userData.pushToken) {
+                                await fetch("https://exp.host/--/api/v2/push/send", {
+                                    method: "POST",
+                                    headers: {
+                                        "Accept": "application/json",
+                                        "Content-Type": "application/json"
+                                    },
+                                    body: JSON.stringify({
+                                        to: userData.pushToken,
+                                        sound: "default",
+                                        title: "Challenge Expired",
+                                        body: `Your challenge "${challenge.description}" has expired.`,
+                                        data: {
+                                            type: "challengeExpired",
+                                            challengeId: id
+                                        }
+                                    })
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
             const list = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -676,11 +724,16 @@ function ChallengeCard({ challenge, setViewChallenge, removeChallenge, cancelCha
 
        if (diff <= 0) return "Expired";
 
+       const minutes = Math.floor(diff / (1000 * 60));
        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
 
        if (days > 0) return `${days} day${days === 1 ? "" : "s"} remaining`;
-       return `${hours} hour${hours === 1 ? "" : "s"} remaining`;
+
+       if (hours > 0) return `${hours} hour${hours === 1 ? "" : "s"} remaining`;
+
+       return `${minutes} minute${minutes === 1 ? "" : "s"} remaining`;
+
    };
 
    return (
@@ -922,11 +975,42 @@ function CreateChallengeModal({ onClose, friends }) {
                 completionNotified: false,
             };
 
-            // Write to Firestore.
-            await addDoc(collection(db, "challenges"), challengeData);
+            // Write to Firestore, create challenge and get id.
+            const challengeRef = await addDoc(collection(db, "challenges"), challengeData);
+            const challengeId = challengeRef.id;
 
             Alert.alert("Success", "Challenge created!");
             onClose();
+
+            // Send push notifs to invited users.
+            for (const user of invitedFriends) {
+                const userQuery = query(collection(db, "users"), where("username", "==", user));
+                const userDocs = await getDocs(userQuery);
+
+                if (!userDocs.empty) {
+                    const userData = userDocs.docs[0].data();
+
+                    if (userData.pushToken) {
+                        await fetch("https://exp.host/--/api/v2/push/send", {
+                            method: "POST",
+                            headers: {
+                                "Accept": "application/json",
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                to: userData.pushToken,
+                                sound: "default",
+                                title: "New Challenge Invite",
+                                body: `${ownerUsername} invited you to a challenge.`,
+                                data: {
+                                    type: "challengeInvite",
+                                    challengeId: challengeId
+                                }
+                            })
+                        });
+                    }
+                }
+            }
 
         } catch (e) {
             console.error("Error creating challenge:", e);

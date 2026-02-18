@@ -481,8 +481,7 @@ export async function acceptChallenge(challengeId, username) {
             lastUpdated: new Date()
         };
 
-        // If this is a group challenge AND it is becoming active now,
-        // recalculate the end date based on the time period (unless one off challenge).
+        // If group challenge and becoming active now, recalculate end date based on time period (unless one off challenge).
         if (challengeData.mode === "group" && newStatus === "active") {
 
             let newEndDate;
@@ -511,6 +510,38 @@ export async function acceptChallenge(challengeId, username) {
 
         await updateDoc(challengeRef, updates);
 
+        // If group challenge and just become active, notify all participants.
+        if (challengeData.mode === "group" && newStatus === "active") {
+
+            for (const user of updatedParticipants) {
+                const userQuery = query(collection(db, "users"), where("username", "==", user));
+                const userDocs = await getDocs(userQuery);
+
+                if (!userDocs.empty) {
+                    const userData = userDocs.docs[0].data();
+
+                    if (userData.pushToken) {
+                        await fetch("https://exp.host/--/api/v2/push/send", {
+                            method: "POST",
+                            headers: {
+                                "Accept": "application/json",
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                to: userData.pushToken,
+                                sound: "default",
+                                title: "Challenge Started",
+                                body: `Your group challenge "${challengeData.description}" has now started.`,
+                                data: {
+                                    type: "challengeStarted",
+                                    challengeId: challengeId
+                                }
+                            })
+                        });
+                    }
+                }
+            }
+        }
 
         console.log(`Challenge ${challengeId} accepted by ${username}.`);
         return { success: true };
