@@ -13,7 +13,7 @@ export default function OnboardingSummary() {
     const router = useRouter();
 
     const params = useLocalSearchParams();
-    const { q1, q2, q3, level, muscles, likes, dislikes, calculatedLevel, score, unit } = params;
+    const { q1, q2, q3, level, muscles, likes, dislikes, calculatedLevel, score, unit, goal, q4 } = params;
 
     const parsedMuscles = muscles ? JSON.parse(muscles as string) : [];
     const parsedLikes = likes ? JSON.parse(likes as string) : [];
@@ -74,6 +74,7 @@ export default function OnboardingSummary() {
                 {
                     onboardingCompleted: true,
                     experienceLevel: level,
+                    goal: goal || null,
                     likedBodyParts: score !== "0" ? parsedMuscles : null,
                     likedExercises: score !== "0" ? parsedLikes : null,
                     dislikedExercises: score !== "0" ? parsedDislikes : null,
@@ -108,6 +109,12 @@ export default function OnboardingSummary() {
 
                 <View style = { styles.card }>
                     <Text style = { styles.valueText }>{ level }</Text>
+                </View>
+
+                <Text style = { styles.sectionTitle }>Your Selected Goal</Text>
+
+                <View style = { styles.card }>
+                    <Text style = { styles.valueText }>{ q4 || "No specific goal" }</Text>
                 </View>
 
                 <Text style = { styles.sectionTitle }>Your Answers</Text>

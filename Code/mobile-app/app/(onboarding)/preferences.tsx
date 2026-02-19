@@ -88,18 +88,18 @@ export default function ExercisePreferences() {
                     {
                         text: "Continue Anyway",
                         style: "destructive",
-                        onPress: () => proceedToSummary()
+                        onPress: () => proceedToGoals()
                     }
                 ]
             );
         } else {
-            proceedToSummary();
+            proceedToGoals();
         }
     };
 
-    const proceedToSummary = () => {
+    const proceedToGoals = () => {
         router.push({
-            pathname: '/summary',
+            pathname: '/questions/q4',
             params: {
                 q1,
                 q2,
