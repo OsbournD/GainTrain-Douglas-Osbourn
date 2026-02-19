@@ -68,22 +68,22 @@ export default function welcomeDashboard() {
 
         <View style={ styles.appBackground }>
 
-            <ThemedView style={styles.headerContainer}>
+            <View style = { styles.topSection }>
 
-                    <TouchableOpacity style = { styles.logoutButton } onPress = { logoutClicked } >
-                        <Text style = { styles.headerButtonText }> LOG OUT </Text>
-                    </TouchableOpacity>
+                <TouchableOpacity style = { styles.logoutButton } onPress = { logoutClicked } >
+                    <Text style = { styles.headerButtonText }> LOG OUT </Text>
+                </TouchableOpacity>
 
-                        <Image
-                            source = { require('@/assets/gaintrain-images/gaintrain-banner.png')}
-                            style = { styles.logo }
-                        />
+                    <Image
+                        source = { require('@/assets/gaintrain-images/gaintrain-banner.png')}
+                        style = { styles.logo }
+                    />
 
-                    <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
-                        <Text style = { styles.headerButtonText }> SETTINGS </Text>
-                    </TouchableOpacity>
+                <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
+                    <Text style = { styles.headerButtonText }> SETTINGS </Text>
+                </TouchableOpacity>
 
-            </ThemedView>
+            </View>
 
             <ScrollView>
 
@@ -139,13 +139,12 @@ const styles = StyleSheet.create({
         height: 100,
         resizeMode: 'contain',
     },
-    headerContainer: {
-        height: 140,
+    topSection: {
+        height: '20%',
         justifyContent: 'center',
+        alignItems: 'center',
         backgroundColor: 'white',
         paddingHorizontal: 20,
-        position: 'relative',
-        alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -167,7 +166,7 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 3,
         position: 'absolute',
-        top: 30,
+        top: 46,
         right: 12,
         zIndex: 10,
     },
@@ -182,7 +181,7 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 3,
         position: 'absolute',
-        top: 30,
+        top: 46,
         left: 12,
         zIndex: 10,
     },
@@ -286,4 +285,5 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         padding: 2,
     },
+
 });

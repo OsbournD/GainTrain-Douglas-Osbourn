@@ -54,7 +54,7 @@ export default function settingsScreen() {
 
         <View style={ styles.appBackground }>
 
-            <ThemedView style={styles.headerContainer}>
+            <ThemedView style = { styles.headerContainer }>
 
                     <TouchableOpacity style = { styles.logoutButton } onPress = { logoutClicked } >
                         <Text style = { styles.headerButtonText }> LOG OUT </Text>
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#E6F3FF',
     },
     headerContainer: {
-        height: 100,
+        height: '15%',
         justifyContent: 'center',
         backgroundColor: 'white',
         paddingHorizontal: 20,
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 3,
         position: 'absolute',
-        top: 30,
+        top: 46,
         left: 12,
         zIndex: 10,
     },
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 3,
         position: 'absolute',
-        top: 30,
+        top: 46,
         right: 12,
         zIndex: 10,
     },

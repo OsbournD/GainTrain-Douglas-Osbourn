@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView } from 'react-native';
+import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link, router } from 'expo-router';
@@ -70,94 +70,141 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
 
-      <ThemedView style={styles.headerContainer}>
-        <ThemedText type="title">GainTrain!</ThemedText>
-      </ThemedView>
+        <View style = { styles.screen }>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ThemedView style={styles.sectionContainer}>
+            <View style = { styles.topSection }>
 
-          <ThemedText type="subtitle">Sign Up</ThemedText>
+                <Image
+                  source = { require('@/assets/gaintrain-images/gaintrain-icon.jpeg') }
+                  style = { styles.logo }
+                />
 
-          <TextInput style = { styles.input } placeholder = "Enter a username" value = { username } onChangeText = { setUsername } />
+            </View>
 
-          <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
+            <View style = { styles.card }>
 
-          <TextInput style = { styles.input } placeholder = "Confirm password" secureTextEntry value = { confirmPassword } onChangeText = { setConfirmPassword } />
+                <Text style = { styles.signupTitle }>Sign Up</Text>
 
-          <View style={ styles.buttonContainer }>
-            <Button title="Create Account" onPress={signUpClicked} />
-          </View>
+                <TextInput style = { styles.input } placeholder = "Enter a username" value = { username } onChangeText = { setUsername } />
 
-          <View style={ styles.buttonContainer }>
-            <Link href="/(auth)/login">
-              <ThemedText type="link">Already have an account? Log in</ThemedText>
-            </Link>
-          </View>
-        </ThemedView>
+                <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
 
-      </ScrollView>
+                <TextInput style = { styles.input } placeholder = "Confirm password" secureTextEntry value = { confirmPassword } onChangeText = { setConfirmPassword } />
 
-      {__DEV__ && (
+                <TouchableOpacity style = { styles.signupButton } onPress = { signUpClicked }>
+                    <Text style = { styles.signupButtonText }> CREATE ACCOUNT </Text>
+                </TouchableOpacity>
 
-          <>
+                <TouchableOpacity style = { styles.loginLinkContainer }>
+                  <Link href = "/(auth)/login">
+                      <Text style = { styles.loginLink }> Already have an account? Log in </Text>
+                  </Link>
+                </TouchableOpacity>
 
-              <View style={ styles.buttonContainer }>
-                  <Button
-                      title = "Add New Test User"
-                      onPress = { async() => {
-                          const result = await addTestUser();
-                          console.log("Test user result:", result);
-                      }}
-                  />
-              </View>
+            </View>
 
-              <View style={ styles.buttonContainer }>
-                  <Button
-                      title = "Seed Data"
-                      onPress = { async() => {
-                          const result = await seedTestData();
-                          console.log("Seed result:", result);
-                      }}
-                  />
-              </View>
 
-          </>
-      )}
+            {__DEV__ && (
 
-    </View>
+                <>
+
+                  <View style={ styles.buttonContainer }>
+                      <Button
+                          title = "Add New Test User"
+                          onPress = { async() => {
+                              const result = await addTestUser();
+                              console.log("Test user result:", result);
+                          }}
+                      />
+                  </View>
+
+                  <View style={ styles.buttonContainer }>
+                      <Button
+                          title = "Seed Data"
+                          onPress = { async() => {
+                              const result = await seedTestData();
+                              console.log("Seed result:", result);
+                          }}
+                      />
+                  </View>
+
+                </>
+            )}
+        </View>
+
   );
 }
 
 const styles = StyleSheet.create({
 
-    headerContainer: {
-        height: 120,
+    screen: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    topSection: {
+        height: '35%',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#94C8FF',
     },
-    scrollContent: {
-        paddingBottom: 20,
+    logo: {
+        width: 300,
+        height: 300,
+        marginTop: 30,
+        marginBottom: 20,
     },
-    sectionContainer: {
+    card: {
+        backgroundColor: 'white',
         padding: 20,
-        backgroundColor: '#fff',
+        marginHorizontal: 20,
+        borderRadius: 16,
+        marginTop: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    signupTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+        textAlign: 'center',
+        marginBottom: 20,
     },
     input: {
         borderWidth: 1,
         borderColor: 'black',
-        borderRadius: 5,
-        padding: 10,
+        borderRadius: 10,
+        padding: 12,
         marginVertical: 10,
         backgroundColor: 'white',
-
+        fontSize: 16,
+    },
+    signupButton: {
+        backgroundColor: '#52ABFF',
+        paddingVertical: 16,
+        borderRadius: 12,
+        marginTop: 10,
+        alignItems: 'center',
+    },
+    signupButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    loginLinkContainer: {
+        marginTop: 14,
+        alignItems: 'center',
+    },
+    loginLink: {
+        color: '#24C3FF',
+        fontSize: 18,
     },
     buttonContainer: {
         marginTop: 10,
     },
+
 });
 
 

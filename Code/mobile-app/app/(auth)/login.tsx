@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView } from 'react-native';
+import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link, router } from 'expo-router';
@@ -24,7 +24,6 @@ export default function LoginScreen() {
         const result = await verifyUserLogin(username, password);
 
         if (result.success) {
-            Alert.alert('Success', result.message);
 
             await AsyncStorage.setItem('loggedInUser', username);
 
@@ -76,64 +75,120 @@ export default function LoginScreen() {
     };
 
     return (
-        <View style={{ flex: 1 }}>
 
-          <ThemedView style={styles.headerContainer}>
-            <ThemedText type="title">GainTrain!</ThemedText>
-          </ThemedView>
+        <View style = { styles.screen }>
 
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <View style = { styles.topSection }>
 
-              <ThemedView style={styles.sectionContainer}>
-                <ThemedText type = "subtitle"> Login </ThemedText>
+                <Image
+                    source = { require('@/assets/gaintrain-images/gaintrain-icon.jpeg') }
+                    style = { styles.logo }
+                />
 
-                <TextInput style = { styles.input } placeholder = "Enter a username" value = { username } onChangeText = { setUsername } />
+            </View>
 
-                <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
+            <View style = { styles.card }>
 
-                <View style = { styles.buttonContainer }>
-                    <Button title = 'Login' onPress = {loginClicked}/>
-                </View>
+                <Text style = { styles.loginTitle }> Login </Text>
 
-                <View style = { styles.buttonContainer }>
+                <TextInput
+                    style = { styles.input }
+                    placeholder = "Enter a username"
+                    value = { username }
+                    onChangeText = { setUsername }
+                />
+
+                <TextInput
+                    style = { styles.input }
+                    placeholder = "Enter a password"
+                    secureTextEntry
+                    value = { password }
+                    onChangeText = { setPassword }
+                />
+
+                <TouchableOpacity style = { styles.loginButton } onPress = { loginClicked }>
+                    <Text style = { styles.loginButtonText }> LOGIN </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style = { styles.signupLinkContainer }>
                     <Link href = "/(auth)/signup">
-                        <ThemedText type = "link"> Make an Account </ThemedText>
+                        <Text style = { styles.signupLink }> Make an Account </Text>
                     </Link>
-                </View>
+                </TouchableOpacity>
 
-              </ThemedView>
-
-            </ScrollView>
+            </View>
 
         </View>
-      );
+    );
 }
 
 const styles = StyleSheet.create({
 
-    headerContainer: {
-        height: 120,
+    screen: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    topSection: {
+        height: '45%',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#94C8FF',
     },
-    scrollContent: {
-        paddingBottom: 20,
+    logo: {
+        width: 300,
+        height: 300,
+        marginTop: 30,
+        marginBottom: 20,
     },
-    sectionContainer: {
+    card: {
+        backgroundColor: 'white',
         padding: 20,
-        backgroundColor: '#fff',
+        marginHorizontal: 20,
+        borderRadius: 16,
+        marginTop: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    loginTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+        textAlign: 'center',
+        marginBottom: 20,
     },
     input: {
         borderWidth: 1,
         borderColor: 'black',
-        borderRadius: 5,
-        padding: 10,
+        borderRadius: 10,
+        padding: 12,
         marginVertical: 10,
         backgroundColor: 'white',
-
+        fontSize: 16,
     },
-    buttonContainer: {
+    loginButton: {
+        backgroundColor: '#52ABFF',
+        paddingVertical: 16,
+        borderRadius: 12,
         marginTop: 10,
+        alignItems: 'center',
+    },
+    loginButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    signupLinkContainer: {
+        marginTop: 14,
+        alignItems: 'center',
+    },
+    signupLink: {
+        color: '#24C3FF',
+        fontSize: 18,
     },
 });
+
+
+
+
