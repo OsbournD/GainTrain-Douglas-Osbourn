@@ -52,7 +52,7 @@ export default function workoutLogger() {
     const [newTags, setNewTags] = useState("");
     const [newPrimaryMuscle, setNewPrimaryMuscle] = useState("");
     const [newSecondaryMuscles, setNewSecondaryMuscles] = useState("");
-    const [newBestFor, setNewBestFor] = useState("");
+    const [newBestFor, setNewBestFor] = useState<string | string[] | null>(null);
 
     const [activeExerciseIndex, setActiveExerciseIndex] = useState<number | null>(null);
     const [showSetModal, setShowSetModal] = useState(false);
@@ -434,7 +434,8 @@ export default function workoutLogger() {
                     onPress = { async () => {
 
                         if (!sessionName.trim()) {
-                           Alert.alert("Missing name", "Session must have a name.");
+                            Alert.alert("Missing name", "Session must have a name.");
+                            return;
                         }
 
                         if (!startedAt) {
@@ -938,12 +939,44 @@ export default function workoutLogger() {
                             onChangeText = { setNewSecondaryMuscles }
                         />
 
-                        <TextInput
-                            style = { styles.input }
-                            placeholder = "Best For (comma separated)"
-                            value = { newBestFor }
-                            onChangeText = { setNewBestFor }
-                        />
+                        <Text style = { styles.subtitle }>Best for:</Text>
+
+                        <View style = { styles.bestForRow }>
+
+                            <TouchableOpacity
+                                style = { [
+                                    styles.bestForButton,
+                                    newBestFor === "muscle_growth" && styles.bestForSelected
+                                ] }
+                                onPress = { () => setNewBestFor("muscle_growth") }
+                            >
+                                <Text style = { styles.bestForText }>Muscle Building</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style = { [
+                                    styles.bestForButton,
+                                    newBestFor === "strength" && styles.bestForSelected
+                                ] }
+                                onPress = { () => setNewBestFor("strength") }
+                            >
+                                <Text style = { styles.bestForText }>Strength Gain</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style = { [
+                                    styles.bestForButton,
+                                    Array.isArray(newBestFor) &&
+                                    newBestFor.includes("muscle_growth") &&
+                                    newBestFor.includes("strength") &&
+                                    styles.bestForSelected
+                                ] }
+                                onPress = { () => setNewBestFor(["muscle_growth", "strength"]) }
+                            >
+                                <Text style = { styles.bestForText }>Both</Text>
+                            </TouchableOpacity>
+
+                        </View>
 
                         <TouchableOpacity
                             style = { styles.saveExerciseButton }
@@ -953,7 +986,7 @@ export default function workoutLogger() {
                                 // Then adds the exercise to the current session.
 
                                 if (!newExerciseName.trim()) {
-                                    Alert.alert("Exercise must have a name.");
+                                    Alert.alert("Missing field", "Exercise must have a name.");
                                     return;
                                 }
 
@@ -995,6 +1028,11 @@ export default function workoutLogger() {
                                     return;
                                 }
 
+                                if (!newBestFor) {
+                                    Alert.alert("Missing field", "Please select what this exercise is best for.");
+                                    return;
+                                }
+
                                 // Formatting comma separated fields (tags, secondaryMuscles, bestFor)
                                 // into clean arrays.
                                 const formattedTags = newTags
@@ -1002,10 +1040,6 @@ export default function workoutLogger() {
                                     .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'));
 
                                 const formattedSecondary = newSecondaryMuscles
-                                    .split(',')
-                                    .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'));
-
-                                const formattedBestFor = newBestFor
                                     .split(',')
                                     .map(t => t.trim().toLowerCase().replace(/\s+/g, '_'));
 
@@ -1017,7 +1051,7 @@ export default function workoutLogger() {
                                     tags: formattedTags,
                                     primaryMuscle: newPrimaryMuscle.toLowerCase().replace(/\s+/g, '_'),
                                     secondaryMuscles: formattedSecondary,
-                                    bestFor: formattedBestFor,
+                                    bestFor: Array.isArray(newBestFor) ? newBestFor : [newBestFor],
                                     type: "user",
                                     createdBy: userUid,
                                     createdAt: new Date(),
@@ -1184,7 +1218,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#E6F3FF',
     },
     headerContainer: {
-        height: 100,
+        height: '13%',
         justifyContent: 'center',
         backgroundColor: 'white',
         paddingHorizontal: 20,
@@ -1212,7 +1246,7 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 3,
         position: 'absolute',
-        top: 30,
+        top: 46,
         right: 12,
         zIndex: 10,
     },
@@ -1227,7 +1261,7 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 3,
         position: 'absolute',
-        top: 30,
+        top: 46,
         left: 12,
         zIndex: 10,
     },
@@ -1472,7 +1506,6 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 6,
     },
-
     modalOverlay: {
         position: 'absolute',
         top: 0,
@@ -1494,6 +1527,42 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 6,
+    },
+    subtitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+        marginTop: 10,
+        marginBottom: 6,
+        textAlign: 'center'
+    },
+    bestForRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    bestForButton: {
+        flex: 1,
+        backgroundColor: '#E6F3FF',
+        paddingVertical: 10,
+        marginHorizontal: 4,
+        borderRadius: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+        justifyContent: 'center',
+    },
+    bestForSelected: {
+        borderWidth: 2,
+        borderColor: '#24C3FF',
+    },
+    bestForText: {
+        fontSize: 14,
+        color: 'black',
+        fontWeight: '500',
+        textAlign: 'center',
     },
 
 });
