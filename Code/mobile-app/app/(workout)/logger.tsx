@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, getDocs, doc, updateDoc, Timestamp } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, Timestamp, increment } from "firebase/firestore";
 import { db } from "../../src/firebase";
 
 import { normaliseMuscleName, mapToBroadGroup, calculatePointsAwarded } from "../../src/utils/exerciseScoring";
@@ -48,6 +48,7 @@ export default function workoutLogger() {
 
     const [newExerciseName, setNewExerciseName] = useState("");
     const [newDifficulty, setNewDifficulty] = useState("");
+    const [newRiskRating, setNewRiskRating] = useState("");
     const [newTags, setNewTags] = useState("");
     const [newPrimaryMuscle, setNewPrimaryMuscle] = useState("");
     const [newSecondaryMuscles, setNewSecondaryMuscles] = useState("");
@@ -463,6 +464,18 @@ export default function workoutLogger() {
                         let musclePointsMap = {}; // i.e. { biceps: 40, quads: 20, etc }.
                         let groupPointsMap = {};
 
+                        let uniqueExerciseIds: string[] = [];
+
+                        async function incrementUsageCounts(ids: string[]) {    // Increment usageCount for each unique exercise.
+                            for (const id of ids) {
+                                const ref = doc(db, "exercises", id);
+
+                                await updateDoc(ref, {
+                                    usageCount: increment(1)
+                                });
+                            }
+                        }
+
                         try { // Create session document.
 
                             const sessionRef = await addDoc(collection(db, "sessions"), {
@@ -557,6 +570,10 @@ export default function workoutLogger() {
                                 exerciseLogIds.push(logRef.id);
                             }
 
+                            uniqueExerciseIds = Array.from(
+                                new Set(exercises.map(exercise => exercise.id || exercise.exerciseId))  // Extract unique exerciseIds from session.
+                            );
+
                             await updateDoc(sessionRef, {
                                 exerciseLogs: exerciseLogIds
                             });
@@ -570,6 +587,8 @@ export default function workoutLogger() {
                             console.error("Error saving session:", e);
                             Alert.alert("Error", "There was a problem saving your session.");
                         }
+
+                        await incrementUsageCounts(uniqueExerciseIds);
 
                         // Fetch active challenges for this user.
                         if (!username) {
@@ -892,6 +911,14 @@ export default function workoutLogger() {
 
                         <TextInput
                             style = { styles.input }
+                            placeholder = "Risk Rating (1-5)"
+                            keyboardType = "numeric"
+                            value = { newRiskRating }
+                            onChangeText = { setNewRiskRating }
+                        />
+
+                        <TextInput
+                            style = { styles.input }
                             placeholder = "Tags (comma separated)"
                             value = { newTags }
                             onChangeText = { setNewTags }
@@ -944,6 +971,20 @@ export default function workoutLogger() {
 
                                 const difficultyValue = rawDifficulty;
 
+                                if (!newRiskRating.trim()) {
+                                    Alert.alert("Exercise must have a risk rating (1–5).");
+                                    return;
+                                }
+
+                                const rawRiskRating = Number(newRiskRating);
+
+                                if (isNaN(rawRiskRating) || rawRiskRating < 1 || rawRiskRating > 5) {
+                                    Alert.alert("Risk rating must be a number between 1 and 5.");
+                                    return;
+                                }
+
+                                const riskRatingValue = rawRiskRating;
+
                                 if (!newPrimaryMuscle.trim()) {
                                     Alert.alert("Exercise must have a primary muscle.");
                                     return;
@@ -972,6 +1013,7 @@ export default function workoutLogger() {
                                     name: newExerciseName,
                                     exerciseId: newExerciseName.toLowerCase().replace(/\s+/g, "_"),
                                     difficulty: difficultyValue,
+                                    riskRating: riskRatingValue,
                                     tags: formattedTags,
                                     primaryMuscle: newPrimaryMuscle.toLowerCase().replace(/\s+/g, '_'),
                                     secondaryMuscles: formattedSecondary,
