@@ -7,6 +7,7 @@ const { scoreUsage } = require("./scoring/scoreUsage");
 const { scoreRest } = require("./scoring/scoreRest");
 const { scoreVariety } = require("./scoring/scoreVariety");
 const { scoreDifficulty } = require("./scoring/scoreDifficulty");
+const { scoreRisk } = require("./scoring/scoreRisk");
 
 import { ExerciseMeta, ExerciseLog, RecommendationInput } from "./types";
 
@@ -257,3 +258,14 @@ for (const ex of filtered) {
     const diffScore = scoreDifficulty(ex, mockInput.userPreferences);
     console.log(ex.exerciseId, "difficultyScore =", diffScore);
 }
+
+// Step 7 - scoreRisk.
+// Expected result: lat pulldown = -2, squat = -10, sit ups = -2
+
+console.log("---------------- Step 7: scoreRisk ----------------");
+
+for (const ex of filtered) {
+    const riskScore = scoreRisk(ex, mockInput.userPreferences);
+    console.log(ex.exerciseId, "riskScore =", riskScore);
+}
+
