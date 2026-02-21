@@ -25,11 +25,6 @@ export function filterExercises(input: RecommendationInput): ExerciseMeta[] {
             return false;
         }
 
-        // Avoid recommending exercises the user strongly dislikes.
-        if (userPreferences.dislikedExercises?.includes(exercise.exerciseId)) {
-            return false;
-        }
-
         // Avoid exercises that hit recently-trained primary muscles.
         const primary = normaliseMuscleName(exercise.primaryMuscle);
 

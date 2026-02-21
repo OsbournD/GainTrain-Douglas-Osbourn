@@ -8,6 +8,7 @@ const { scoreRest } = require("./scoring/scoreRest");
 const { scoreVariety } = require("./scoring/scoreVariety");
 const { scoreDifficulty } = require("./scoring/scoreDifficulty");
 const { scoreRisk } = require("./scoring/scoreRisk");
+const { scorePreferences } = require("./scoring/scorePreferences");
 
 import { ExerciseMeta, ExerciseLog, RecommendationInput } from "./types";
 
@@ -99,9 +100,9 @@ const mockInput: RecommendationInput = {    // Combined input object for recomme
         username: "testUser",
         experienceLevel: "beginner",
         goal: "muscle_gain",
-        likedBodyParts: null,
-        likedExercises: null,
-        dislikedExercises: null,
+        likedBodyParts: ["back"],
+        likedExercises: ["lat_pulldown", "bench_press"],
+        dislikedExercises: ["sit_ups"],
         weightUnitPreference: "kg"
     },
     friendActivity: [],
@@ -116,7 +117,7 @@ console.log("---------------- Step 1: computeUserExerciseStats ----------------"
 const stats = computeUserExerciseStats(mockLogs);
 console.log("Stats:", stats);
 
-// Step 2 — Test filtering.
+// Step 2 — Test filters.
 // Expected output: ["lat_pulldown", "squat", "sit_ups"].
 
 console.log("---------------- Step 2: filterExercises ----------------");
@@ -269,3 +270,12 @@ for (const ex of filtered) {
     console.log(ex.exerciseId, "riskScore =", riskScore);
 }
 
+// Step 8 - scorePreferences.
+// Expected result: lat pulldown = 13, squat = 0, prefScore = -20.
+
+console.log("---------------- Step 8: scorePreferences ----------------");
+
+for (const ex of filtered) {
+    const prefScore = scorePreferences(ex, mockInput.userPreferences);
+    console.log(ex.exerciseId, "prefScore =", prefScore);
+}
