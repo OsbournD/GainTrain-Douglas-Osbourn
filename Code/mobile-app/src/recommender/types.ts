@@ -97,7 +97,8 @@ export interface ScoredExercise {
     exercise: ExerciseMeta;
     score: number;
     components: {
-        base: number;
+        base: number; // For potentially adding boosts for
+        // exercises related to global weekly challenges (if i implement them).
         usage: number;
         rest: number;
         variety: number;
@@ -105,7 +106,6 @@ export interface ScoredExercise {
         risk: number;
         preferences: number;
         social: number;
-        goal: number;
     };
 }
 

@@ -9,6 +9,8 @@ const { scoreVariety } = require("./scoring/scoreVariety");
 const { scoreDifficulty } = require("./scoring/scoreDifficulty");
 const { scoreRisk } = require("./scoring/scoreRisk");
 const { scorePreferences } = require("./scoring/scorePreferences");
+const { scoreFriendActivity } = require("./scoring/scoreFriendActivity");
+const { combineScores } = require("./scoring/combineScores");
 
 import { ExerciseMeta, ExerciseLog, RecommendationInput } from "./types";
 
@@ -105,7 +107,23 @@ const mockInput: RecommendationInput = {    // Combined input object for recomme
         dislikedExercises: ["sit_ups"],
         weightUnitPreference: "kg"
     },
-    friendActivity: [],
+    friendActivity: [
+        {
+            exerciseId: "squat",
+            lastPerformedAt: new Date(Date.now() - 192 * 60 * 60 * 1000),   // 8 Days ago.
+            timesPerformedRecently: 2
+        },
+        {
+            exerciseId: "lat_pulldown",
+            lastPerformedAt: new Date(Date.now() - 72 * 60 * 60 * 1000),   // 3 Days ago.
+            timesPerformedRecently: 2
+        },
+        {
+            exerciseId: "bench_press",
+            lastPerformedAt: new Date(),   // Today.
+            timesPerformedRecently: 1
+        },
+    ],
     recentSessionExerciseIds: ["bench_press"]   // Only chest should be blocked.
 };
 
@@ -116,6 +134,31 @@ console.log("---------------- Step 1: computeUserExerciseStats ----------------"
 
 const stats = computeUserExerciseStats(mockLogs);
 console.log("Stats:", stats);
+
+// Build muscle history map for scoreRest.
+const muscleHistory = new Map<string, Date>();
+
+for (const log of mockLogs) {
+    const exercise = mockExercises.find(e => e.exerciseId === log.exerciseId);
+    if (!exercise) continue;
+
+    const last = log.loggedAt;
+
+    // Primary muscle.
+    const primary = exercise.primaryMuscle;
+    const existingPrimary = muscleHistory.get(primary);
+    if (!existingPrimary || last > existingPrimary) {
+        muscleHistory.set(primary, last);
+    }
+
+    // Secondary muscles.
+    for (const sec of exercise.secondaryMuscles) {
+        const existingSec = muscleHistory.get(sec);
+        if (!existingSec || last > existingSec) {
+            muscleHistory.set(sec, last);
+        }
+    }
+}
 
 // Step 2 — Test filters.
 // Expected output: ["lat_pulldown", "squat", "sit_ups"].
@@ -271,7 +314,7 @@ for (const ex of filtered) {
 }
 
 // Step 8 - scorePreferences.
-// Expected result: lat pulldown = 13, squat = 0, prefScore = -20.
+// Expected result: lat pulldown = 13, squat = 0, sit ups = -20.
 
 console.log("---------------- Step 8: scorePreferences ----------------");
 
@@ -279,3 +322,74 @@ for (const ex of filtered) {
     const prefScore = scorePreferences(ex, mockInput.userPreferences);
     console.log(ex.exerciseId, "prefScore =", prefScore);
 }
+
+// Step 9 - scoreFriendActivity.
+// Expected result: lat pulldown = 10, squat = 0, sit ups = 0
+
+console.log("---------------- Step 9: scoreFriendActivity ----------------");
+
+for (const ex of filtered) {
+    const friendScore = scoreFriendActivity(ex, mockInput);
+    console.log(ex.exerciseId, "friendScore =", friendScore);
+}
+
+// Step 10 - combineScores.
+// Expected result:
+// lat_pulldown finalScore = 76 {
+//   base: 0,
+//   usage: 25,
+//   rest: 0,
+//   variety: 10,
+//   difficulty: 20,
+//   risk: -2,
+//   preferences: 13,
+//   social: 10
+// }
+// squat finalScore = 60 {
+//   base: 0,
+//   usage: 40,
+//   rest: 0,
+//   variety: 20,
+//   difficulty: 10,
+//   risk: -10,
+//   preferences: 0,
+//   social: 0
+// }
+// sit_ups finalScore = 48 {
+//   base: 0,
+//   usage: 30,
+//   rest: 0,
+//   variety: 20,
+//   difficulty: 20,
+//   risk: -2,
+//   preferences: -20,
+//   social: 0
+// }
+
+console.log("---------------- Step 10: combineScores ----------------");
+
+for (const ex of filtered) {
+
+    const stat = stats.get(ex.exerciseId);
+
+    const usage = scoreUsage(ex, stat);
+    const rest = scoreRest(ex, muscleHistory);
+    const variety = scoreVariety(ex, stat);
+    const difficulty = scoreDifficulty(ex, mockInput.userPreferences);
+    const risk = scoreRisk(ex, mockInput.userPreferences);
+    const preferences = scorePreferences(ex, mockInput.userPreferences);
+    const social = scoreFriendActivity(ex, mockInput);
+
+    const scored = combineScores(ex, {
+        usage,
+        rest,
+        variety,
+        difficulty,
+        risk,
+        preferences,
+        social,
+    });
+
+    console.log(ex.exerciseId, "finalScore =", scored.score, scored.components);
+}
+
