@@ -107,6 +107,7 @@ export interface ScoredExercise {
         preferences: number;
         social: number;
     };
+    explanation?: string;
 }
 
 // Final recommendation result.

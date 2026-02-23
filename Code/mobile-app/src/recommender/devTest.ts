@@ -12,6 +12,7 @@ const { scorePreferences } = require("./scoring/scorePreferences");
 const { scoreFriendActivity } = require("./scoring/scoreFriendActivity");
 const { combineScores } = require("./scoring/combineScores");
 const { rankAndRecommend } = require("./rankAndRecommend");
+const { generateExplanation } = require("./generateExplanations");
 
 import { ExerciseMeta, ExerciseLog, RecommendationInput, ScoredExercise } from "./types";
 
@@ -423,6 +424,8 @@ for (const ex of filtered) {
         social,
     });
 
+    scored.explanation = generateExplanation(scored);
+
     scoredList.push(scored);
 }
 
@@ -430,3 +433,16 @@ const result = rankAndRecommend(scoredList);
 
 console.log("Primary:", result.primary.map(scoredExercise => scoredExercise.exercise.exerciseId));
 console.log("Alternatives:", result.alternatives.map(scoredExercise => scoredExercise.exercise.exerciseId));
+
+//  Generating recommendation explanations.
+
+console.log("---------------- Generating explanations ----------------");
+
+
+for (const scoredExercise of result.primary) {
+    console.log(scoredExercise.exercise.exerciseId, "-", scoredExercise.explanation);
+}
+
+for (const scoredExercise of result.alternatives) {
+    console.log(scoredExercise.exercise.exerciseId, "-", scoredExercise.explanation);
+}
