@@ -36,6 +36,7 @@ export default function settingsScreen() {
         try {
             await logoutUser();
             await AsyncStorage.removeItem('loggedInUser');
+            await AsyncStorage.removeItem('loggedInUid');
             router.push('/(auth)/login');
         } catch (e) {
             console.error("Logout error: ", e);

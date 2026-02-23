@@ -1,4 +1,4 @@
-// STEP 10 - Combines all scoring components into a final weighted score.
+// STEP 11 - Combines all scoring components into a final weighted score.
 
 import { ExerciseMeta, RecommendationInput, ScoredExercise } from "../types";
 
@@ -12,6 +12,7 @@ export function combineScores(
         risk: number;
         preferences: number;
         social: number;
+        goal: number;
     }
 ): ScoredExercise {
 
@@ -25,7 +26,8 @@ export function combineScores(
         components.difficulty +
         components.risk +
         components.preferences +
-        components.social
+        components.social +
+        components.goal;
 
     return {
         exercise,

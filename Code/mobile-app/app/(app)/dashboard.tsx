@@ -5,6 +5,8 @@ import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
 import { logoutUser } from '../../src/firestore';
 
+import { runRecommender } from '../../src/recommender/runRecommender';
+
 import { Image } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,21 +15,63 @@ export default function welcomeDashboard() {
 
     const router = useRouter();
     const [username, setUsername] = useState<string | null>(null);
+    const [uid, setUid] = useState<string | null>(null);
+
+    const [recommendations, setRecommendations] = useState(null);
+    const [loadingRecommendations, setLoadingRecommendations] = useState(true);
 
     useEffect(() => {
 
         const loadUsername = async () => {
             const storedUser = await AsyncStorage.getItem('loggedInUser');
+            const storedUid = await AsyncStorage.getItem('loggedInUid');
 
             setUsername(storedUser);
+            setUid(storedUid);
         }
         loadUsername();
     }, []);
+
+    useEffect(() => {
+        if (!uid) return;
+
+        const loadSuggestions = async () => {
+            try {
+                const result = await runRecommender(uid);
+                setRecommendations(result);
+            } catch (e) {
+                console.error("Recommender error:", e);
+            }
+
+            setLoadingRecommendations(false);
+        };
+
+        loadSuggestions();
+    }, [username]);
+
+    const refreshSuggestions = async () => {
+        if (!uid) return;
+
+        setLoadingRecommendations(true);
+
+        // Clear cache for this user.
+        await AsyncStorage.removeItem(`recommendations_${uid}_`);
+
+        try {
+            const result = await runRecommender(uid);
+            setRecommendations(result);
+        } catch (e) {
+            console.error("Recommender refresh error:", e);
+        }
+
+        setLoadingRecommendations(false);
+    };
 
     const logoutClicked = async () => {
         try {
             await logoutUser();
             await AsyncStorage.removeItem('loggedInUser');
+            await AsyncStorage.removeItem('loggedInUid');
             router.push('/(auth)/login');
         } catch (e) {
             console.error("Logout error: ", e);
@@ -100,13 +144,37 @@ export default function welcomeDashboard() {
                 </ThemedView>
 
                 <ThemedView style = { styles.card }>
-                    <ThemedText style = { styles.headingText }>Smart Suggestions</ThemedText>
-                    <TouchableOpacity style = { styles.suggestionCard } onPress = { () => console.log("Smart suggestion clicked")} >
-                        <Text style = { styles.suggestionText }> Barbell Romanian Deadlift </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style = { styles.suggestionCard } onPress = { () => console.log("Smart suggestion clicked")} >
-                        <Text style = { styles.suggestionText }> Lying Leg Curl </Text>
-                    </TouchableOpacity>
+                    <View style = { styles.suggestionsHeaderRow }>
+                        <ThemedText style = { styles.headingText }>Smart Suggestions</ThemedText>
+
+                        <TouchableOpacity
+                            style = { styles.refreshButton }
+                            onPress = { refreshSuggestions }
+                        >
+                            <Text style = { styles.refreshButtonText }>REFRESH</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    { loadingRecommendations && (
+                        <Text style = {{ textAlign: 'center', padding: 10 }}>Loading suggestions...</Text>
+                    )}
+
+                    { !loadingRecommendations && recommendations && recommendations.primary.length === 0 && (
+                        <Text style = {{ textAlign: 'center', padding: 10 }}>No suggestions available.</Text>
+                    )}
+
+                    { !loadingRecommendations && recommendations && recommendations.primary.slice(0, 2).map((ex, index) => (
+                        <TouchableOpacity
+                            key = { index }
+                            style = { styles.suggestionCard }
+                            onPress = { () => console.log("Smart suggestion clicked:", ex.exercise.exerciseId) }
+                        >
+                            <Text style = { styles.suggestionText }>{ ex.exercise.name }</Text>
+                            <Text style = {{ color: 'white', fontSize: 12, marginTop: 4 }}>
+                                { ex.explanation }
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </ThemedView>
 
                 <TouchableOpacity style = { styles.primaryButton } onPress = { () => startWorkoutClicked() } >
@@ -284,6 +352,30 @@ const styles = StyleSheet.create({
     recentText: {
         textAlign: 'center',
         padding: 2,
+    },
+    refreshButton: {
+        backgroundColor: '#46C3F3',
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 10,
+        alignSelf: 'flex-end',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        marginBottom: 8,
+    },
+    refreshButtonText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    suggestionsHeaderRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
     },
 
 });

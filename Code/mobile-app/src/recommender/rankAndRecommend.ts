@@ -1,4 +1,4 @@
-// STEP 11 - Rank exercises by score and then split into primary and alternative recommendations.
+// STEP 12 - Rank exercises by score and then split into primary and alternative recommendations.
 
 import { ScoredExercise, RecommendationResult } from "./types.ts";
 

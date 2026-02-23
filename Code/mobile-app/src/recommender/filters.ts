@@ -1,22 +1,19 @@
 import { ExerciseMeta, RecommendationInput } from "./types.ts";
 import { normaliseMuscleName } from "../utils/exerciseScoring.ts";
 
-// STEP 2 - Filters exercises. Removes exercises that do not match the user's goal
-// or that target muscles trained too recently.
+// STEP 2 - Filters exercises that target muscles trained too recently.
 
 export function filterExercises(input: RecommendationInput): ExerciseMeta[] {
 
     const { exercises, userPreferences, recentSessionExerciseIds } = input;
-
-    const goal = userPreferences.goal;
 
     // Build set of muscles trained in most recent session.
     const recentMuscles = buildRecentMuscleSet(exercises, recentSessionExerciseIds);
 
     return exercises.filter(exercise => {
 
-        // Must match user goal (unless goal is null).
-        if (goal && !exercise.bestFor.includes(goal)) {
+        // Block exact exercises from the most recent session.
+        if (recentSessionExerciseIds.includes(exercise.id)) {
             return false;
         }
 
@@ -47,7 +44,7 @@ function buildRecentMuscleSet(
 
     for (const id of recentSessionExerciseIds) {
 
-        const exercise = exercises.find(ex => ex.exerciseId === id);
+        const exercise = exercises.find(ex => ex.id === id);
         if (!exercise) continue;
 
         const primaryMuscle = normaliseMuscleName(exercise.primaryMuscle);

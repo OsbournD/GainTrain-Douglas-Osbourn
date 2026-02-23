@@ -10,11 +10,16 @@ const { scoreDifficulty } = require("./scoring/scoreDifficulty");
 const { scoreRisk } = require("./scoring/scoreRisk");
 const { scorePreferences } = require("./scoring/scorePreferences");
 const { scoreFriendActivity } = require("./scoring/scoreFriendActivity");
+const { scoreGoal } = require("./scoring/scoreGoal");
 const { combineScores } = require("./scoring/combineScores");
 const { rankAndRecommend } = require("./rankAndRecommend");
 const { generateExplanation } = require("./generateExplanations");
 
 import { ExerciseMeta, ExerciseLog, RecommendationInput, ScoredExercise } from "./types";
+
+function daysAgo(days: number): Date {
+    return new Date(Date.now() - days * 24 * 60 * 60 * 1000);   // Dates are fixed for repeatable results.
+}
 
 // Mock data for testing.
 
@@ -79,7 +84,7 @@ const mockLogs: ExerciseLog[] = [   // Mock user exercise logs.
         uid: "u1",
         exerciseId: "bench_press",
         exerciseName: "Bench Press",
-        loggedAt: new Date("2026-02-20T10:00:00Z"),
+        loggedAt: daysAgo(0),
         location: null,
         notes: null,
         sets: [{ weight: 60, reps: 10 }]
@@ -89,7 +94,7 @@ const mockLogs: ExerciseLog[] = [   // Mock user exercise logs.
         uid: "u1",
         exerciseId: "lat_pulldown",
         exerciseName: "Lat Pulldown",
-        loggedAt: new Date("2026-02-18T10:00:00Z"),
+        loggedAt: daysAgo(3),
         location: null,
         notes: null,
         sets: [{ weight: 40, reps: 12 }]
@@ -107,26 +112,26 @@ const mockInput: RecommendationInput = {    // Combined input object for recomme
         likedBodyParts: ["back"],
         likedExercises: ["lat_pulldown", "bench_press"],
         dislikedExercises: ["sit_ups"],
-        weightUnitPreference: "kg"
+        weightUnitPreferences: "kg"
     },
     friendActivity: [
         {
             exerciseId: "squat",
-            lastPerformedAt: new Date(Date.now() - 192 * 60 * 60 * 1000),   // 8 Days ago.
+            lastPerformedAt: daysAgo(8),   // 8 Days ago.
             timesPerformedRecently: 2
         },
         {
             exerciseId: "lat_pulldown",
-            lastPerformedAt: new Date(Date.now() - 72 * 60 * 60 * 1000),   // 3 Days ago.
+            lastPerformedAt: daysAgo(3),   // 3 Days ago.
             timesPerformedRecently: 2
         },
         {
             exerciseId: "bench_press",
-            lastPerformedAt: new Date(),   // Today.
+            lastPerformedAt: daysAgo(0),   // Today.
             timesPerformedRecently: 1
         },
     ],
-    recentSessionExerciseIds: ["bench_press"]   // Only chest should be blocked.
+    recentSessionExerciseIds: ["1"]   // Only chest should be blocked.
 };
 
 // Step 1 — Test userStats.
@@ -163,7 +168,7 @@ for (const log of mockLogs) {
 }
 
 // Step 2 — Test filters.
-// Expected output: ["lat_pulldown", "squat", "sit_ups"].
+// Expected output: 'lat_pulldown', 'squat', 'sit_ups'.
 
 console.log("---------------- Step 2: filterExercises ----------------");
 
@@ -171,7 +176,8 @@ const filtered = filterExercises(mockInput);
 console.log("Filtered exercises:", filtered.map(ex => ex.exerciseId));
 
 // Step 3 — Test scoreUsage.
-// Expected result: squat scores highest (user hasn't done it + high usageCount), sit_ups scores moderate, lat_pulldown lowest (user did it session before last).
+// Expected result: squat scores highest (user hasn't done it + high usageCount), sit_ups scores moderate,
+// lat_pulldown lowest (user did it session before last).
 
 console.log("---------------- Step 3: scoreUsage ----------------");
 
@@ -182,6 +188,7 @@ for (const ex of filtered) {
 }
 
 // Step 4 — Test scoreRest.
+// Expected result: (shows in log).
 
 console.log("---------------- Step 4: scoreRest ----------------");
 
@@ -273,7 +280,7 @@ const restTestCases = [
             ["shoulders", hoursAgo(30)],
             ["glutes", hoursAgo(80)]
         ]),
-        expected: -5
+        expected: -7.5
     }
 
 ];
@@ -335,9 +342,20 @@ for (const ex of filtered) {
     console.log(ex.exerciseId, "friendScore =", friendScore);
 }
 
-// Step 10 - combineScores.
+// Step 10 — scoreGoal.
+// Expected result: lat pulldown = 15, squat = 15, sit ups = 15
+
+console.log("---------------- Step 10: scoreGoal ----------------");
+
+for (const ex of filtered) {
+    const goalScore = scoreGoal(ex, mockInput.userPreferences);
+    console.log(ex.exerciseId, "goalScore =", goalScore);
+}
+
+
+// Step 11 - combineScores.
 // Expected result:
-// lat_pulldown finalScore = 76 {
+// lat_pulldown finalScore = 91 {
 //   base: 0,
 //   usage: 25,
 //   rest: 0,
@@ -345,9 +363,10 @@ for (const ex of filtered) {
 //   difficulty: 20,
 //   risk: -2,
 //   preferences: 13,
-//   social: 10
+//   social: 10,
+//   goal: 15
 // }
-// squat finalScore = 60 {
+// squat finalScore = 75 {
 //   base: 0,
 //   usage: 40,
 //   rest: 0,
@@ -355,9 +374,10 @@ for (const ex of filtered) {
 //   difficulty: 10,
 //   risk: -10,
 //   preferences: 0,
-//   social: 0
+//   social: 0,
+//   goal: 15
 // }
-// sit_ups finalScore = 48 {
+// sit_ups finalScore = 63 {
 //   base: 0,
 //   usage: 30,
 //   rest: 0,
@@ -365,10 +385,11 @@ for (const ex of filtered) {
 //   difficulty: 20,
 //   risk: -2,
 //   preferences: -20,
-//   social: 0
+//   social: 0,
+//   goal: 15
 // }
 
-console.log("---------------- Step 10: combineScores ----------------");
+console.log("---------------- Step 11: combineScores ----------------");
 
 for (const ex of filtered) {
 
@@ -381,6 +402,7 @@ for (const ex of filtered) {
     const risk = scoreRisk(ex, mockInput.userPreferences);
     const preferences = scorePreferences(ex, mockInput.userPreferences);
     const social = scoreFriendActivity(ex, mockInput);
+    const goal = scoreGoal(ex, mockInput.userPreferences);
 
     const scored = combineScores(ex, {
         usage,
@@ -390,15 +412,16 @@ for (const ex of filtered) {
         risk,
         preferences,
         social,
+        goal
     });
 
     console.log(ex.exerciseId, "finalScore =", scored.score, scored.components);
 }
 
-// Step 11 - rankAndRecommend.
-// Expected results: Primary - lat pulldown, squat, Alternatives - sit ups
+// Step 12 - rankAndRecommend.
+// Expected results: Primary - lat pulldown and squat, Alternatives - sit ups.
 
-console.log("---------------- Step 11: rankAndRecommend ----------------");
+console.log("---------------- Step 12: rankAndRecommend ----------------");
 
 const scoredList: ScoredExercise[] = [];
 
@@ -413,6 +436,7 @@ for (const ex of filtered) {
     const risk = scoreRisk(ex, mockInput.userPreferences);
     const preferences = scorePreferences(ex, mockInput.userPreferences);
     const social = scoreFriendActivity(ex, mockInput);
+    const goal = scoreGoal(ex, mockInput.userPreferences);
 
     const scored = combineScores(ex, {
         usage,
@@ -422,6 +446,7 @@ for (const ex of filtered) {
         risk,
         preferences,
         social,
+        goal
     });
 
     scored.explanation = generateExplanation(scored);

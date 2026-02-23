@@ -47,6 +47,9 @@ export default function LoginScreen() {
                     });
 
                     const userData = userDocs.docs[0].data();
+
+                    await AsyncStorage.setItem('loggedInUid', userData.uid);
+
                     onboardingCompleted = userData.onboardingCompleted === true;
 
                     console.log("Stored push token for: ", username);

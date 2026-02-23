@@ -138,8 +138,8 @@ export default function workoutLogger() {
                     const userData = snapshot.docs[0].data();
                     setUserUid(userData.uid);
 
-                    if (userData.weightUnitPreference) {
-                        setWeightUnit(userData.weightUnitPreference);
+                    if (userData.weightUnitPreferences) {
+                        setWeightUnit(userData.weightUnitPreferences);
                     }
 
                     if (userData.experienceLevel) {
@@ -580,6 +580,10 @@ export default function workoutLogger() {
                             });
 
                             await AsyncStorage.removeItem(getDraftKey(userUid)); // Remove draft (if session was draft).
+
+                            if (userUid) {
+                                await AsyncStorage.removeItem(`recommendations_${userUid}_`); // Remove recommendations.
+                            }
 
                             Alert.alert("Success", "Workout saved!");
                             router.push("/(app)/dashboard")

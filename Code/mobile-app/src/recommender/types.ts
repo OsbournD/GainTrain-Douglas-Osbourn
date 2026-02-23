@@ -65,7 +65,7 @@ export interface UserPreferences {
     likedBodyParts: string[] | null;
     likedExercises: string[] | null;
     dislikedExercises: string[] | null;
-    weightUnitPreference: "kg" | "lbs";
+    weightUnitPreferences: "kg" | "lbs";
 }
 
 // Computed stats from exercise logs.
@@ -106,6 +106,7 @@ export interface ScoredExercise {
         risk: number;
         preferences: number;
         social: number;
+        goal: number;
     };
     explanation?: string;
 }

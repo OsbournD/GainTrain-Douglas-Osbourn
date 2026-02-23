@@ -23,7 +23,9 @@ export function scoreRest(
         if (h < 48) return -10; // Half penalty.
     }
 
-    // Secondary muscle logic, small penalty if trained recently.
+    // Secondary muscle logic with proportional penalties.
+    let secondaryTrained = 0;
+
     for (const sec of exercise.secondaryMuscles) {
         const secLast = muscleHistory.get(sec);
         if (!secLast) continue;
@@ -31,8 +33,14 @@ export function scoreRest(
         const h = hoursSince(secLast);
 
         if (h < 24) {
-            penalty = Math.min(penalty, -5); // Small penalty if less than 24hrs.
+            secondaryTrained += 1;  // Full weight.
+        } else if (h < 48) {
+            secondaryTrained += 0.5;    // Half weight.
         }
+    }
+
+    if (secondaryTrained > 0) {
+        penalty = Math.min(penalty, -5 * secondaryTrained);
     }
 
     return penalty;
