@@ -11,8 +11,9 @@ const { scoreRisk } = require("./scoring/scoreRisk");
 const { scorePreferences } = require("./scoring/scorePreferences");
 const { scoreFriendActivity } = require("./scoring/scoreFriendActivity");
 const { combineScores } = require("./scoring/combineScores");
+const { rankAndRecommend } = require("./rankAndRecommend");
 
-import { ExerciseMeta, ExerciseLog, RecommendationInput } from "./types";
+import { ExerciseMeta, ExerciseLog, RecommendationInput, ScoredExercise } from "./types";
 
 // Mock data for testing.
 
@@ -393,3 +394,39 @@ for (const ex of filtered) {
     console.log(ex.exerciseId, "finalScore =", scored.score, scored.components);
 }
 
+// Step 11 - rankAndRecommend.
+// Expected results: Primary - lat pulldown, squat, Alternatives - sit ups
+
+console.log("---------------- Step 11: rankAndRecommend ----------------");
+
+const scoredList: ScoredExercise[] = [];
+
+for (const ex of filtered) {
+
+    const stat = stats.get(ex.exerciseId);
+
+    const usage = scoreUsage(ex, stat);
+    const rest = scoreRest(ex, muscleHistory);
+    const variety = scoreVariety(ex, stat);
+    const difficulty = scoreDifficulty(ex, mockInput.userPreferences);
+    const risk = scoreRisk(ex, mockInput.userPreferences);
+    const preferences = scorePreferences(ex, mockInput.userPreferences);
+    const social = scoreFriendActivity(ex, mockInput);
+
+    const scored = combineScores(ex, {
+        usage,
+        rest,
+        variety,
+        difficulty,
+        risk,
+        preferences,
+        social,
+    });
+
+    scoredList.push(scored);
+}
+
+const result = rankAndRecommend(scoredList);
+
+console.log("Primary:", result.primary.map(scoredExercise => scoredExercise.exercise.exerciseId));
+console.log("Alternatives:", result.alternatives.map(scoredExercise => scoredExercise.exercise.exerciseId));
