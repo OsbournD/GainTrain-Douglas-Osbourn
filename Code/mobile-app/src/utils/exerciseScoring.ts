@@ -26,7 +26,11 @@ export function normaliseMuscleName(rawMuscle: string | null | undefined): strin
 
     if (muscleName.includes("trap")) return "traps";
     if (muscleName.includes("shoulder")) return "shoulders";
-    if (muscleName.includes("chest") || muscleName.includes("pec")) return "chest";
+    if (muscleName.includes("upper") && muscleName.includes("chest")) return "upper_chest";
+    if (muscleName.includes("mid") && muscleName.includes("chest")) return "mid_chest";
+    if (muscleName.includes("middle") && muscleName.includes("chest")) return "mid_chest";
+    if (muscleName.includes("low") && muscleName.includes("chest")) return "lower_chest";
+    if (muscleName.includes("chest") || muscleName.includes("pec")) return "mid_chest";
     if (muscleName.includes("lower") && muscleName.includes("back")) return "lower_back";
     if (muscleName.includes("upper") && muscleName.includes("back")) return "upper_back";
     if (muscleName.includes("mid") && muscleName.includes("back")) return "mid_back";
@@ -64,6 +68,9 @@ export function mapToBroadGroup(muscle: string): string {
     if (muscle === "traps") return "pull";
     if (muscle === "shoulders") return "push";
 
+    if (muscle === "upper_chest") return "push";
+    if (muscle === "mid_chest") return "push";
+    if (muscle === "lower_chest") return "push";
     if (muscle === "chest") return "push";
 
     if (muscle === "lower_back") return "core";
@@ -102,6 +109,9 @@ export function getMuscleWeight(muscle: string): number {
         hamstrings: 1.0,
         glutes: 1.0,
         back: 1.0,
+        upper_chest: 1.0,
+        mid_chest: 1.0,
+        lower_chest: 1.0,
         chest: 1.0,
         lats: 1.0,
         adductors: 1.0,

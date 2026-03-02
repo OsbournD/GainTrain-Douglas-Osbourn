@@ -21,7 +21,7 @@ export function recommend(input: RecommendationInput): RecommendationResult {
     // Build muscle history map.
     const muscleHistory = new Map<string, Date>();
     for (const log of input.logs) {
-        const ex = input.exercises.find(e => e.exerciseId === log.exerciseId);
+        const ex = input.exercises.find(e => e.id === log.exerciseId);
         if (!ex) continue;
 
         const last = log.loggedAt;

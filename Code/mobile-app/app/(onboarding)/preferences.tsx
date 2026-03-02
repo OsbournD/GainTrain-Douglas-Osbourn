@@ -28,8 +28,32 @@ export default function ExercisePreferences() {
         "Dumbbell Lateral Raise",
         "Leg Extension",
         "Leg Press",
-        "Barbell Curl",
+        "Barbell Bicep Curl",
     ];
+
+    // Map onboarding muscle groups to muscle keys.
+    const muscleGroupMap: Record<string, string[]> = {
+        Chest: ["upper_chest", "mid_chest", "lower_chest"],
+        Back: ["upper_back", "mid_back", "lower_back", "back"],
+        Shoulders: ["side_delts", "front_delts", "rear_delts", "shoulders"],
+        Arms: ["biceps", "triceps", "forearms"],
+        Legs: ["quads", "hamstrings", "glutes", "calves", "adductors", "abductors"],
+        Core: ["core"],
+    };
+
+    // Map onboarding exercise names to exercise ids.
+    const exerciseNameToId: Record<string, string> = {
+        "Bench Press": "barbell_bench_press",
+        "Squat": "barbell_back_squat",
+        "Deadlift": "conventional_barbell_deadlift",
+        "Lat Pulldown": "cable_lat_pulldown",
+        "Overhead Press": "barbell_overhead_press",
+        "Barbell Row": "barbell_row",
+        "Dumbbell Lateral Raise": "standing_dumbbell_lateral_raise",
+        "Leg Extension": "leg_extension",
+        "Leg Press": "leg_press",
+        "Barbell Bicep Curl": "barbell_bicep_curl",
+    };
 
     const [weightUnit, setWeightUnit] = useState<"kg" | "lbs" | null>(null);
     const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
@@ -98,6 +122,21 @@ export default function ExercisePreferences() {
     };
 
     const proceedToGoals = () => {
+
+        // Match high-level muscle labels into related system muscles.
+        const likedBodyParts = selectedMuscles.flatMap(muscle =>
+            muscleGroupMap[muscle] ?? []
+        );
+
+        // Map exercise names to exercise ids.
+        const likedExerciseIds = likedExercises
+            .map(name => exerciseNameToId[name])
+            .filter(Boolean);
+
+        const dislikedExerciseIds = dislikedExercises
+            .map(name => exerciseNameToId[name])
+            .filter(Boolean);
+
         router.push({
             pathname: '/questions/q4',
             params: {
@@ -105,9 +144,9 @@ export default function ExercisePreferences() {
                 q2,
                 q3,
                 level,
-                muscles: JSON.stringify(selectedMuscles),
-                likes: JSON.stringify(likedExercises),
-                dislikes: JSON.stringify(dislikedExercises),
+                muscles: JSON.stringify(likedBodyParts),
+                likes: JSON.stringify(likedExerciseIds),
+                dislikes: JSON.stringify(dislikedExerciseIds),
                 unit: weightUnit
             }
         });

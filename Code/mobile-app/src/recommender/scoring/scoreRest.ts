@@ -19,8 +19,35 @@ export function scoreRest(
     if (primaryLast) {
         const h = hoursSince(primaryLast);
 
-        if (h < 24) return -20; // Full penalty.
-        if (h < 48) return -10; // Half penalty.
+        if (h < 24) {
+            return -20; // Full penalty.
+        }
+        if (h < 48) {
+            return -10; // Half penalty.
+        }
+    }
+
+    // Cross-chest muscle logic (upper/mid/lower chest).
+    const chestGroups = ["upper_chest", "mid_chest", "lower_chest"];
+
+    // Backwards compatibility, old logs used "chest".
+    const normalisedPrimary = primary === "chest" ? "mid_chest" : primary;
+
+    if (chestGroups.includes(primary)) {
+        for (const group of chestGroups) {
+            if (group === primary) continue; // Skip exact matches.
+
+            const last = muscleHistory.get(group);
+            if (!last) continue;
+
+            const h = hoursSince(last);
+
+            if (h < 24) {
+                penalty -= 5;      // Light penalty.
+            } else if (h < 48) {
+                penalty -= 2.5;    // Half penalty.
+            }
+        }
     }
 
     // Secondary muscle logic with proportional penalties.
@@ -40,7 +67,8 @@ export function scoreRest(
     }
 
     if (secondaryTrained > 0) {
-        penalty = Math.min(penalty, -5 * secondaryTrained);
+        const secPenalty = -5 * secondaryTrained;
+        penalty = Math.min(penalty, secPenalty);
     }
 
     return penalty;
