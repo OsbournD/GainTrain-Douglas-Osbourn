@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput, Alert } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import DateTimePicker, { useDefaultStyles, DateType } from 'react-native-ui-datepicker';
 import dayjs from 'dayjs';
@@ -73,6 +73,8 @@ export default function workoutLogger() {
     const [endedAt, setEndedAt] = useState<Date | null>(null);
 
     const [username, setUsername] = useState<string | null>(null);
+
+    const { recommendedId } = useLocalSearchParams();
 
     const fetchExercises = async () => { // Fetch exercises from firestore
         try {
@@ -181,6 +183,47 @@ export default function workoutLogger() {
 
        loadDraft();
     }, [userUid]);
+
+    // Match recommended exercise id with existing exercise id.
+    useEffect(() => {
+        if (!recommendedId) return;
+        if (exerciseLibrary.length === 0) return;
+
+        const match = exerciseLibrary.find(ex => String(ex.exerciseId) === String(recommendedId));
+
+        if (!match) {
+            console.warn("Recommended exercise not found in exercise library:", recommendedId);
+            return;
+        }
+
+        // Prevent duplicates.
+        setExercises(prev => {
+            const exists = prev.some(e => e.id === match.id);
+            if (exists) return prev;
+
+            Alert.alert(
+                "Recommended Exercise Added",
+                `${match.name} was added to your session!`
+            );
+
+            return [
+                ...prev,
+                {
+                    id: match.id,
+                    name: match.name,
+                    primaryMuscle: match.primaryMuscle,
+                    secondaryMuscles: match.secondaryMuscles || [],
+                    difficulty: match.difficulty,
+                    sets: []
+                }
+            ];
+        });
+
+        if (match) {
+            router.setParams({ recommendedId: undefined });
+        }
+
+    }, [recommendedId, exerciseLibrary]);
 
     if (checkingLogin) {
         return (

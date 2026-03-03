@@ -19,6 +19,8 @@ export default function welcomeDashboard() {
 
     const [recommendations, setRecommendations] = useState(null);
     const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+    const [selectedRecommendation, setSelectedRecommendation] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
 
     useEffect(() => {
 
@@ -65,6 +67,22 @@ export default function welcomeDashboard() {
         }
 
         setLoadingRecommendations(false);
+    };
+
+    const openRecommendationModal = (exercise) => {
+        setSelectedRecommendation(exercise);
+        setModalVisible(true);
+    }
+
+    const closeRecommendationModal = () => {
+        setModalVisible(false);
+        setSelectedRecommendation(null);
+    }
+
+    const formatDifficulty = (value: any) => {
+        const num = Number(value);
+        if (!num || isNaN(num)) return "N/A";
+        return `${num}/5`;
     };
 
     const logoutClicked = async () => {
@@ -167,7 +185,7 @@ export default function welcomeDashboard() {
                             <TouchableOpacity
                                 key = { index }
                                 style = { styles.suggestionCard }
-                                onPress = { () => console.log("Smart suggestion clicked:", ex.exercise.exerciseId) }
+                                onPress = { () => openRecommendationModal(ex) }
                             >
                                 <Text
                                     style = { styles.suggestionText }
@@ -209,7 +227,64 @@ export default function welcomeDashboard() {
 
             <View style = { styles.spacer }/>
 
+            { modalVisible && selectedRecommendation && (
+                <View style = { styles.modalOverlay }>
+                    <View style = { styles.modalContainer }>
+
+                        <ScrollView contentContainerStyle = {{ paddingBottom: 20 }}>
+
+                            <Text style = { styles.modalTitle }>{ selectedRecommendation.exercise.name }</Text>
+
+                            <Text style = { styles.modalSubtitle }>Why was this recommended?</Text>
+                            <Text style = { styles.modalText }>
+                                { selectedRecommendation.explanation }
+                            </Text>
+
+                            <Text style = { styles.modalSubtitle }>Primary Muscle Targeted:</Text>
+                            <Text style = { styles.modalText }>{ selectedRecommendation.exercise.primaryMuscle }</Text>
+
+                            { selectedRecommendation.exercise.secondaryMuscles && (
+                                <>
+                                    <Text style = { styles.modalSubtitle }>Secondary Muscles Targeted:</Text>
+                                    <Text style = { styles.modalText }>
+                                        { selectedRecommendation.exercise.secondaryMuscles.join(', ') }
+                                    </Text>
+                                </>
+                            )}
+
+                            <Text style = { styles.modalSubtitle }>Difficulty:</Text>
+                            <Text style = { styles.modalText }> { formatDifficulty(selectedRecommendation.exercise.difficulty) } </Text>
+
+                            <TouchableOpacity
+                                style = { styles.modalButton }
+                                onPress = { () => {
+                                    closeRecommendationModal();
+                                    router.push({
+                                        pathname: '/(workout)/logger',
+                                        params: {
+                                            recommendedId: selectedRecommendation.exercise.exerciseId
+                                        }
+                                    });
+                                }}
+                            >
+                                <Text style = { styles.modalButtonText }>Add to New Session</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style = { styles.modalCloseButton }
+                                onPress = { closeRecommendationModal }
+                            >
+                                <Text style = { styles.modalCloseButtonText }>Close</Text>
+                            </TouchableOpacity>
+
+                        </ScrollView>
+
+                    </View>
+                </View>
+            )}
+
         </View>
+
     );
 }
 
@@ -399,6 +474,68 @@ const styles = StyleSheet.create({
     bottomButtonsContainer: {
         paddingBottom: 10,
         backgroundColor: '#E6F3FF',
-    }
+    },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    modalContainer: {
+        backgroundColor: 'white',
+        width: '100%',
+        borderRadius: 16,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 6,
+    },
+    modalTitle: {
+        fontSize: 26,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        textAlign: 'center',
+        color: '#C47CF8',
+    },
+    modalSubtitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginTop: 10,
+    },
+    modalText: {
+        fontSize: 16,
+        marginTop: 4,
+    },
+    modalButton: {
+        backgroundColor: 'green',
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginTop: 20,
+        alignItems: 'center',
+    },
+    modalButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    modalCloseButton: {
+        backgroundColor: '#FF4646',
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginTop: 10,
+        alignItems: 'center',
+    },
+    modalCloseButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
 
 });
