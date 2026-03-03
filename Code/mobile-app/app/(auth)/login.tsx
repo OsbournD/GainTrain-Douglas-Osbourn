@@ -81,45 +81,49 @@ export default function LoginScreen() {
 
         <View style = { styles.screen }>
 
-            <View style = { styles.topSection }>
+            <ScrollView>
 
-                <Image
-                    source = { require('@/assets/gaintrain-images/gaintrain-icon.jpeg') }
-                    style = { styles.logo }
-                />
+                <View style = { styles.topSection }>
 
-            </View>
+                    <Image
+                        source = { require('@/assets/gaintrain-images/gaintrain-icon.jpeg') }
+                        style = { styles.logo }
+                    />
 
-            <View style = { styles.card }>
+                </View>
 
-                <Text style = { styles.loginTitle }> Login </Text>
+                <View style = { styles.card }>
 
-                <TextInput
-                    style = { styles.input }
-                    placeholder = "Enter a username"
-                    value = { username }
-                    onChangeText = { setUsername }
-                />
+                    <Text style = { styles.loginTitle }> Login </Text>
 
-                <TextInput
-                    style = { styles.input }
-                    placeholder = "Enter a password"
-                    secureTextEntry
-                    value = { password }
-                    onChangeText = { setPassword }
-                />
+                    <TextInput
+                        style = { styles.input }
+                        placeholder = "Enter a username"
+                        value = { username }
+                        onChangeText = { setUsername }
+                    />
 
-                <TouchableOpacity style = { styles.loginButton } onPress = { loginClicked }>
-                    <Text style = { styles.loginButtonText }> LOGIN </Text>
-                </TouchableOpacity>
+                    <TextInput
+                        style = { styles.input }
+                        placeholder = "Enter a password"
+                        secureTextEntry
+                        value = { password }
+                        onChangeText = { setPassword }
+                    />
 
-                <TouchableOpacity style = { styles.signupLinkContainer }>
-                    <Link href = "/(auth)/signup">
-                        <Text style = { styles.signupLink }> Make an Account </Text>
-                    </Link>
-                </TouchableOpacity>
+                    <TouchableOpacity style = { styles.loginButton } onPress = { loginClicked }>
+                        <Text style = { styles.loginButtonText }> LOGIN </Text>
+                    </TouchableOpacity>
 
-            </View>
+                    <TouchableOpacity style = { styles.signupLinkContainer }>
+                        <Link href = "/(auth)/signup">
+                            <Text style = { styles.signupLink }> Make an Account </Text>
+                        </Link>
+                    </TouchableOpacity>
+
+                </View>
+
+            </ScrollView>
 
         </View>
     );
@@ -132,6 +136,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
     },
     topSection: {
+        marginTop: 10,
+        marginBottom: 40,
         height: '45%',
         justifyContent: 'center',
         alignItems: 'center',

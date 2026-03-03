@@ -73,64 +73,69 @@ export default function SignUpScreen() {
 
         <View style = { styles.screen }>
 
-            <View style = { styles.topSection }>
+            <ScrollView>
 
-                <Image
-                  source = { require('@/assets/gaintrain-images/gaintrain-icon.jpeg') }
-                  style = { styles.logo }
-                />
+                <View style = { styles.topSection }>
 
-            </View>
+                    <Image
+                      source = { require('@/assets/gaintrain-images/gaintrain-icon.jpeg') }
+                      style = { styles.logo }
+                    />
 
-            <View style = { styles.card }>
+                </View>
 
-                <Text style = { styles.signupTitle }>Sign Up</Text>
+                <View style = { styles.card }>
 
-                <TextInput style = { styles.input } placeholder = "Enter a username" value = { username } onChangeText = { setUsername } />
+                    <Text style = { styles.signupTitle }>Sign Up</Text>
 
-                <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
+                    <TextInput style = { styles.input } placeholder = "Enter a username" value = { username } onChangeText = { setUsername } />
 
-                <TextInput style = { styles.input } placeholder = "Confirm password" secureTextEntry value = { confirmPassword } onChangeText = { setConfirmPassword } />
+                    <TextInput style = { styles.input } placeholder = "Enter a password" secureTextEntry value = { password } onChangeText = { setPassword } />
 
-                <TouchableOpacity style = { styles.signupButton } onPress = { signUpClicked }>
-                    <Text style = { styles.signupButtonText }> CREATE ACCOUNT </Text>
-                </TouchableOpacity>
+                    <TextInput style = { styles.input } placeholder = "Confirm password" secureTextEntry value = { confirmPassword } onChangeText = { setConfirmPassword } />
 
-                <TouchableOpacity style = { styles.loginLinkContainer }>
-                  <Link href = "/(auth)/login">
-                      <Text style = { styles.loginLink }> Already have an account? Log in </Text>
-                  </Link>
-                </TouchableOpacity>
+                    <TouchableOpacity style = { styles.signupButton } onPress = { signUpClicked }>
+                        <Text style = { styles.signupButtonText }> CREATE ACCOUNT </Text>
+                    </TouchableOpacity>
 
-            </View>
+                    <TouchableOpacity style = { styles.loginLinkContainer }>
+                      <Link href = "/(auth)/login">
+                          <Text style = { styles.loginLink }> Already have an account? Log in </Text>
+                      </Link>
+                    </TouchableOpacity>
+
+                </View>
 
 
-            {__DEV__ && (
+                {__DEV__ && (
 
-                <>
+                    <>
 
-                  <View style={ styles.buttonContainer }>
-                      <Button
-                          title = "Add New Test User"
-                          onPress = { async() => {
-                              const result = await addTestUser();
-                              console.log("Test user result:", result);
-                          }}
-                      />
-                  </View>
+                      <View style={ styles.buttonContainer }>
+                          <Button
+                              title = "Add New Test User"
+                              onPress = { async() => {
+                                  const result = await addTestUser();
+                                  console.log("Test user result:", result);
+                              }}
+                          />
+                      </View>
 
-                  <View style={ styles.buttonContainer }>
-                      <Button
-                          title = "Seed Data"
-                          onPress = { async() => {
-                              const result = await seedTestData();
-                              console.log("Seed result:", result);
-                          }}
-                      />
-                  </View>
+                      <View style={ styles.buttonContainer }>
+                          <Button
+                              title = "Seed Data"
+                              onPress = { async() => {
+                                  const result = await seedTestData();
+                                  console.log("Seed result:", result);
+                              }}
+                          />
+                      </View>
 
-                </>
-            )}
+                    </>
+                )}
+
+            </ScrollView>
+
         </View>
 
   );
@@ -144,6 +149,8 @@ const styles = StyleSheet.create({
     },
     topSection: {
         height: '35%',
+        marginTop: 10,
+        marginBottom: 40,
         justifyContent: 'center',
         alignItems: 'center',
     },

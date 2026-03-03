@@ -69,7 +69,7 @@ export default function settingsScreen() {
 
             </ThemedView>
 
-            <View style={{ marginTop: 20 }}>
+            <View style = {{ marginTop: 20 }}>
 
                 <View style = { styles.card }>
 

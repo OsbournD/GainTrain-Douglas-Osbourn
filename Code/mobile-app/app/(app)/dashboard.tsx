@@ -129,53 +129,69 @@ export default function welcomeDashboard() {
 
             </View>
 
-            <ScrollView>
+            <ScrollView contentContainerStyle = {{ flexGrow: 1, paddingBottom: 20 }}>
 
-                <View style = { styles.spacer }/>
+                <View style = {{ flex: 1 }}>
 
-                <ThemedView style = { styles.card }>
-                    <ThemedText style = { styles.welcomeText }>Welcome, {username}</ThemedText>
-                </ThemedView>
+                    <View style = { styles.spacer }/>
 
-                <ThemedView style = { styles.card }>
-                    <ThemedText style = { styles.headingText }>Recently You...</ThemedText>
-                    <ThemedText style = { styles.recentText }>Work in progress...</ThemedText>
+                    <ThemedView style = { styles.card }>
+                        <ThemedText style = { styles.welcomeText }>Welcome, {username}</ThemedText>
+                        <ThemedText style = { styles.headingText }>Recently You...</ThemedText>
+                        <ThemedText style = { styles.recentText }>Work in progress...</ThemedText>
+                        <ThemedText style = { styles.recentText }>i.e. Logged 3 workouts!</ThemedText>
 
-                </ThemedView>
+                    </ThemedView>
 
-                <ThemedView style = { styles.card }>
-                    <View style = { styles.suggestionsHeaderRow }>
-                        <ThemedText style = { styles.headingText }>Smart Suggestions</ThemedText>
+                    <ThemedView style = { styles.card }>
+                        <View style = { styles.suggestionsHeaderRow }>
+                            <ThemedText style = { styles.headingText }>Exercise Suggestions</ThemedText>
 
-                        <TouchableOpacity
-                            style = { styles.refreshButton }
-                            onPress = { refreshSuggestions }
-                        >
-                            <Text style = { styles.refreshButtonText }>REFRESH</Text>
-                        </TouchableOpacity>
-                    </View>
+                            <TouchableOpacity
+                                style = { styles.refreshButton }
+                                onPress = { refreshSuggestions }
+                            >
+                                <Text style = { styles.refreshButtonText }>REFRESH</Text>
+                            </TouchableOpacity>
+                        </View>
 
-                    { loadingRecommendations && (
-                        <Text style = {{ textAlign: 'center', padding: 10 }}>Loading suggestions...</Text>
-                    )}
+                        { loadingRecommendations && (
+                            <Text style = {{ textAlign: 'center', padding: 10 }}>Loading suggestions...</Text>
+                        )}
 
-                    { !loadingRecommendations && recommendations && recommendations.primary.length === 0 && (
-                        <Text style = {{ textAlign: 'center', padding: 10 }}>No suggestions available.</Text>
-                    )}
+                        { !loadingRecommendations && recommendations && recommendations.primary.length === 0 && (
+                            <Text style = {{ textAlign: 'center', padding: 10 }}>No suggestions available.</Text>
+                        )}
 
-                    { !loadingRecommendations && recommendations && recommendations.primary.slice(0, 2).map((ex, index) => (
-                        <TouchableOpacity
-                            key = { index }
-                            style = { styles.suggestionCard }
-                            onPress = { () => console.log("Smart suggestion clicked:", ex.exercise.exerciseId) }
-                        >
-                            <Text style = { styles.suggestionText }>{ ex.exercise.name }</Text>
-                            <Text style = {{ color: 'white', fontSize: 12, marginTop: 4 }}>
-                                { ex.explanation }
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ThemedView>
+                        { !loadingRecommendations && recommendations && recommendations.primary.slice(0, 2).map((ex, index) => (
+                            <TouchableOpacity
+                                key = { index }
+                                style = { styles.suggestionCard }
+                                onPress = { () => console.log("Smart suggestion clicked:", ex.exercise.exerciseId) }
+                            >
+                                <Text
+                                    style = { styles.suggestionText }
+                                    numberOfLines = { 1 }
+                                    ellipsizeMode = "tail"
+                                >
+                                    { ex.exercise.name }
+                                </Text>
+                                <Text
+                                    style = {{ color: 'white', fontSize: 12, marginTop: 4 }}
+                                    numberOfLines = { 2 }
+                                    ellipsizeMode = "tail"
+                                >
+                                    { ex.explanation }
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ThemedView>
+
+                </View>
+
+            </ScrollView>
+
+            <View style = { styles.bottomButtonsContainer }>
 
                 <TouchableOpacity style = { styles.primaryButton } onPress = { () => startWorkoutClicked() } >
                     <Text style = { styles.primaryButtonText }> Start Workout </Text>
@@ -189,9 +205,9 @@ export default function welcomeDashboard() {
                     </TouchableOpacity>
                 </View>
 
-                <View style = { styles.spacer }/>
+            </View>
 
-            </ScrollView>
+            <View style = { styles.spacer }/>
 
         </View>
     );
@@ -275,6 +291,8 @@ const styles = StyleSheet.create({
         margin: 6,
         borderRadius: 12,
         alignItems: 'center',
+        justifyContent: 'center',
+        height: 75,
         overflow: 'hidden',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
@@ -289,7 +307,7 @@ const styles = StyleSheet.create({
     },
     primaryButton: {
         backgroundColor: '#3EEF7C',
-        paddingVertical: 28,
+        paddingVertical: 24,
         borderRadius: 20,
         marginTop: 16,
         marginVertical: 8,
@@ -303,7 +321,7 @@ const styles = StyleSheet.create({
     },
     secondaryButton: {
         backgroundColor: '#46C3F3',
-        paddingVertical: 30,
+        paddingVertical: 24,
         flex: 1,
         borderRadius: 16,
         marginHorizontal: 8,
@@ -348,6 +366,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'center',
         lineHeight: 25,
+        marginBottom: 10,
     },
     recentText: {
         textAlign: 'center',
@@ -377,5 +396,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 4,
     },
+    bottomButtonsContainer: {
+        paddingBottom: 10,
+        backgroundColor: '#E6F3FF',
+    }
 
 });
