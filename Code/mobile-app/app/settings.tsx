@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, Switch } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
 import { logoutUser } from '../src/firestore';
 import { query, collection, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../src/firebase";
+
+import { registerForPush } from '../app/_layout';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -236,27 +238,40 @@ export default function settingsScreen() {
 
                 <View style = { styles.card }>
 
-                    <ThemedText style = { styles.sectionTitle }>Notifications</ThemedText>
-
                     <View style = { styles.toggleRow }>
 
-                        <Text style = { styles.rowText }>Workout Reminders</Text>
-                        <View style = { styles.placeholderSwitch } />
+                        <ThemedText style = { styles.sectionTitle }>Notifications</ThemedText>
+                        <Switch
+                            value = { user?.notifications?.enabled ?? true }
+                            onValueChange = { async (value) => {
+                                await updateUser({
+                                    notifications: {
+                                        ...user.notifications,
+                                        enabled: value
+                                    }
+                                });
+
+                                if (value === true) {
+                                    // Turn notifications on immediately.
+                                    await registerForPush();
+                                } else {
+                                    // Turn notifications off immediately.
+                                    const ref = doc(db, "users", user.id);
+                                    await updateDoc(ref, { pushToken: null });
+                                }
+
+                            }}
+
+                        />
 
                     </View>
 
-                    <View style = { styles.toggleRow }>
-
-                        <Text style = { styles.rowText }>Friend Activity</Text>
-                        <View style = { styles.placeholderSwitch } />
-
-                    </View>
 
                 </View>
 
                 <View style = { styles.card }>
 
-                    <ThemedText style = { styles.sectionTitle }>App Info</ThemedText>
+                    <ThemedText style = { styles.sectionTitle }>App Info (WIP)</ThemedText>
 
                     <TouchableOpacity style = { styles.rowButton }>
                         <Text style = { styles.rowText }>Terms of Service</Text>

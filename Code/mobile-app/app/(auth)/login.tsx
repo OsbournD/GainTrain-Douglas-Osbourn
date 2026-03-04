@@ -41,18 +41,23 @@ export default function LoginScreen() {
 
                 if (!userDocs.empty) {
                     const userRef = doc(db, "users", userDocs.docs[0].id);
-
-                    await updateDoc(userRef, { // Save token to firestore.
-                        pushToken: token
-                    });
-
                     const userData = userDocs.docs[0].data();
+                    const prefs = userData.notifications || {};
+
+                    if (prefs.enabled === false) {
+                        console.log("Notifications disabled, not storing push token.");
+                        await updateDoc(userRef, { pushToken: null });
+                    } else {
+                        await updateDoc(userRef, {  // Save token to firestore.
+                            pushToken: token
+                        });
+                        console.log("Stored push token for: ", username);
+                    }
 
                     await AsyncStorage.setItem('loggedInUid', userData.uid);
 
                     onboardingCompleted = userData.onboardingCompleted === true;
 
-                    console.log("Stored push token for: ", username);
                 } else {
                     console.log("No Firestore user found for: ", username);
                 }

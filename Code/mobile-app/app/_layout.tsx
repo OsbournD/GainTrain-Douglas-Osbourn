@@ -20,79 +20,95 @@ Notifications.setNotificationHandler({
     }),
 });
 
+export const registerForPush = async () => {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync(); // check current permission status.
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync(); // if not granted, request again.
+        finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') {
+        console.log("Notification permissions not granted."); // if still not granted, stop.
+        return;
+    }
+
+    const tokenData = await Notifications.getExpoPushTokenAsync(); // get expo push token.
+    const token = tokenData.data;
+    console.log("Expo push token: ", tokenData.data);
+
+    const currentUser = await AsyncStorage.getItem('loggedInUser');
+
+    if (currentUser) {
+        const usersRef = collection(db, "users");
+        const usersQuery = query(usersRef, where("username", "==", currentUser));
+        const userDocs = await getDocs(usersQuery);
+
+        if (!userDocs.empty) {
+
+            // userRef must be defined before checking preferences.
+            const userRef = doc(db, "users", userDocs.docs[0].id);
+            const userData = userDocs.docs[0].data();
+            const prefs = userData.notifications || {};
+
+            // If notifications disabled, delete token and stop.
+            if (prefs.enabled === false) {
+                console.log("Notifications disabled, not storing push token.");
+                await updateDoc(userRef, { pushToken: null });
+                return;
+            }
+
+            // Notifications enabled, store token.
+            await updateDoc(userRef, {
+                pushToken: token
+            });
+
+            console.log("Stored push token for: ", currentUser);
+
+        } else {
+            console.log("No Firestore user found for: ", currentUser);
+        }
+
+    } else {
+        console.log("No logged in user, skipping storing token.");
+    }
+
+}
+
 export default function RootLayout() {
 
     const colorScheme = useColorScheme();
 
     useEffect(() => {
-      const registerForPush = async () => {
-          const { status: existingStatus } = await Notifications.getPermissionsAsync(); // check current permission status.
-          let finalStatus = existingStatus;
 
-          if (existingStatus !== 'granted') {
-              const { status } = await Notifications.requestPermissionsAsync(); // if not granted, request again.
-              finalStatus = status;
-          }
+        registerForPush();
 
-          if (finalStatus !== 'granted') {
-              console.log("Notification permissions not granted."); // if still not granted, stop.
-              return;
-          }
+        const onReceiveNotification = Notifications.addNotificationReceivedListener(notification => {
+            console.log("Notification received: ", notification);
+        })
 
-          const tokenData = await Notifications.getExpoPushTokenAsync(); // get expo push token.
-          const token = tokenData.data;
-          console.log("Expo push token: ", tokenData.data);
+        const onPressNotification = Notifications.addNotificationResponseReceivedListener(response => {
+            console.log("Notification tapped: ", response);
+        })
 
-          const currentUser = await AsyncStorage.getItem('loggedInUser');
-
-          if (currentUser) {
-              const usersRef = collection(db, "users");
-              const usersQuery = query(usersRef, where("username", "==", currentUser));
-              const userDocs = await getDocs(usersQuery);
-
-              if (!userDocs.empty) {
-                  const userRef = doc(db, "users", userDocs.docs[0].id);
-
-                  await updateDoc(userRef, { // save token to firestore.
-                      pushToken: token
-                  });
-                  console.log("Stored push token for: ", currentUser);
-              } else {
-                  console.log("No Firestore user found for: ", currentUser);
-              }
-
-          } else {
-              console.log("No logged in user, skipping storing token.");
-          }
-      }
-
-      const onReceiveNotification = Notifications.addNotificationReceivedListener(notification => {
-          console.log("Notification received: ", notification);
-      })
-
-      const onPressNotification = Notifications.addNotificationResponseReceivedListener(response => {
-          console.log("Notification tapped: ", response);
-      })
-
-      registerForPush();
-
-      return () => {
-          onReceiveNotification.remove();
-          onPressNotification.remove();
-      }
+        return () => {
+            onReceiveNotification.remove();
+            onPressNotification.remove();
+        }
 
     }, []);
 
     return (
         <ThemeProvider value={ colorScheme === 'dark' ? DarkTheme : DefaultTheme }>
-          <Stack screenOptions = {{ headerShown: false }}>
+            <Stack screenOptions = {{ headerShown: false }}>
 
-              <Stack.Screen name = "(app)" />
+                <Stack.Screen name = "(app)" />
 
-              <Stack.Screen name = "(auth)" />
+                <Stack.Screen name = "(auth)" />
 
-          </Stack>
-          <StatusBar style="auto" />
+            </Stack>
+            <StatusBar style="auto" />
         </ThemeProvider>
     );
 
