@@ -144,6 +144,7 @@ export default function ExercisePreferences() {
                 q2,
                 q3,
                 level,
+                preferredMuscles: JSON.stringify(selectedMuscles),
                 muscles: JSON.stringify(likedBodyParts),
                 likes: JSON.stringify(likedExerciseIds),
                 dislikes: JSON.stringify(dislikedExerciseIds),

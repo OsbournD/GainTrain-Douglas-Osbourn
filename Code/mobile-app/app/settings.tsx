@@ -16,6 +16,45 @@ export default function settingsScreen() {
 
     const [user, setUser] = useState(null);
 
+    const [showExercisePrefs, setShowExercisePrefs] = useState(false);
+    const [selectedMuscles, setSelectedMuscles] = useState<string[]>(user?.preferredMuscles || []);
+    const [likedExercises, setLikedExercises] = useState<string[]>(user?.likedExercises || []);
+    const [dislikedExercises, setDislikedExercises] = useState<string[]>(user?.dislikedExercises || []);
+
+    const muscleGroupMap = {
+        Chest: ["upper_chest", "mid_chest", "lower_chest"],
+        Back: ["upper_back", "mid_back", "lower_back", "back"],
+        Shoulders: ["side_delts", "front_delts", "rear_delts", "shoulders"],
+        Arms: ["biceps", "triceps", "forearms"],
+        Legs: ["quads", "hamstrings", "glutes", "calves", "adductors", "abductors"],
+        Core: ["core"],
+    };
+
+    const exerciseNameToId = {
+        "Bench Press": "barbell_bench_press",
+        "Squat": "barbell_back_squat",
+        "Deadlift": "conventional_barbell_deadlift",
+        "Lat Pulldown": "cable_lat_pulldown",
+        "Overhead Press": "barbell_overhead_press",
+        "Barbell Row": "barbell_row",
+        "Dumbbell Lateral Raise": "standing_dumbbell_lateral_raise",
+        "Leg Extension": "leg_extension",
+        "Leg Press": "leg_press",
+        "Barbell Bicep Curl": "barbell_bicep_curl",
+    };
+
+    // Reverse maps.
+    const reverseMuscleMap = {};
+    Object.entries(muscleGroupMap).forEach(([group, keys]) => {
+        keys.forEach(key => {
+            reverseMuscleMap[key] = group;
+        });
+    });
+
+    const idToExerciseName = Object.fromEntries(
+        Object.entries(exerciseNameToId).map(([name, id]) => [id, name])
+    );
+
     useEffect(() => {
         const loadUser = async () => {
             const storedUser = await AsyncStorage.getItem('loggedInUser');
@@ -31,6 +70,33 @@ export default function settingsScreen() {
 
         loadUser();
     }, []);
+
+    useEffect(() => {
+        if (user) {
+
+            const dedupe = (arr) => [...new Set(arr || [])];
+
+            // Load generalised muscle groups.
+            const initialMuscles = dedupe(user.preferredMuscles || []);
+            setSelectedMuscles(initialMuscles);
+
+            // Convert exercise ids to names.
+            const initialLikes = dedupe(
+                (user.likedExercises || [])
+                    .map(id => idToExerciseName[id])
+                    .filter(Boolean)
+            );
+
+            const initialDislikes = dedupe(
+                (user.dislikedExercises || [])
+                    .map(id => idToExerciseName[id])
+                    .filter(Boolean)
+            );
+
+            setLikedExercises(initialLikes);
+            setDislikedExercises(initialDislikes);
+        }
+    }, [user]);
 
     useEffect(() => {
         const checkLogin = async () => {
@@ -103,10 +169,10 @@ export default function settingsScreen() {
 
                 <View style = { styles.card }>
 
-                    <ThemedText style={ styles.sectionTitle }>Account</ThemedText>
+                    <ThemedText style = { styles.sectionTitle }>Account (WIP)</ThemedText>
 
                     <TouchableOpacity style = { styles.rowButton }>
-                        <Text style={styles.rowText}>Edit Profile</Text>
+                        <Text style = { styles.rowText }>Edit Profile</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style = { styles.rowButton }>
@@ -159,6 +225,13 @@ export default function settingsScreen() {
                         </View>
                     </View>
 
+                    <TouchableOpacity
+                        style = { styles.rowButton }
+                        onPress={ () => setShowExercisePrefs(true) }
+                    >
+                        <Text style = { styles.rowText }>Exercise Preferences</Text>
+                    </TouchableOpacity>
+
                 </View>
 
                 <View style = { styles.card }>
@@ -206,6 +279,138 @@ export default function settingsScreen() {
                 </View>
 
             </ScrollView>
+
+            { showExercisePrefs && (
+
+                <View style = { styles.modalOverlay }>
+
+                    <View style = { styles.modalCard }>
+
+                        <Text style = { styles.modalTitle }>Exercise Preferences</Text>
+
+                        <ScrollView style = {{ maxHeight: 400 }}>
+
+                            <Text style = { styles.modalLabel }>Muscle Groups You Enjoy</Text>
+
+                            { ["Chest","Back","Shoulders","Arms","Legs","Core"].map((muscle, index) => (
+
+                                <TouchableOpacity
+                                    key = { index }
+                                    style = {[
+                                        styles.optionButton,
+                                        selectedMuscles.includes(muscle) && styles.optionSelected
+                                    ]}
+                                    onPress = { () => {
+                                        if (selectedMuscles.includes(muscle)) {
+                                            setSelectedMuscles(selectedMuscles.filter(m => m !== muscle));
+                                        } else {
+                                            setSelectedMuscles([...selectedMuscles, muscle]);
+                                        }
+                                    }}
+                                >
+                                    <Text style = { styles.optionText }>{ muscle }</Text>
+                                </TouchableOpacity>
+
+                            ))}
+
+                            <Text style = { styles.modalLabel }>Exercise Likes / Dislikes</Text>
+
+                            { Object.keys(exerciseNameToId).map((exercise, index) => (
+
+                                <View key = { index } style = { styles.exerciseRow }>
+
+                                    <Text style = { styles.exerciseText }>{ exercise }</Text>
+
+                                    <View style = { styles.exerciseButtons }>
+
+                                        <TouchableOpacity
+                                            style = {[
+                                                styles.likeButton,
+                                                likedExercises.includes(exercise) && styles.likeSelected
+                                            ]}
+                                            onPress = { () => {
+
+                                                if (likedExercises.includes(exercise)) {
+                                                    setLikedExercises(likedExercises.filter(e => e !== exercise));
+                                                } else {
+                                                    setLikedExercises([...likedExercises, exercise]);
+                                                    setDislikedExercises(dislikedExercises.filter(e => e !== exercise));
+                                                }
+                                            }}
+                                        >
+                                            <Text style = { styles.likeDislikeText }>Like</Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style = {[
+                                                styles.dislikeButton,
+                                                dislikedExercises.includes(exercise) && styles.dislikeSelected
+                                            ]}
+                                            onPress = { () => {
+                                                if (dislikedExercises.includes(exercise)) {
+                                                    setDislikedExercises(dislikedExercises.filter(e => e !== exercise));
+                                                } else {
+                                                    setDislikedExercises([...dislikedExercises, exercise]);
+                                                    setLikedExercises(likedExercises.filter(e => e !== exercise));
+                                                }
+
+                                            }}
+                                        >
+                                            <Text style = { styles.likeDislikeText }>Dislike</Text>
+                                        </TouchableOpacity>
+
+                                    </View>
+
+                                </View>
+
+                            ))}
+
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style = { styles.modalButton }
+                            onPress = { async () => {
+
+                                // Convert generalised muscles to specific.
+                                const likedBodyParts = selectedMuscles.flatMap(muscle =>
+                                    muscleGroupMap[muscle] || []
+                                );
+
+                                // Convert names to ids.
+                                const likedIds = likedExercises.map(name => exerciseNameToId[name]);
+                                const dislikedIds = dislikedExercises.map(name => exerciseNameToId[name]);
+
+                                // De-duplicate everything.
+                                const uniqueMuscles = [...new Set(selectedMuscles)];
+                                const uniqueBodyParts = [...new Set(likedBodyParts)];
+                                const uniqueLikes = [...new Set(likedIds)];
+                                const uniqueDislikes = [...new Set(dislikedIds)];
+
+                                await updateUser({
+                                    preferredMuscles: uniqueMuscles,
+                                    likedBodyParts: uniqueBodyParts,
+                                    likedExercises: uniqueLikes,
+                                    dislikedExercises: uniqueDislikes
+                                });
+
+                                setShowExercisePrefs(false);
+                            }}
+                        >
+                            <Text style = { styles.modalCloseButtonText }>Save</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style = { styles.modalCloseButton }
+                            onPress = { () => setShowExercisePrefs(false) }
+                        >
+                            <Text style = { styles.modalCloseButtonText }>Cancel</Text>
+                        </TouchableOpacity>
+
+                    </View>
+
+                </View>
+
+            )}
 
         </View>
     );
@@ -364,6 +569,134 @@ const styles = StyleSheet.create({
     },
     unitButtonTextActive: {
         color: "white",
+    },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        zIndex: 999,
+    },
+    modalCard: {
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 20,
+        width: '100%',
+        maxHeight: '80%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        elevation: 6,
+    },
+    modalTitle: {
+        fontSize: 26,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+    modalLabel: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+        marginTop: 10,
+    },
+    modalValue: {
+        fontSize: 16,
+        color: '#646262',
+        marginBottom: 6,
+    },
+    optionButton: {
+        backgroundColor: 'white',
+        padding: 14,
+        borderRadius: 10,
+        marginVertical: 6,
+        marginHorizontal: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 4,
+    },
+    optionSelected: {
+        borderWidth: 2,
+        borderColor: '#24C3FF',
+    },
+    optionText: {
+        fontSize: 16,
+        color: '#646262',
+    },
+    exerciseRow: {
+        backgroundColor: 'white',
+        padding: 14,
+        borderRadius: 10,
+        marginVertical: 6,
+        marginHorizontal: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    exerciseText: {
+        fontSize: 16,
+        color: '#646262',
+    },
+    exerciseButtons: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    likeButton: {
+        padding: 10,
+        borderRadius: 8,
+        backgroundColor: '#E6F3FF',
+    },
+    dislikeButton: {
+        padding: 10,
+        borderRadius: 8,
+        backgroundColor: '#FFE6E6',
+    },
+    likeSelected: {
+        backgroundColor: '#52ABFF',
+    },
+    dislikeSelected: {
+        backgroundColor: '#FF6B6B',
+    },
+    likeDislikeText: {
+        fontSize: 16,
+    },
+    modalButton: {
+        backgroundColor: 'green',
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginTop: 20,
+        alignItems: 'center',
+    },
+    modalButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    modalCloseButton: {
+        backgroundColor: '#FF4646',
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginTop: 10,
+        alignItems: 'center',
+    },
+    modalCloseButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 
 });

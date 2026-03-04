@@ -7,7 +7,7 @@ export default function Question4() {
     const router = useRouter();
 
     const params = useLocalSearchParams();
-    const { q1, q2, q3, level, muscles, likes, dislikes, calculatedLevel, score, unit } = params;
+    const { q1, q2, q3, level, muscles, preferredMuscles, likes, dislikes, calculatedLevel, score, unit } = params;
 
     const [selected, setSelected] = useState<string | null>(null);
 
@@ -75,6 +75,7 @@ export default function Question4() {
                             q3,
                             level,
                             muscles,
+                            preferredMuscles,
                             likes,
                             dislikes,
                             unit,
