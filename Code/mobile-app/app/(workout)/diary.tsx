@@ -10,6 +10,8 @@ import { logoutUser } from '../src/firestore';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { useFocusEffect } from '@react-navigation/native';
+
 export default function workoutDiary() {
 
     const router = useRouter();
@@ -24,6 +26,8 @@ export default function workoutDiary() {
     const [loadingLogs, setLoadingLogs] = useState(false);
 
     const [userUid, setUserUid] = useState<string | null>(null);
+
+    const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
 
     useEffect(() => {
         const fetchSessions = async () => { // Fetch logged in users sessions.
@@ -51,6 +55,33 @@ export default function workoutDiary() {
 
     }, [userUid]);
 
+    // Refresh preferences if user goes to settings and back etc.
+    useFocusEffect(
+        React.useCallback(() => {
+            const refreshUnitPreference = async () => {
+                const storedUser = await AsyncStorage.getItem('loggedInUser');
+                if (!storedUser) return;
+
+                const usersQuery = query(
+                    collection(db, "users"),
+                    where("username", "==", storedUser)
+                );
+
+                const snapshot = await getDocs(usersQuery);
+
+                if (!snapshot.empty) {
+                    const userData = snapshot.docs[0].data();
+
+                    if (userData.weightUnitPreferences) {
+                        setWeightUnit(userData.weightUnitPreferences);
+                    }
+                }
+            };
+
+            refreshUnitPreference();
+        }, [])
+    );
+
     useEffect(() => {
         const checkLogin = async () => {
             const storedUser = await AsyncStorage.getItem('loggedInUser');
@@ -71,6 +102,11 @@ export default function workoutDiary() {
             if (!snapshot.empty) {  // Get users uid.
                 const userData = snapshot.docs[0].data();
                 setUserUid(userData.uid);
+
+                if (userData.weightUnitPreferences) {
+                    setWeightUnit(userData.weightUnitPreferences);
+                }
+
             }
 
             setCheckingLogin(false);
@@ -191,6 +227,15 @@ export default function workoutDiary() {
         );
 
     }
+
+    // Convert units from kg to preferences.
+    const toDisplay = (weightKg, unit) => {
+        const value = unit === "kg"
+            ? weightKg
+            : weightKg * 2.20462;
+
+        return Number(value.toFixed(2));
+    };
 
     return(
 
@@ -328,7 +373,7 @@ export default function workoutDiary() {
                                             <View key = { idx } style = {{ marginBottom: 6 }}>
 
                                                 <Text style = { styles.setText }>
-                                                    { set.weight }{ set.unit || "kg" } x { set.reps }
+                                                    { toDisplay(set.weight, weightUnit) }{ weightUnit } x { set.reps }
                                                     { set.rpe ? ` — RPE ${ set.rpe }` : "" }
                                                 </Text>
 

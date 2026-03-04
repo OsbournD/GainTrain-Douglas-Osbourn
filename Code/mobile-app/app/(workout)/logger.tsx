@@ -14,6 +14,8 @@ import dayjs from 'dayjs';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { useFocusEffect } from '@react-navigation/native';
+
 // Generates a unique key for user session draft state.
 const getDraftKey = (uid: string) => `workout_draft_${uid}`;
 
@@ -75,6 +77,8 @@ export default function workoutLogger() {
     const [username, setUsername] = useState<string | null>(null);
 
     const { recommendedId } = useLocalSearchParams();
+    const scrollRef = React.useRef<ScrollView>(null);
+    const [justAddedRecommended, setJustAddedRecommended] = useState(false);
 
     const fetchExercises = async () => { // Fetch exercises from firestore
         try {
@@ -157,6 +161,33 @@ export default function workoutLogger() {
 
     }, []);
 
+    // Refresh preferences if user goes to settings and back etc.
+    useFocusEffect(
+        React.useCallback(() => {
+            const refreshUnitPreference = async () => {
+                const storedUser = await AsyncStorage.getItem('loggedInUser');
+                if (!storedUser) return;
+
+                const usersQuery = query(
+                    collection(db, "users"),
+                    where("username", "==", storedUser)
+                );
+
+                const snapshot = await getDocs(usersQuery);
+
+                if (!snapshot.empty) {
+                    const userData = snapshot.docs[0].data();
+
+                    if (userData.weightUnitPreferences) {
+                        setWeightUnit(userData.weightUnitPreferences);
+                    }
+                }
+            };
+
+            refreshUnitPreference();
+        }, [])
+    );
+
     useEffect(() => { // Loads a saved user-specific draft session.
         const loadDraft = async () => {
             try {
@@ -206,6 +237,8 @@ export default function workoutLogger() {
                 `${match.name} was added to your session!`
             );
 
+            setJustAddedRecommended(true);
+
             return [
                 ...prev,
                 {
@@ -224,6 +257,17 @@ export default function workoutLogger() {
         }
 
     }, [recommendedId, exerciseLibrary]);
+
+    useEffect(() => {
+        if (!justAddedRecommended) return;
+
+        // Allow layout to finish loading.
+        setTimeout(() => {
+            scrollRef.current?.scrollToEnd({ animated: true });
+        }, 150);
+
+        setJustAddedRecommended(false);
+    }, [justAddedRecommended]);
 
     if (checkingLogin) {
         return (
@@ -251,6 +295,19 @@ export default function workoutLogger() {
 
     }
 
+    // Always store weight in kg.
+    const toKg = (value, unit) =>
+        unit === "kg" ? value : value / 2.20462;
+
+    // Convert from kgs to unit preference.
+    const toDisplay = (weightKg, unit) => {
+        const value = unit === "kg"
+            ? weightKg
+            : weightKg * 2.20462;
+
+        return Number(value.toFixed(2));
+    };
+
     return(
 
         <View style={ [styles.appBackground, { position: 'relative' }] }>
@@ -271,7 +328,10 @@ export default function workoutLogger() {
 
             <View style = { styles.spacer }/>
 
-            <ScrollView contentContainerStyle = {{ paddingBottom: 40 }}>
+            <ScrollView
+                ref = { scrollRef }
+                contentContainerStyle = {{ paddingBottom: 40 }}
+            >
 
                 <View>
 
@@ -364,8 +424,6 @@ export default function workoutLogger() {
 
                 </View>
 
-
-
                 {/* Exercise list. */}
 
                 <View style = { styles.card }>
@@ -388,7 +446,7 @@ export default function workoutLogger() {
                                 <View key = { setIndex } style = {{ marginTop: 4 }}>
 
                                     <Text style = { styles.setText }>
-                                        { set.weight }{ weightUnit } x { set.reps }
+                                        { toDisplay(set.weight, weightUnit) }{ weightUnit } x { set.reps }
                                         { set.rpe ? ` — RPE ${set.rpe}` : "" }
                                     </Text>
 
@@ -1212,7 +1270,9 @@ export default function workoutLogger() {
                                         : Math.max(1, Math.min(10, numericRPEraw));
 
                                 const setObject = {     // Make the set object.
-                                    weight: isNaN(numericWeight) ? 0 : numericWeight,
+                                    weight: isNaN(numericWeight)
+                                        ? 0
+                                        : toKg(numericWeight, weightUnit),
                                     reps: isNaN(numericReps) ? 0 : numericReps,
                                     rpe: numericRPE,
                                     equipment: newSetEquipment

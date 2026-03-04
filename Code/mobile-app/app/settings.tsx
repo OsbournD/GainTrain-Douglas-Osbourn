@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
 import { logoutUser } from '../src/firestore';
+import { query, collection, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { db } from "../src/firebase";
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -11,6 +13,24 @@ export default function settingsScreen() {
 
     const router = useRouter();
     const [checkingLogin, setCheckingLogin] = useState(true);
+
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const loadUser = async () => {
+            const storedUser = await AsyncStorage.getItem('loggedInUser');
+            if (!storedUser) return;
+
+            const q = query(collection(db, "users"), where("username", "==", storedUser));
+            const snap = await getDocs(q);
+
+            if (!snap.empty) {
+                setUser({ id: snap.docs[0].id, ...snap.docs[0].data() });
+            }
+        };
+
+        loadUser();
+    }, []);
 
     useEffect(() => {
         const checkLogin = async () => {
@@ -51,9 +71,19 @@ export default function settingsScreen() {
         }
     }
 
+    const updateUser = async (fields) => {
+        try {
+            const ref = doc(db, "users", user.id);
+            await updateDoc(ref, fields);
+            setUser({ ...user, ...fields });
+        } catch (e) {
+            console.error("Update error:", e);
+        }
+    };
+
     return (
 
-        <View style={ styles.appBackground }>
+        <View style = { styles.appBackground }>
 
             <ThemedView style = { styles.headerContainer }>
 
@@ -69,7 +99,7 @@ export default function settingsScreen() {
 
             </ThemedView>
 
-            <View style = {{ marginTop: 20 }}>
+            <ScrollView style = {{ marginTop: 20, marginBottom: 40 }}>
 
                 <View style = { styles.card }>
 
@@ -90,19 +120,43 @@ export default function settingsScreen() {
                     <ThemedText style = { styles.sectionTitle }>Preferences</ThemedText>
 
                     <View style = { styles.toggleRow }>
-
                         <Text style = { styles.rowText }>Measurement Units</Text>
-                        <TouchableOpacity style = { styles.placeholderToggle }>
-                            <Text>kg / lb</Text>
-                        </TouchableOpacity>
 
-                    </View>
+                        <View style = { styles.unitToggleContainer }>
+                            <TouchableOpacity
+                                style = {[
+                                    styles.unitButton,
+                                    user?.weightUnitPreferences === "kg" && styles.unitButtonActive
+                                ]}
+                                onPress = { () => updateUser({ weightUnitPreferences: "kg" }) }
+                            >
+                                <Text
+                                    style = {[
+                                        styles.unitButtonText,
+                                        user?.weightUnitPreferences === "kg" && styles.unitButtonTextActive
+                                    ]}
+                                >
+                                    kg
+                                </Text>
+                            </TouchableOpacity>
 
-                    <View style = { styles.toggleRow }>
-
-                        <Text style = { styles.rowText }>Dark Mode</Text>
-                        <View style = { styles.placeholderSwitch } />
-
+                            <TouchableOpacity
+                                style = {[
+                                    styles.unitButton,
+                                    user?.weightUnitPreferences === "lbs" && styles.unitButtonActive
+                                ]}
+                                onPress={ () => updateUser({ weightUnitPreferences: "lbs" }) }
+                            >
+                                <Text
+                                    style = {[
+                                        styles.unitButtonText,
+                                        user?.weightUnitPreferences === "lbs" && styles.unitButtonTextActive
+                                    ]}
+                                >
+                                    lbs
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
                 </View>
@@ -151,7 +205,7 @@ export default function settingsScreen() {
 
                 </View>
 
-              </View>
+            </ScrollView>
 
         </View>
     );
@@ -290,4 +344,26 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'center',
     },
+    unitToggleContainer: {
+        flexDirection: "row",
+        backgroundColor: "#D9D9D9",
+        borderRadius: 10,
+        overflow: "hidden",
+    },
+    unitButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 16,
+    },
+    unitButtonActive: {
+        backgroundColor: "#24C3FF",
+    },
+    unitButtonText: {
+        fontSize: 16,
+        color: "black",
+        fontWeight: "bold",
+    },
+    unitButtonTextActive: {
+        color: "white",
+    },
+
 });
