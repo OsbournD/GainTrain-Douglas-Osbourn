@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, Switch } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, Switch, Alert } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
-import { logoutUser } from '../src/firestore';
+import { logoutUser, deleteUserAccount } from '../src/firestore';
 import { query, collection, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { getAuth, deleteUser } from "firebase/auth";
 import { db } from "../src/firebase";
 
 import { registerForPush } from '../app/_layout';
@@ -114,7 +115,15 @@ export default function settingsScreen() {
 
     if (checkingLogin) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <View style = {{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size = "large" />
+            </View>
+        );
+    }
+
+    if (!user) {
+        return (
+            <View style = {{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <ActivityIndicator size="large" />
             </View>
         );
@@ -287,7 +296,43 @@ export default function settingsScreen() {
 
                     <ThemedText style = { [styles.sectionTitle, { color: 'red' }] }>Danger Zone</ThemedText>
 
-                    <TouchableOpacity style = { styles.dangerButton }>
+                    <TouchableOpacity
+                        style = { styles.dangerButton }
+                        onPress = { () => {
+
+                            Alert.alert(
+                                "Delete Account",
+                                "Are you sure you want to permanently delete your account? This cannot be undone.",
+                                [
+                                    { text: "Cancel", style: "cancel" },
+                                    {
+                                        text: "Delete",
+                                        style: "destructive",
+                                        onPress: async () => {
+
+                                            const auth = getAuth();
+                                            const current = auth.currentUser;
+
+                                            if (current) {
+                                                try {
+                                                    await deleteUser(current);   // Deletes emailAlias + Auth account.
+                                                } catch (e) {
+                                                    console.log("Auth deletion error:", e);
+                                                }
+                                            }
+
+                                            await deleteUserAccount(user.username);   // Deletes Firestore data.
+
+                                            await AsyncStorage.removeItem("loggedInUser");
+                                            await AsyncStorage.removeItem("loggedInUid");
+
+                                            router.replace("/(auth)/login");
+                                        }
+                                    }
+                                ]
+                            );
+                        }}
+                    >
                         <Text style = { styles.dangerText }>Delete Account</Text>
                     </TouchableOpacity>
 

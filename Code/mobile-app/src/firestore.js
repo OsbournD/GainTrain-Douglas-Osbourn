@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove, Timestamp } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove, Timestamp, deleteDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from "./firebase";
 import { systemExercises } from "./data/exercises";
@@ -581,6 +581,99 @@ export async function denyChallenge(challengeId, username) {
         return { success: false, message: e.message };
     }
 }
+
+// Deleting user account.
+export const deleteUserAccount = async (username) => {
+
+    // 1. Find the user document.
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("username", "==", username));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+        console.log("No user found for deletion:", username);
+        return { success: false, message: "User not found" };
+    }
+
+    const userDoc = snap.docs[0];
+    const userId = userDoc.id;
+    const userUid = userDoc.data().uid;
+    const userRef = doc(db, "users", userId);
+
+    // 2. Remove push token.
+    await updateDoc(userRef, {
+        pushToken: null
+    });
+
+    // 3. Remove user from all friend lists.
+    const allUsers = await getDocs(collection(db, "users"));
+    for (const u of allUsers.docs) {
+        const data = u.data();
+        if (data.friends?.includes(username)) {
+            await updateDoc(doc(db, "users", u.id), {
+                friends: data.friends.filter(f => f !== username)
+            });
+        }
+    }
+
+    // 4. Delete friend requests involving this user.
+    const frRef = collection(db, "friendRequests");
+    const frSnap = await getDocs(frRef);
+
+    for (const fr of frSnap.docs) {
+        const data = fr.data();
+        if (data.to === username || data.from === username) {
+            await deleteDoc(doc(db, "friendRequests", fr.id));
+        }
+    }
+
+    // 5. Remove user from all challenges.
+    const challengesRef = collection(db, "challenges");
+    const challengesSnap = await getDocs(challengesRef);
+
+    for (const c of challengesSnap.docs) {
+        const data = c.data();
+
+        if (data.participants?.includes(username)) {
+            const updated = data.participants.filter(p => p !== username);
+
+            if (updated.length === 0) {
+                await deleteDoc(doc(db, "challenges", c.id));
+            } else {
+                await updateDoc(doc(db, "challenges", c.id), {
+                    participants: updated
+                });
+            }
+        }
+    }
+
+    // 6. Delete exercise logs (top-level collection, filtered by auth uid).
+    const logsQuery = query(
+        collection(db, "exerciseLogs"),
+        where("uid", "==", userUid)
+    );
+    const logsSnap = await getDocs(logsQuery);
+
+    for (const l of logsSnap.docs) {
+        await deleteDoc(doc(db, "exerciseLogs", l.id));
+    }
+
+    // 7. Delete sessions (top-level collection, filtered by auth uid).
+    const sessionsQuery = query(
+        collection(db, "sessions"),
+        where("uid", "==", userUid)
+    );
+    const sessionsSnap = await getDocs(sessionsQuery);
+
+    for (const s of sessionsSnap.docs) {
+        await deleteDoc(doc(db, "sessions", s.id));
+    }
+
+    // 8. Delete the user document.
+    await deleteDoc(userRef);
+
+    return { success: true };
+};
 
 export function onAuthStateChange(callback) {  // Listener for firebase auth state changes.
     return onAuthStateChanged(auth, callback);

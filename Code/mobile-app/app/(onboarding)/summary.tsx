@@ -49,7 +49,7 @@ export default function OnboardingSummary() {
 
                 if (!snapshot.empty) {
                     const userData = snapshot.docs[0];
-                    setUserUid(userData.id);
+                    setUserUid(userData.data().uid);
                 }
 
             } catch (e) {
@@ -187,6 +187,7 @@ export default function OnboardingSummary() {
                 onPress = { async () => {
 
                     await saveOnboardingData();
+                    await AsyncStorage.setItem('loggedInUid', userUid);
                     router.replace('/dashboard');
 
                 }}
