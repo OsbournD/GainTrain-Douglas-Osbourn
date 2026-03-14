@@ -29,15 +29,6 @@ export default function workoutLogger() {
     const [sessionLocation, setSessionLocation] = useState("");
     const [sessionTags, setSessionTags] = useState("");
 
-    const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
-    const [templateList, setTemplateList] = useState([
-        "Push Day",
-        "Pull Day",
-        "Legs",
-        "Full Body",
-    ]);
-    const [selectedTemplate, setSelectedTemplate] = useState("");
-
     const [showSetup, setShowSetup] = useState(true);
 
     const [exercises, setExercises] = useState([]);
@@ -203,7 +194,6 @@ export default function workoutLogger() {
                 setSessionNotes(draft.sessionNotes || "");
                 setSessionLocation(draft.sessionLocation || "");
                 setSessionTags(draft.sessionTags || "");
-                setSelectedTemplate(draft.selectedTemplate || "");
                 setStartedAt(draft.startedAt ? new Date(draft.startedAt) : new Date());
                 setExercises(draft.exercises || []);
 
@@ -395,18 +385,6 @@ export default function workoutLogger() {
                                 onChangeText = { setSessionTags }
                             />
 
-                            <View>
-
-                                <TouchableOpacity
-                                    style = { styles.input }
-                                    onPress = {() => setShowTemplateDropdown(!showTemplateDropdown)}
-                                >
-                                    <Text style = {{ color: selectedTemplate ? 'black' : '#24C3FF' }}>
-                                        { selectedTemplate || "Choose Template (optional)..." }
-                                    </Text>
-                                </TouchableOpacity>
-
-                            </View>
                         </View>
 
                     )}
@@ -414,7 +392,6 @@ export default function workoutLogger() {
                     <TouchableOpacity style = { styles.hideButton }
                         onPress = {() => {
                             setShowSetup(!showSetup);
-                            setShowTemplateDropdown(false);
                         }}>
                         <Text style = { styles.collapseText }>
                             {showSetup ? '- Hide Session Setup' : '+ Show Session Setup'}
@@ -554,7 +531,14 @@ export default function workoutLogger() {
                             return;
                         }
 
-                        const endedAtValue = new Date();
+                        const now = new Date();
+                        let endedAtValue = now;
+
+                        // If user selected a future start time, match endedAt to startedAt.
+                        if (startedAt && startedAt > now) {
+                            endedAtValue = startedAt;
+                        }
+
                         setEndedAt(endedAtValue);
 
                         const formattedSessionTags = sessionTags // Format and clean session tags.
@@ -588,7 +572,6 @@ export default function workoutLogger() {
                                 notes: sessionNotes.trim() || null,
                                 exerciseLogs: [],
                                 tags: formattedSessionTags,
-                                templateUsed: selectedTemplate || null,
                                 name: sessionName.trim(),
                             });
 
@@ -835,7 +818,6 @@ export default function workoutLogger() {
                                 sessionNotes,
                                 sessionLocation,
                                 sessionTags,
-                                selectedTemplate,
                                 startedAt,
                                 exercises,
                             };
@@ -882,7 +864,6 @@ export default function workoutLogger() {
                                             setSessionNotes("");
                                             setSessionLocation("");
                                             setSessionTags("");
-                                            setSelectedTemplate("");
                                             setStartedAt(new Date());
                                             setExercises([]);
                                             setShowSetup(true);
@@ -907,25 +888,6 @@ export default function workoutLogger() {
 
 
             </View>
-
-            { showTemplateDropdown && (
-                <View style = { styles.dropdownMenu }>
-                    { templateList.map( (template, index) => (
-                        <TouchableOpacity
-                            key = { index }
-                            style = { styles.dropdownItem }
-                            onPress = { () => {
-                                setSelectedTemplate(template);
-                                setShowTemplateDropdown(false);
-                            }}
-                        >
-
-                            <Text style = { styles.dropdownItemText }>{ template }</Text>
-                        </TouchableOpacity>
-                    ))}
-
-                </View>
-            )}
 
             { showExerciseSelector && (
                 <View style = { styles.modalOverlay }>
