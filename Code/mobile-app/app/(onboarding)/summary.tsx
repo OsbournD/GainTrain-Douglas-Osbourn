@@ -6,6 +6,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../src/firebase";
 
+import { formatMuscleName } from "../../src/utils/muscleFormatting";
+import { formatExerciseName } from "../../src/utils/exerciseFormatting";
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OnboardingSummary() {
@@ -21,6 +24,7 @@ export default function OnboardingSummary() {
     const parsedDislikes = dislikes ? JSON.parse(dislikes as string) : [];
 
     const [userUid, setUserUid] = useState<string | null>(null);
+    const [authUid, setAuthUid] = useState<string | null>(null);
 
     const [checkingLogin, setCheckingLogin] = useState(true);
 
@@ -48,8 +52,9 @@ export default function OnboardingSummary() {
                 const snapshot = await getDocs(usersQuery);
 
                 if (!snapshot.empty) {
-                    const userData = snapshot.docs[0];
-                    setUserUid(userData.data().uid);
+                    const userDoc = snapshot.docs[0];
+                    setUserUid(userDoc.id);
+                    setAuthUid(userDoc.data().uid);
                 }
 
             } catch (e) {
@@ -145,7 +150,7 @@ export default function OnboardingSummary() {
                         <View style = { styles.card }>
                             { parsedMuscles.length > 0 ? (
                                 parsedMuscles.map( (muscleGroup: string, index: number) => (
-                                    <Text key = { index } style = { styles.valueText }>{ muscleGroup }</Text>
+                                    <Text key = { index } style = { styles.valueText }>{ formatMuscleName(muscleGroup) }</Text>
                                 ))
                             ) : (
                                 <Text style = { styles.placeholder }>None selected</Text>
@@ -160,7 +165,7 @@ export default function OnboardingSummary() {
 
                             { parsedLikes.length > 0 ? (
                                 parsedLikes.map( (exercise: string, index: number) => (
-                                    <Text key = { index } style = { styles.valueText }>{ exercise }</Text>
+                                    <Text key = { index } style = { styles.valueText }>{ formatExerciseName(exercise) }</Text>
                                 ))
                             ) : (
                                 <Text style = { styles.placeholder }>None selected</Text>
@@ -170,7 +175,7 @@ export default function OnboardingSummary() {
 
                             { parsedDislikes.length > 0 ? (
                                 parsedDislikes.map( (exercise: string, index: number) => (
-                                    <Text key = { index } style = { styles.valueText }>{ exercise }</Text>
+                                    <Text key = { index } style = { styles.valueText }>{ formatExerciseName(exercise) }</Text>
                                 ))
                             ) : (
                                 <Text style = { styles.placeholder }>None selected</Text>
@@ -187,7 +192,7 @@ export default function OnboardingSummary() {
                 onPress = { async () => {
 
                     await saveOnboardingData();
-                    await AsyncStorage.setItem('loggedInUid', userUid);
+                    await AsyncStorage.setItem('loggedInUid', authUid);
                     router.replace('/dashboard');
 
                 }}

@@ -7,6 +7,8 @@ import { logoutUser } from '../../src/firestore';
 
 import { runRecommender } from '../../src/recommender/runRecommender';
 
+import { formatMuscleName } from "../../src/utils/muscleFormatting";
+
 import { Image } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -241,13 +243,13 @@ export default function welcomeDashboard() {
                             </Text>
 
                             <Text style = { styles.modalSubtitle }>Primary Muscle Targeted:</Text>
-                            <Text style = { styles.modalText }>{ selectedRecommendation.exercise.primaryMuscle }</Text>
+                            <Text style = { styles.modalText }>{ formatMuscleName(selectedRecommendation.exercise.primaryMuscle) }</Text>
 
                             { selectedRecommendation.exercise.secondaryMuscles && (
                                 <>
                                     <Text style = { styles.modalSubtitle }>Secondary Muscles Targeted:</Text>
                                     <Text style = { styles.modalText }>
-                                        { selectedRecommendation.exercise.secondaryMuscles.join(', ') }
+                                        { formatMuscleName(selectedRecommendation.exercise.secondaryMuscles.join(', ')) }
                                     </Text>
                                 </>
                             )}

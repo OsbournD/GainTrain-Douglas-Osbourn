@@ -23,6 +23,8 @@ export default function settingsScreen() {
     const [selectedMuscles, setSelectedMuscles] = useState<string[]>(user?.preferredMuscles || []);
     const [likedExercises, setLikedExercises] = useState<string[]>(user?.likedExercises || []);
     const [dislikedExercises, setDislikedExercises] = useState<string[]>(user?.dislikedExercises || []);
+    const [showTerms, setShowTerms] = useState(false);
+    const [showPrivacy, setShowPrivacy] = useState(false);
 
     const muscleGroupMap = {
         Chest: ["upper_chest", "mid_chest", "lower_chest"],
@@ -180,15 +182,11 @@ export default function settingsScreen() {
 
                 <View style = { styles.card }>
 
-                    <ThemedText style = { styles.sectionTitle }>Account (WIP)</ThemedText>
+                    <ThemedText style = { styles.sectionTitle }>Account</ThemedText>
 
-                    <TouchableOpacity style = { styles.rowButton }>
-                        <Text style = { styles.rowText }>Edit Profile</Text>
-                    </TouchableOpacity>
+                    <ThemedText style = { styles.rowText }>Username:   { user.username }</ThemedText>
 
-                    <TouchableOpacity style = { styles.rowButton }>
-                        <Text style = { styles.rowText }>Change Password</Text>
-                    </TouchableOpacity>
+                    <ThemedText style = { styles.rowText }>Experience Level:   { user.experienceLevel || "Not set" }</ThemedText>
 
                 </View>
 
@@ -280,13 +278,13 @@ export default function settingsScreen() {
 
                 <View style = { styles.card }>
 
-                    <ThemedText style = { styles.sectionTitle }>App Info (WIP)</ThemedText>
+                    <ThemedText style = { styles.sectionTitle }>App Info</ThemedText>
 
-                    <TouchableOpacity style = { styles.rowButton }>
+                    <TouchableOpacity style = { styles.rowButton } onPress = { () => setShowTerms(true) }>
                         <Text style = { styles.rowText }>Terms of Service</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style = { styles.rowButton }>
+                    <TouchableOpacity style = { styles.rowButton } onPress = { () => setShowPrivacy(true) }>
                         <Text style = { styles.rowText }>Privacy Policy</Text>
                     </TouchableOpacity>
 
@@ -470,6 +468,76 @@ export default function settingsScreen() {
 
                 </View>
 
+            )}
+
+            { showTerms && (
+                <View style = { styles.modalOverlay }>
+                    <View style = { styles.modalCard }>
+
+                        <Text style={styles.modalTitle}>Terms of Service</Text>
+
+                        <ScrollView style = {{ maxHeight: 400 }}>
+                            <Text style = { styles.modalText }>
+                                This application is designed for personal fitness tracking and exercise guidance.
+                                By using the app, you agree to use all features responsibly and understand that
+                                exercise recommendations are general suggestions, not personalised medical advice.
+                            </Text>
+
+                            <Text style = { styles.modalText }>
+                                No personal data is shared publicly. User-generated content is stored securely
+                                and used only to provide personalised recommendations within the app.
+                            </Text>
+
+                            <Text style = { styles.modalText }>
+                                The app follows safety‑first design principles aligned with the Online Safety Act,
+                                avoiding public posting, profile images, or social comparison features.
+                            </Text>
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style = { styles.modalCloseButton }
+                            onPress = { () => setShowTerms(false) }
+                        >
+                            <Text style = { styles.modalCloseButtonText }>Close</Text>
+                        </TouchableOpacity>
+
+                    </View>
+                </View>
+            )}
+
+            { showPrivacy && (
+                <View style = { styles.modalOverlay }>
+                    <View style = { styles.modalCard }>
+
+                        <Text style = { styles.modalTitle }>Privacy Policy</Text>
+
+                        <ScrollView style = {{ maxHeight: 400 }}>
+                            <Text style = { styles.modalText }>
+                                Your data is used solely to support app functionality such as exercise
+                                recommendations, workout logging, and personalised preferences.
+                            </Text>
+
+                            <Text style = { styles.modalText }>
+                                No personal information is shared with third parties. The app does not
+                                include public profiles, social posting, or image‑based identity features,
+                                supporting Online Safety Act compliance.
+                            </Text>
+
+                            <Text style = { styles.modalText }>
+                                You may delete your account at any time from the Settings screen, which
+                                permanently removes your authentication record and all associated data.
+                            </Text>
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style = { styles.modalCloseButton }
+                            onPress = { () => setShowPrivacy(false) }
+                        >
+                            <Text style = { styles.modalCloseButtonText }>Close</Text>
+                        </TouchableOpacity>
+
+                    </View>
+                </View>
             )}
 
         </View>
@@ -758,5 +826,9 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
-
+    modalText: {
+        fontSize: 16,
+        color: '#646262',
+        marginBottom: 10,
+    },
 });
