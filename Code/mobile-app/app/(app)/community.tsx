@@ -38,19 +38,19 @@ export default function communityPage() {
 
     return(
 
-        <View style={ styles.appBackground }>
+        <View style = { styles.appBackground }>
 
             <ThemedView style = { styles.headerContainer }>
 
-                    <TouchableOpacity style = { styles.backButton } onPress = { backToDashboardClicked } >
-                        <Text style = { styles.headerButtonText }> BACK </Text>
-                    </TouchableOpacity>
+                <TouchableOpacity style = { styles.backButton } onPress = { backToDashboardClicked } >
+                    <Text style = { styles.headerButtonText }> BACK </Text>
+                </TouchableOpacity>
 
-                    <ThemedText style = { styles.titleText }>Community</ThemedText>
+                <ThemedText style = { styles.titleText }>Community</ThemedText>
 
-                    <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
-                        <Text style = { styles.headerButtonText }> SETTINGS </Text>
-                    </TouchableOpacity>
+                <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
+                    <Text style = { styles.headerButtonText }> SETTINGS </Text>
+                </TouchableOpacity>
 
             </ThemedView>
 
@@ -89,103 +89,209 @@ export default function communityPage() {
 }
 
 function FeedContent() {
+
     const [showFilterMenu, setShowFilterMenu] = useState(false);
     const [feedFilter, setFeedFilter] = useState<'Latest' | 'Popular' | 'Sessions' | 'Friends'>('Latest');
-    const [searchQuery, setSearchQuery] = useState('');
 
-    const filters = ['Latest', 'Popular', 'Sessions', 'Friends'];
+    const [username, setUsername] = useState<string | null>(null);
+    const [friends, setFriends] = useState<string[]>([]);
+    const [friendUids, setFriendUids] = useState<string[]>([]);
+    const [uidToUsername, setUidToUsername] = useState<Record<string, string>>({});
 
-    const activities = [  // MOCK DATA!!
-        {
-            id: '1',
-            type: 'session',
-            user: 'UserB',
-            title: 'Push Day',
-            subtitle: 'Bench Press, Overhead Press, Tricep Dips...',
-            comment: 'Felt strong today!!',
-            time: '1h ago',
-            likes: 12,
-        },
-        {
-            id: '2',
-            type: 'newFriendExercise',
-            user: 'UserC',
-            title: 'Conventional Barbell Deadlift',
-            subtitle: '50kg x 10, 60kg x 12, 50kg x 8',
-            time: '2h ago',
-            likes: 9,
-        },
-        {
-            id: '3',
-            type: 'newFriend',
-            user: 'UserB',
-            title: 'New Friend!',
-            subtitle: 'Goal: Muscle Gain',
-            time: '2 days ago',
-            likes: 0,
-        },
-        {
-            id: '4',
-            type: 'friendPR',
-            user: 'UserD',
-            title: 'New PR!',
-            subtitle: 'Deadlift — 120kg',
-            comment: 'Finally hit this milestone!',
-            time: '3 days ago',
-            likes: 22,
+    const [feedItems, setFeedItems] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const filters = ['Latest', 'Oldest', 'Friends (A -> Z)', 'Sessions (A -> Z)'];
+
+    useEffect(() => {
+        const loadUsername = async () => {
+            const stored = await AsyncStorage.getItem('loggedInUser');
+            setUsername(stored);
+        };
+        loadUsername();
+    }, []);
+
+    // Listen for changes to user's friends list.
+    useEffect(() => {
+        if (!username) return;
+
+        const userQuery = query(
+            collection(db, 'users'),
+            where('username', '==', username)
+        );
+
+        const stopListening = onSnapshot(userQuery, snapshot => {
+            if (!snapshot.empty) {
+                const data = snapshot.docs[0].data();
+                setFriends(data.friends || []);
+            }
+        });
+
+        return () => stopListening();
+    }, [username]);
+
+    // Convert friend username to uids.
+    useEffect(() => {
+        if (!friends.length) {
+            setFriendUids([]);
+            return;
         }
 
-    ];
+        const resolveUids = async () => {
+            const uids: string[] = [];
+
+            for (const friendUsername of friends) {
+                const q = query(
+                    collection(db, 'users'),
+                    where('username', '==', friendUsername)
+                );
+
+                const snap = await getDocs(q);
+
+                if (!snap.empty) {
+                    const data = snap.docs[0].data();
+                    uids.push(data.uid);
+                }
+            }
+
+            setFriendUids(uids);
+        };
+
+        resolveUids();
+    }, [friends]);
+
+    // Convert uid to username map for rendering.
+    useEffect(() => {
+        if (!friendUids.length) {
+            setUidToUsername({});
+            return;
+        }
+
+        const resolveUsernames = async () => {
+            const map: Record<string, string> = {};
+
+            for (const uid of friendUids) {
+                const q = query(
+                    collection(db, 'users'),
+                    where('uid', '==', uid)
+                );
+
+                const snap = await getDocs(q);
+
+                if (!snap.empty) {
+                    const data = snap.docs[0].data();
+                    map[uid] = data.username;
+                }
+            }
+
+            setUidToUsername(map);
+        };
+
+        resolveUsernames();
+    }, [friendUids]);
+
+    // Load friend sessions when uids + usernames are ready.
+    useEffect(() => {
+        if (!friendUids.length) {
+            setFeedItems([]);
+            setLoading(false);
+            return;
+        }
+
+        if (!Object.keys(uidToUsername).length) {
+            return; // Wait for username map.
+        }
+
+        const sessionsQuery = query(
+            collection(db, 'sessions'),
+            where('uid', 'in', friendUids),
+            orderBy('endedAt', 'desc')
+        );
+
+        const stopListening = onSnapshot(sessionsQuery, snapshot => {
+            const items = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    type: 'friendSession',
+                    user: uidToUsername[data.uid] || data.uid,
+                    title: data.name,
+                    time: data.endedAt.toDate(),
+                };
+            });
+
+            setFeedItems(items);
+            setLoading(false);
+        });
+
+        return () => stopListening();
+    }, [friendUids, uidToUsername]);
+
+    // Apply feed filter.
+    let sortedFeed = [...feedItems];
+
+    switch (feedFilter) {
+
+        case 'Latest':
+            sortedFeed.sort((a, b) => b.time - a.time);
+            break;
+
+        case 'Oldest':
+            sortedFeed.sort((a, b) => a.time - b.time);
+            break;
+
+        case 'Friends (A -> Z)':
+            sortedFeed.sort((a, b) => a.user.localeCompare(b.user));
+            break;
+
+        case 'Sessions (A -> Z)':
+            sortedFeed.sort((a, b) => a.title.localeCompare(b.title));
+            break;
+
+        default:
+            break;
+    }
 
     return (
-        <View style = {{ flex: 1 }}>
+        <View style = {{ flex:1 }}>
 
-            <View style = {{ position: 'relative', zIndex: 100 }}>
-
+            <View style = {{ position:'relative', zIndex:100 }}>
                 <View style = { styles.filterSearchRow }>
-
                     <TouchableOpacity
                         style = { styles.filterButton }
                         onPress = { () => setShowFilterMenu(!showFilterMenu) }
                     >
-                        <Text style = { styles.filterButtonText }>{feedFilter}</Text>
+                        <Text style = { styles.filterButtonText }>{ feedFilter }</Text>
                     </TouchableOpacity>
-
-                    <View style = { styles.searchBar }>
-                        <TextInput
-                            style = { styles.searchInput }
-                            placeholder = "Search..."
-                            placeholderTextColor = "#49454F"
-                            value = { searchQuery }
-                            onChangeText = { setSearchQuery }
-                        />
-                    </View>
-
                 </View>
 
                 { showFilterMenu && (
                     <View style = { styles.dropdownMenu }>
-                        {filters.map( option => (
+                        { filters.map(option => (
                             <TouchableOpacity
                                 key = { option }
                                 style = { styles.dropdownItem }
                                 onPress = { () => {
-                                    setFeedFilter(option);
+                                    setFeedFilter(option as any);
                                     setShowFilterMenu(false);
                                 }}
                             >
-
-                                <Text style = { styles.dropdownItemText }>{option}</Text>
+                                <Text style = { styles.dropdownItemText }>{ option }</Text>
                             </TouchableOpacity>
-                        ))}
+                        )) }
                     </View>
                 )}
             </View>
 
-            <ScrollView style = {{ marginTop: 10 }}>
-                { activities.map(activity => (
-                    <ActivityCard key = { activity.id } activity = { activity } />
-                ))}
+            <ScrollView style = {{ marginTop:10 }}>
+                { loading ? (
+                    <ActivityIndicator size = "large" color = "#24C3FF" style = {{ marginTop:20 }} />
+                ) : (
+                    sortedFeed.map(item => (
+                        <ActivityCard key = { item.id } activity = { item } />
+                    ))
+                )}
+
                 <View>
                     <Text style = { styles.welcomeText }>You've reached the end!</Text>
                 </View>
@@ -195,59 +301,27 @@ function FeedContent() {
     );
 }
 
-function ActivityCard({ activity }: { activity: any}) {
+function ActivityCard({ activity }: { activity:any }) {
     return (
         <View style = { styles.activityCard }>
-            <Text style = { styles.activityUser }>{ activity.user }</Text>
 
-                { activity.type === 'session' && (
-                    <>
-                        <Text style = { styles.activityTitle }>Logged a session: { activity.title }</Text>
-                        <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
-                        {activity.comment && (
-                            <Text style = { styles.activityComment } >“{ activity.comment }”</Text>
-                        )}
-                    </>
-                )}
+            <Text style = { styles.activityUser }>
+                { activity.user }
+            </Text>
 
-                { activity.type === 'newFriendExercise' && (
-                    <>
-                        <Text style = { styles.activityTitle }>Tried a new exercise</Text>
-                        <Text style = { styles.activitySubtitle }>{ activity.title }</Text>
-                        <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
-                    </>
-                )}
+            { activity.type === 'friendSession' && (
+                <Text style = { styles.activityTitle }>
+                    Logged a session: { activity.title }
+                </Text>
+            )}
 
-                { activity.type === 'newFriend' && (
-                    <>
-                        <Text style = { styles.activityTitle }>New Friend!</Text>
-                        <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
-                    </>
-                )}
-
-                { activity.type === 'friendPR' && (
-                    <>
-                        <Text style = { styles.activityTitle }>New PR!</Text>
-                        <Text style = { styles.activitySubtitle }>{ activity.subtitle }</Text>
-                        {activity.comment && (
-                            <Text style = { styles.activityComment }>“{ activity.comment }”</Text>
-                        )}
-                    </>
-                )}
-
-                <View style = { styles.activityMetaRow }>
-
-                    <Text style = { styles.activityTime }>{ activity.time }</Text>
-
-                    {activity.likes > 0 && (
-                        <TouchableOpacity style = { styles.metaButton }>
-                            <Text style = { styles.metaButtonText }>{ activity.likes } likes</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
+            <View style = { styles.activityMetaRow }>
+                <Text style = { styles.activityTime }>
+                    { activity.time.toLocaleString() }
+                </Text>
+            </View>
 
         </View>
-
     );
 }
 
