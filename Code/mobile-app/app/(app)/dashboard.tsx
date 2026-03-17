@@ -7,7 +7,8 @@ import { logoutUser } from '../../src/firestore';
 
 import { runRecommender } from '../../src/recommender/runRecommender';
 
-import { formatMuscleName } from "../../src/utils/muscleFormatting";
+import { formatMuscleName } from '../../src/utils/muscleFormatting';
+import { computeUserSummary } from '../../src/utils/computeUserSummary';
 
 import { Image } from 'react-native';
 
@@ -23,6 +24,10 @@ export default function welcomeDashboard() {
     const [loadingRecommendations, setLoadingRecommendations] = useState(true);
     const [selectedRecommendation, setSelectedRecommendation] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+
+    const [summary, setSummary] = useState(null);
+    const [loadingSummary, setLoadingSummary] = useState(true);
+    const [summaryModalVisible, setSummaryModalVisible] = useState(false);
 
     useEffect(() => {
 
@@ -85,6 +90,34 @@ export default function welcomeDashboard() {
         const num = Number(value);
         if (!num || isNaN(num)) return "N/A";
         return `${num}/5`;
+    };
+
+    useEffect(() => {
+        if (!uid) return;
+
+        const loadSummary = async () => {
+            const result = await computeUserSummary(uid);
+            setSummary(result);
+            setLoadingSummary(false);
+        };
+
+        loadSummary();
+    }, [uid]);
+
+    const getRandomMetric = () => {
+        if (!summary) return "";
+
+        const options = [];
+
+        options.push(`Logged ${summary.sessionsThisWeek} workouts this week`);
+        options.push(`Completed ${summary.exercisesThisMonth} exercises this month`);
+
+        if (summary.topMuscleGroup) {
+            options.push(`Focused on: ${formatMuscleName(summary.topMuscleGroup)}`);
+        }
+
+        const index = Math.floor(Math.random() * options.length);
+        return options[index];
     };
 
     const logoutClicked = async () => {
@@ -157,10 +190,39 @@ export default function welcomeDashboard() {
 
                     <ThemedView style = { styles.card }>
                         <ThemedText style = { styles.welcomeText }>Welcome, {username}</ThemedText>
-                        <ThemedText style = { styles.headingText }>Recently You...</ThemedText>
-                        <ThemedText style = { styles.recentText }>Work in progress...</ThemedText>
-                        <ThemedText style = { styles.recentText }>i.e. Logged 3 workouts!</ThemedText>
 
+                        <View style = {{ flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
+
+                            <ThemedText style = { styles.headingText }>Recently You...</ThemedText>
+
+                            <TouchableOpacity
+                                onPress = { () => setSummaryModalVisible(true) }
+                                style = { styles.seeMoreButton }
+                            >
+                                <Text style = { styles.seeMoreButtonText }>
+                                    See More
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        { loadingSummary && (
+                            <Text style = { styles.recentText }>Loading...</Text>
+                        )}
+
+                        { !loadingSummary && summary && (
+                            <>
+                                { summary.weeklyStreak > 0 && (
+                                    <Text style = { styles.recentMetric2 }>
+                                        Hit a { summary.weeklyStreak }-week streak!
+                                    </Text>
+                                )}
+
+                                <Text style = { styles.recentMetric }>
+                                    { getRandomMetric() }
+                                </Text>
+
+                            </>
+                        )}
                     </ThemedView>
 
                     <ThemedView style = { styles.card }>
@@ -275,6 +337,41 @@ export default function welcomeDashboard() {
                             <TouchableOpacity
                                 style = { styles.modalCloseButton }
                                 onPress = { closeRecommendationModal }
+                            >
+                                <Text style = { styles.modalCloseButtonText }>Close</Text>
+                            </TouchableOpacity>
+
+                        </ScrollView>
+
+                    </View>
+                </View>
+            )}
+
+            { summaryModalVisible && summary && (
+                <View style = { styles.modalOverlay }>
+                    <View style = { styles.modalContainer }>
+
+                        <ScrollView contentContainerStyle = {{ paddingBottom: 20 }}>
+
+                            <Text style = { styles.modalTitle2 }>Recently You...</Text>
+
+                            <Text style = { styles.modalSubtitle }>Sessions this week:</Text>
+                            <Text style = { styles.modalText }>{ summary.sessionsThisWeek }</Text>
+
+                            <Text style = { styles.modalSubtitle }>Exercises logged this month:</Text>
+                            <Text style = { styles.modalText }>{ summary.exercisesThisMonth }</Text>
+
+                            <Text style = { styles.modalSubtitle }>Top muscle this month:</Text>
+                            <Text style = { styles.modalText }>
+                                { summary.topMuscleGroup ? formatMuscleName(summary.topMuscleGroup) : "N/A" }
+                            </Text>
+
+                            <Text style = { styles.modalSubtitle }>Weekly streak:</Text>
+                            <Text style = { styles.modalText }>{ summary.weeklyStreak } weeks</Text>
+
+                            <TouchableOpacity
+                                style = { styles.modalCloseButton }
+                                onPress = { () => setSummaryModalVisible(false) }
                             >
                                 <Text style = { styles.modalCloseButtonText }>Close</Text>
                             </TouchableOpacity>
@@ -447,6 +544,7 @@ const styles = StyleSheet.create({
     },
     recentText: {
         textAlign: 'center',
+        fontSize: 16,
         padding: 2,
     },
     refreshButton: {
@@ -539,5 +637,40 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
-
+    seeMoreButton: {
+        backgroundColor: '#46C3F3',
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+        borderRadius: 8,
+        alignSelf: 'flex-end',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+        marginBottom: 8,
+    },
+    seeMoreButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
+    modalTitle2: {
+        fontSize: 26,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        textAlign: 'center',
+        color: '#46C3F3',
+    },
+    recentMetric: {
+        textAlign: 'left',
+        fontSize: 16,
+        paddingVertical: 2,
+    },
+    recentMetric2: {
+        textAlign: 'left',
+        fontWeight: 'bold',
+        fontSize: 16,
+        paddingVertical: 2,
+    },
 });

@@ -259,11 +259,6 @@ export default function workoutDiary() {
 
                 <ScrollView>
 
-                    <View style = { styles.card }>
-                        <Text style = { styles.headingText }>Monthly Summary</Text>
-                        <Text style = { styles.summary }>Work in progress...</Text>
-                    </View>
-
                     { /* Renders all sessions. */ }
                     { sessions.map(session => {
 
