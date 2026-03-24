@@ -902,6 +902,7 @@ function CreateChallengeModal({ onClose, friends }) {
     const [muscleGroup, setMuscleGroup] = useState<'pull' | 'push' | 'legs' | 'core' | null>(null);
     const [friendInput, setFriendInput] = useState('');
     const [invitedFriends, setInvitedFriends] = useState<string[]>([]);
+    const [showInfoModal, setShowInfoModal] = useState(false);
 
     // Full muscle list from exerciseScoring.ts.
     const muscleList = [
@@ -1103,6 +1104,13 @@ function CreateChallengeModal({ onClose, friends }) {
                     <Text style = { styles.friendButtonText }>Close</Text>
                 </TouchableOpacity>
 
+                <TouchableOpacity
+                    style = { styles.infoButtonTop }
+                    onPress = { () => setShowInfoModal(true) }
+                >
+                    <Text style = { styles.infoButtonText }>info</Text>
+                </TouchableOpacity>
+
                 <Text style = { styles.modalTitle }>Create Challenge</Text>
 
                 <ScrollView style = {{ maxHeight: '90%' }}>
@@ -1284,6 +1292,56 @@ function CreateChallengeModal({ onClose, friends }) {
                 </TouchableOpacity>
 
             </View>
+
+            { showInfoModal && (
+                <View style = {[ styles.modalOverlay, { zIndex: 50 } ]}>
+                    <View style = { styles.modalContainer }>
+
+                        <TouchableOpacity
+                            style = { styles.closeButton }
+                            onPress = { () => setShowInfoModal(false) }
+                        >
+                            <Text style = { styles.friendButtonText }>Close</Text>
+                        </TouchableOpacity>
+
+                        <Text style = { styles.modalTitle }>How Challenge Points Work</Text>
+
+                        <ScrollView style = {{ maxHeight:'85%' }}>
+
+                            <Text style = {{ marginBottom:10 }}>
+                                Points Challenges: Earn points by completing exercises. Most workouts give 60–120 points.
+                            </Text>
+
+                            <Text style = {{ marginBottom:10 }}>
+                                Muscle Challenges: Points only count for exercises targeting the selected muscle. A typical workout gives 20–60 points for one muscle.
+                            </Text>
+
+                            <Text style = {{ marginBottom:10 }}>
+                                Group Challenges: Points only count for Push, Pull, Legs or Core exercises. A normal session gives 40–100 points for a group.
+                            </Text>
+
+                            <Text style = {{ marginBottom:10 }}>
+                                Session Challenges: Progress increases each time you complete a workout session.
+                            </Text>
+
+                            <Text style = {{ marginBottom:10 }}>
+                                Target Number: Choose how many points or sessions you want to reach.
+                            </Text>
+
+                            <Text style = {{ marginBottom:6 }}>
+                                Example Targets:
+                            </Text>
+
+                            <Text style = {{ marginBottom:4 }}> - One Day: 40–120 points, 20–60 muscle points, 30–80 group points, 1 session</Text>
+                            <Text style = {{ marginBottom:4 }}> - One Week: 150–400 points, 80–200 muscle points, 120–250 group points, 2–5 sessions</Text>
+                            <Text style = {{ marginBottom:4 }}> - One Month: 400–1200 points, 200–500 muscle points, 300–700 group points, 8–20 sessions</Text>
+                            <Text> - One Time: However many you want, this is a challenge with no expiration! </Text>
+
+                        </ScrollView>
+
+                    </View>
+                </View>
+            )}
 
         </View>
     );
@@ -1940,6 +1998,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 15,
         textAlign: 'center',
+        paddingTop: 26,
     },
     modalLabel: {
         fontSize: 16,
@@ -2055,5 +2114,23 @@ const styles = StyleSheet.create({
         elevation: 3,
         alignItems: 'center',
     },
+    infoButtonTop: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        paddingVertical: 6,
+        paddingHorizontal: 14,
+        borderRadius: 16,
+        backgroundColor: '#24C3FF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 20,
+    },
+    infoButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+
 });
 

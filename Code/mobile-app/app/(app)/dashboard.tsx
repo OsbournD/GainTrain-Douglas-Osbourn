@@ -282,8 +282,8 @@ export default function welcomeDashboard() {
                     <TouchableOpacity style = { styles.secondaryButton } onPress = { () => workoutDiaryClicked()} >
                         <Text style = { styles.buttonText }> Workout Diary </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style = { styles.secondaryButton } onPress = { () => console.log("Exercise discovery clicked")} >
-                        <Text style = { styles.buttonText }>Exercise Discovery</Text>
+                    <TouchableOpacity style = { styles.secondaryButtonWIP } onPress = { () => console.log("Exercise discovery clicked")} >
+                        <Text style = { styles.buttonText }>Exercise Discovery (WIP!!)</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -495,6 +495,20 @@ const styles = StyleSheet.create({
     },
     secondaryButton: {
         backgroundColor: '#46C3F3',
+        paddingVertical: 24,
+        flex: 1,
+        borderRadius: 16,
+        marginHorizontal: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 4,
+    },
+    secondaryButtonWIP: {
+        backgroundColor: '#757575',
         paddingVertical: 24,
         flex: 1,
         borderRadius: 16,

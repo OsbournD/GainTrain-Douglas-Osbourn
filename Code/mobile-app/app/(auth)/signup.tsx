@@ -106,34 +106,6 @@ export default function SignUpScreen() {
 
                 </View>
 
-
-                {__DEV__ && (
-
-                    <>
-
-                      <View style={ styles.buttonContainer }>
-                          <Button
-                              title = "Add New Test User"
-                              onPress = { async() => {
-                                  const result = await addTestUser();
-                                  console.log("Test user result:", result);
-                              }}
-                          />
-                      </View>
-
-                      <View style={ styles.buttonContainer }>
-                          <Button
-                              title = "Seed Data"
-                              onPress = { async() => {
-                                  const result = await seedTestData();
-                                  console.log("Seed result:", result);
-                              }}
-                          />
-                      </View>
-
-                    </>
-                )}
-
             </ScrollView>
 
         </View>
