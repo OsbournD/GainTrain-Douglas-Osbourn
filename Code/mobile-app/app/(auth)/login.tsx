@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView, Image, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link, router } from 'expo-router';
@@ -83,54 +83,61 @@ export default function LoginScreen() {
     };
 
     return (
+        <KeyboardAvoidingView
+            style = {{ flex: 1 }}
+            behavior = { Platform.OS === 'ios' ? 'padding' : 'height' }
+        >
 
-        <View style = { styles.screen }>
+            <View style = { styles.screen }>
 
-            <ScrollView>
+                <ScrollView>
 
-                <View style = { styles.topSection }>
+                    <View style = { styles.topSection }>
 
-                    <Image
-                        source = { require('@/assets/gaintrain-images/gaintrain-icon.jpeg') }
-                        style = { styles.logo }
-                    />
+                        <Image
+                            source = { require('@/assets/gaintrain-images/gaintrain-icon.jpeg') }
+                            style = { styles.logo }
+                        />
 
-                </View>
+                    </View>
 
-                <View style = { styles.card }>
+                    <View style = { styles.card }>
 
-                    <Text style = { styles.loginTitle }> Login </Text>
+                        <Text style = { styles.loginTitle }> Login </Text>
 
-                    <TextInput
-                        style = { styles.input }
-                        placeholder = "Enter a username"
-                        value = { username }
-                        onChangeText = { setUsername }
-                    />
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Enter a username"
+                            value = { username }
+                            onChangeText = { setUsername }
+                        />
 
-                    <TextInput
-                        style = { styles.input }
-                        placeholder = "Enter a password"
-                        secureTextEntry
-                        value = { password }
-                        onChangeText = { setPassword }
-                    />
+                        <TextInput
+                            style = { styles.input }
+                            placeholder = "Enter a password"
+                            secureTextEntry
+                            value = { password }
+                            onChangeText = { setPassword }
+                        />
 
-                    <TouchableOpacity style = { styles.loginButton } onPress = { loginClicked }>
-                        <Text style = { styles.loginButtonText }> LOGIN </Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity style = { styles.loginButton } onPress = { loginClicked }>
+                            <Text style = { styles.loginButtonText }> LOGIN </Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity style = { styles.signupLinkContainer }>
-                        <Link href = "/(auth)/signup">
-                            <Text style = { styles.signupLink }> Make an Account </Text>
-                        </Link>
-                    </TouchableOpacity>
+                        <TouchableOpacity style = { styles.signupLinkContainer }>
+                            <Link href = "/(auth)/signup">
+                                <Text style = { styles.signupLink }> Make an Account </Text>
+                            </Link>
+                        </TouchableOpacity>
 
-                </View>
+                    </View>
 
-            </ScrollView>
+                </ScrollView>
 
-        </View>
+            </View>
+
+        </KeyboardAvoidingView>
+
     );
 }
 

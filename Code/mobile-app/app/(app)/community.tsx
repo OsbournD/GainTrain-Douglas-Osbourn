@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, TextInput, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, TextInput, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
@@ -54,33 +54,40 @@ export default function communityPage() {
 
             </ThemedView>
 
-            <View style = { styles.tabBar }>
-                {['Feed', 'Challenges', 'Friends'].map(tab => (
-                    <TouchableOpacity
-                        key = {tab}
-                        style = {[
-                            styles.tabButton,
-                            activeTab === tab && styles.tabButtonActive
-                        ]}
-                        onPress = {() => setActiveTab(tab)}
-                    >
-                        <Text
-                            style = {[
-                                styles.tabText,
-                                activeTab === tab && styles.tabTextActive
-                            ]}
-                        >
-                            {tab}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
+            <KeyboardAvoidingView
+                style = {{ flex: 1 }}
+                behavior = { Platform.OS === 'ios' ? 'padding' : 'height' }
+            >
 
-            <View style = {{ flex:1 }}>
-                { activeTab === 'Feed' && <FeedContent /> }
-                { activeTab === 'Challenges' && <ChallengesContent /> }
-                { activeTab === 'Friends' && <FriendsContent /> }
-            </View>
+                <View style = { styles.tabBar }>
+                    {['Feed', 'Challenges', 'Friends'].map(tab => (
+                        <TouchableOpacity
+                            key = {tab}
+                            style = {[
+                                styles.tabButton,
+                                activeTab === tab && styles.tabButtonActive
+                            ]}
+                            onPress = {() => setActiveTab(tab)}
+                        >
+                            <Text
+                                style = {[
+                                    styles.tabText,
+                                    activeTab === tab && styles.tabTextActive
+                                ]}
+                            >
+                                {tab}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                <View style = {{ flex:1 }}>
+                    { activeTab === 'Feed' && <FeedContent /> }
+                    { activeTab === 'Challenges' && <ChallengesContent /> }
+                    { activeTab === 'Friends' && <FriendsContent /> }
+                </View>
+
+            </KeyboardAvoidingView>
 
         </View>
 

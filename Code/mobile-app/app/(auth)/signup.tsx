@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView, Image, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link, router } from 'expo-router';
@@ -71,6 +71,11 @@ export default function SignUpScreen() {
 
   return (
 
+    <KeyboardAvoidingView
+        style = {{ flex: 1 }}
+        behavior = { Platform.OS === 'ios' ? 'padding' : 'height' }
+    >
+
         <View style = { styles.screen }>
 
             <ScrollView>
@@ -109,7 +114,7 @@ export default function SignUpScreen() {
             </ScrollView>
 
         </View>
-
+    </KeyboardAvoidingView>
   );
 }
 

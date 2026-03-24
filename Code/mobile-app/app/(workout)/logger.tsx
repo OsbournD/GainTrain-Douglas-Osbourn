@@ -4,7 +4,7 @@ import { db } from "../../src/firebase";
 import { normaliseMuscleName, mapToBroadGroup, calculatePointsAwarded } from "../../src/utils/exerciseScoring";
 
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput, Alert } from 'react-native';
+import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -300,7 +300,7 @@ export default function workoutLogger() {
 
     return(
 
-        <View style={ [styles.appBackground, { position: 'relative' }] }>
+        <View style = { [styles.appBackground, { position: 'relative' }] }>
 
             <ThemedView style = { styles.headerContainer }>
 
@@ -318,192 +318,199 @@ export default function workoutLogger() {
 
             <View style = { styles.spacer }/>
 
-            <ScrollView
-                ref = { scrollRef }
-                contentContainerStyle = {{ paddingBottom: 40 }}
+            <KeyboardAvoidingView
+                style = {{ flex: 1 }}
+                behavior = { Platform.OS === 'ios' ? 'padding' : 'height' }
             >
 
-                <View>
+                <ScrollView
+                    ref = { scrollRef }
+                    contentContainerStyle = {{ paddingBottom: 40 }}
+                >
 
-                    {/* Session setup card */}
-                    { showSetup && (
+                    <View>
 
-                        <View style = { styles.card }>
+                        {/* Session setup card */}
+                        { showSetup && (
 
-                            <ThemedText style = { styles.headingText }>Session Setup</ThemedText>
+                            <View style = { styles.card }>
 
-                            <TextInput
-                                style = { styles.input }
-                                placeholder = "Session Name"
-                                value = { sessionName }
-                                onChangeText = { setSessionName }
-                            />
+                                <ThemedText style = { styles.headingText }>Session Setup</ThemedText>
 
-                            <View style = { styles.input }>
-                                <DateTimePicker
-                                    mode = "single"
-                                    date = { sessionDate }
-                                    onChange = { ({ date }) => {
-                                        setSessionDate(date);
-                                        if (date) {
-                                            setStartedAt(new Date(date as any));
-                                        }
-                                    }}
-                                    timePicker = { true }
-                                    use12Hours = { true }
-                                    containerHeight = {220}
-                                    weekdaysHeight = {20}
-                                    styles = {{
-                                        ...defaultStyles,
-                                        selected: { ...defaultStyles.selected, backgroundColor: '#24C3FF', borderRadius: 999 },
-                                        selected_label: { ...defaultStyles.selected_label, color: 'white', fontWeight: 'bold' },
-                                        today: { ...defaultStyles.today, borderColor: '#24C3FF', borderWidth: 1, borderRadius: 999 },
-                                    }}
+                                <TextInput
+                                    style = { styles.input }
+                                    placeholder = "Session Name"
+                                    value = { sessionName }
+                                    onChangeText = { setSessionName }
+                                />
+
+                                <View style = { styles.input }>
+                                    <DateTimePicker
+                                        mode = "single"
+                                        date = { sessionDate }
+                                        onChange = { ({ date }) => {
+                                            setSessionDate(date);
+                                            if (date) {
+                                                setStartedAt(new Date(date as any));
+                                            }
+                                        }}
+                                        timePicker = { true }
+                                        use12Hours = { true }
+                                        containerHeight = {220}
+                                        weekdaysHeight = {20}
+                                        styles = {{
+                                            ...defaultStyles,
+                                            selected: { ...defaultStyles.selected, backgroundColor: '#24C3FF', borderRadius: 999 },
+                                            selected_label: { ...defaultStyles.selected_label, color: 'white', fontWeight: 'bold' },
+                                            today: { ...defaultStyles.today, borderColor: '#24C3FF', borderWidth: 1, borderRadius: 999 },
+                                        }}
+                                    />
+
+                                </View>
+
+                                <TextInput
+                                    style = { styles.input }
+                                    placeholder = "Location (optional)"
+                                    value = { sessionLocation }
+                                    onChangeText = { setSessionLocation }
+                                />
+
+                                <TextInput
+                                    style = { styles.notesInput }
+                                    placeholder = "Session Notes (optional)"
+                                    multiline
+                                    value = { sessionNotes }
+                                    onChangeText = { setSessionNotes }
+                                />
+
+                                <TextInput
+                                    style = { styles.input }
+                                    placeholder = "Tags (comma separated)"
+                                    value = { sessionTags }
+                                    onChangeText = { setSessionTags }
                                 />
 
                             </View>
 
-                            <TextInput
-                                style = { styles.input }
-                                placeholder = "Location (optional)"
-                                value = { sessionLocation }
-                                onChangeText = { setSessionLocation }
-                            />
+                        )}
 
-                            <TextInput
-                                style = { styles.notesInput }
-                                placeholder = "Session Notes (optional)"
-                                multiline
-                                value = { sessionNotes }
-                                onChangeText = { setSessionNotes }
-                            />
-
-                            <TextInput
-                                style = { styles.input }
-                                placeholder = "Tags (comma separated)"
-                                value = { sessionTags }
-                                onChangeText = { setSessionTags }
-                            />
-
-                        </View>
-
-                    )}
-
-                    <TouchableOpacity style = { styles.hideButton }
-                        onPress = {() => {
-                            setShowSetup(!showSetup);
-                        }}>
-                        <Text style = { styles.collapseText }>
-                            {showSetup ? '- Hide Session Setup' : '+ Show Session Setup'}
-                        </Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity style = { styles.hideButton }
+                            onPress = {() => {
+                                setShowSetup(!showSetup);
+                            }}>
+                            <Text style = { styles.collapseText }>
+                                {showSetup ? '- Hide Session Setup' : '+ Show Session Setup'}
+                            </Text>
+                        </TouchableOpacity>
 
 
-                </View>
+                    </View>
 
-                {/* Exercise list. */}
+                    {/* Exercise list. */}
 
-                <View style = { styles.card }>
+                    <View style = { styles.card }>
 
-                    <ThemedText style = { styles.headingText }>Exercises</ThemedText>
+                        <ThemedText style = { styles.headingText }>Exercises</ThemedText>
 
-                    { exercises.length === 0 && (
-                        <Text style = { styles.setText }>No exercises added yet.</Text>
-                    )}
+                        { exercises.length === 0 && (
+                            <Text style = { styles.setText }>No exercises added yet.</Text>
+                        )}
 
-                    {/* Render each exercise and sets. */}
-                    { exercises.map((exercise, index) => (
+                        {/* Render each exercise and sets. */}
+                        { exercises.map((exercise, index) => (
 
-                        <View key = { index } style = { styles.exerciseCard }>
+                            <View key = { index } style = { styles.exerciseCard }>
 
-                            <Text style = { styles.exerciseTitle }>{ exercise.name }</Text>
+                                <Text style = { styles.exerciseTitle }>{ exercise.name }</Text>
 
-                            {/* First render the sets per exercise. */}
-                            { exercise.sets && exercise.sets.length > 0 && exercise.sets.map((set, setIndex) => (
-                                <View key = { setIndex } style = {{ marginTop: 4 }}>
+                                {/* First render the sets per exercise. */}
+                                { exercise.sets && exercise.sets.length > 0 && exercise.sets.map((set, setIndex) => (
+                                    <View key = { setIndex } style = {{ marginTop: 4 }}>
 
-                                    <Text style = { styles.setText }>
-                                        { toDisplay(set.weight, weightUnit) }{ weightUnit } x { set.reps }
-                                        { set.rpe ? ` — RPE ${set.rpe}` : "" }
-                                    </Text>
-
-                                    { set.equipment && set.equipment.length > 0 && (
                                         <Text style = { styles.setText }>
-                                            Equipment: { set.equipment.join(', ') }
+                                            { toDisplay(set.weight, weightUnit) }{ weightUnit } x { set.reps }
+                                            { set.rpe ? ` — RPE ${set.rpe}` : "" }
                                         </Text>
-                                    )}
 
-                                    { set.modifiers && set.modifiers.length > 0 && (
-                                        <Text style = { styles.setText }>
-                                            Modifiers: { set.modifiers.join(', ') }
-                                        </Text>
-                                    )}
+                                        { set.equipment && set.equipment.length > 0 && (
+                                            <Text style = { styles.setText }>
+                                                Equipment: { set.equipment.join(', ') }
+                                            </Text>
+                                        )}
+
+                                        { set.modifiers && set.modifiers.length > 0 && (
+                                            <Text style = { styles.setText }>
+                                                Modifiers: { set.modifiers.join(', ') }
+                                            </Text>
+                                        )}
+
+                                        <TouchableOpacity
+                                            style = {{ marginLeft: 10, marginTop: 2 }}
+                                            onPress = { () => {
+                                                const updatedExercises = [...exercises];
+                                                updatedExercises[index].sets = updatedExercises[index].sets.filter((_, i) => i !== setIndex);
+                                                setExercises(updatedExercises);
+                                            }}
+                                        >
+                                            <Text style = {{ color: '#E25252', fontWeight: 'bold' }}>Remove Set</Text>
+                                        </TouchableOpacity>
+
+                                        { setIndex < exercise.sets.length - 1 && (
+                                            <View style = {{
+                                                height: 1,
+                                                backgroundColor: '#D9D9D9',
+                                                marginVertical: 6,
+                                                marginHorizontal: 10,
+                                            }} />
+                                        )}
+
+                                    </View>
+                                ))}
+
+                                <View style = { styles.buttonRow }>
 
                                     <TouchableOpacity
-                                        style = {{ marginLeft: 10, marginTop: 2 }}
+                                        style = { styles.addButton }
                                         onPress = { () => {
-                                            const updatedExercises = [...exercises];
-                                            updatedExercises[index].sets = updatedExercises[index].sets.filter((_, i) => i !== setIndex);
-                                            setExercises(updatedExercises);
+                                            setActiveExerciseIndex(index);
+                                            setNewSetWeight("");
+                                            setNewSetReps("");
+                                            setNewSetRPE("");
+                                            setNewSetEquipment("");
+                                            setNewSetModifiers("");
+                                            setShowSetModal(true)
                                         }}
                                     >
-                                        <Text style = {{ color: '#E25252', fontWeight: 'bold' }}>Remove Set</Text>
+                                        <Text style = { styles.exerciseButtonText }>+ Add Set</Text>
                                     </TouchableOpacity>
 
-                                    { setIndex < exercise.sets.length - 1 && (
-                                        <View style = {{
-                                            height: 1,
-                                            backgroundColor: '#D9D9D9',
-                                            marginVertical: 6,
-                                            marginHorizontal: 10,
-                                        }} />
-                                    )}
+                                    <TouchableOpacity
+                                        style = { styles.removeButton }
+                                        onPress = { () => {
+                                            setExercises(exercises.filter((_, i) => i !== index));
+                                        }}
+                                    >
+                                        <Text style = { styles.exerciseButtonText }>Remove</Text>
+                                    </TouchableOpacity>
 
                                 </View>
-                            ))}
-
-                            <View style = { styles.buttonRow }>
-
-                                <TouchableOpacity
-                                    style = { styles.addButton }
-                                    onPress = { () => {
-                                        setActiveExerciseIndex(index);
-                                        setNewSetWeight("");
-                                        setNewSetReps("");
-                                        setNewSetRPE("");
-                                        setNewSetEquipment("");
-                                        setNewSetModifiers("");
-                                        setShowSetModal(true)
-                                    }}
-                                >
-                                    <Text style = { styles.exerciseButtonText }>+ Add Set</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style = { styles.removeButton }
-                                    onPress = { () => {
-                                        setExercises(exercises.filter((_, i) => i !== index));
-                                    }}
-                                >
-                                    <Text style = { styles.exerciseButtonText }>Remove</Text>
-                                </TouchableOpacity>
 
                             </View>
 
-                        </View>
+                        ))}
 
-                    ))}
+                        <TouchableOpacity
+                            style = { styles.addExerciseButton }
+                            onPress = { () => setShowExerciseSelector(true) }
+                        >
+                            <Text style = { styles.buttonText }>+ Add Exercise</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style = { styles.addExerciseButton }
-                        onPress = { () => setShowExerciseSelector(true) }
-                    >
-                        <Text style = { styles.buttonText }>+ Add Exercise</Text>
-                    </TouchableOpacity>
+                    </View>
 
-                </View>
+                </ScrollView>
 
-            </ScrollView>
+            </KeyboardAvoidingView>
 
             <View style = { styles.fixedButtonRow }>
 
