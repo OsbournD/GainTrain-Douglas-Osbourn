@@ -2,6 +2,7 @@ import { Tabs, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function AppLayout() {
     const router = useRouter();
@@ -33,8 +34,24 @@ export default function AppLayout() {
             headerShown: false
         }}>
 
-            <Tabs.Screen name = "dashboard" options = {{ title: "Dashboard"}} />
-            <Tabs.Screen name = "community" options = {{ title: "Community"}} />
+            <Tabs.Screen
+                name = "dashboard"
+                options = {{
+                    title: "Dashboard",
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="home" size = { size } color = { color } />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name = "community"
+                options = {{
+                    title: "Community",
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="people" size = { size } color = { color } />
+                    ),
+                }}
+            />
 
         </Tabs>
     );
