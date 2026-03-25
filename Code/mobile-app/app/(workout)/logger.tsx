@@ -5,8 +5,7 @@ import { normaliseMuscleName, mapToBroadGroup, calculatePointsAwarded } from "..
 
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import DateTimePicker, { useDefaultStyles, DateType } from 'react-native-ui-datepicker';
@@ -302,19 +301,23 @@ export default function workoutLogger() {
 
         <View style = { [styles.appBackground, { position: 'relative' }] }>
 
-            <ThemedView style = { styles.headerContainer }>
+            <SafeAreaView style = { styles.headerContainer }>
+
+                <View style = { styles.headerRow }>
 
                     <TouchableOpacity style = { styles.backButton } onPress = { backToDashboardClicked } >
                         <Text style = { styles.headerButtonText }> BACK </Text>
                     </TouchableOpacity>
 
-                    <ThemedText style = { styles.titleText }>New Workout</ThemedText>
+                    <Text style = { styles.titleText }>New Workout</Text>
 
                     <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
                         <Text style = { styles.headerButtonText }> SETTINGS </Text>
                     </TouchableOpacity>
 
-            </ThemedView>
+                </View>
+
+            </SafeAreaView>
 
             <View style = { styles.spacer }/>
 
@@ -335,7 +338,7 @@ export default function workoutLogger() {
 
                             <View style = { styles.card }>
 
-                                <ThemedText style = { styles.headingText }>Session Setup</ThemedText>
+                                <Text style = { styles.headingText }>Session Setup</Text>
 
                                 <TextInput
                                     style = { styles.input }
@@ -410,7 +413,7 @@ export default function workoutLogger() {
 
                     <View style = { styles.card }>
 
-                        <ThemedText style = { styles.headingText }>Exercises</ThemedText>
+                        <Text style = { styles.headingText }>Exercises</Text>
 
                         { exercises.length === 0 && (
                             <Text style = { styles.setText }>No exercises added yet.</Text>
@@ -1294,55 +1297,45 @@ const styles = StyleSheet.create({
         backgroundColor: '#E6F3FF',
     },
     headerContainer: {
-        height: '13%',
-        justifyContent: 'center',
         backgroundColor: 'white',
-        paddingHorizontal: 20,
-        position: 'relative',
-        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 8,
-        zIndex: 20,
+        elevation: 6,
     },
-    centerTitle: {
+    headerRow: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        flex: 1,
     },
     headerButton: {
-        paddingVertical: 10,
+        paddingVertical: 8,
         paddingHorizontal: 2,
         backgroundColor: '#D9D9D9',
-        borderRadius: 12,
+        borderRadius: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 3,
-        position: 'absolute',
-        top: 46,
-        right: 12,
-        zIndex: 10,
     },
     backButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
         backgroundColor: '#D9D9D9',
-        borderRadius: 12,
+        borderRadius: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 3,
-        position: 'absolute',
-        top: 46,
-        left: 12,
-        zIndex: 10,
     },
     headerButtonText: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
     },
     card: {
@@ -1361,12 +1354,12 @@ const styles = StyleSheet.create({
         height: 10,
     },
     titleText: {
-        fontSize: 40,
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 34,
         fontWeight: 'bold',
         color: '#24C3FF',
-        position: 'absolute',
-        textAlign: 'center',
-        lineHeight: 50,
+        flexShrink: 1,
     },
     headingText: {
         fontSize: 20,

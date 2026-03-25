@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { logoutUser } from '../../src/firestore';
 
@@ -165,22 +164,26 @@ export default function welcomeDashboard() {
 
         <View style={ styles.appBackground }>
 
-            <View style = { styles.topSection }>
+            <SafeAreaView style = { styles.topSection }>
 
-                <TouchableOpacity style = { styles.logoutButton } onPress = { logoutClicked } >
-                    <Text style = { styles.headerButtonText }> LOG OUT </Text>
-                </TouchableOpacity>
+                <View style = { styles.headerRow }>
 
-                    <Image
-                        source = { require('@/assets/gaintrain-images/gaintrain-banner.png')}
-                        style = { styles.logo }
-                    />
+                    <TouchableOpacity style = { styles.logoutButton } onPress = { logoutClicked } >
+                        <Text style = { styles.headerButtonText }> LOG OUT </Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
-                    <Text style = { styles.headerButtonText }> SETTINGS </Text>
-                </TouchableOpacity>
+                        <Image
+                            source = { require('@/assets/gaintrain-images/gaintrain-banner.png')}
+                            style = { styles.logo }
+                        />
 
-            </View>
+                    <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
+                        <Text style = { styles.headerButtonText }> SETTINGS </Text>
+                    </TouchableOpacity>
+
+                </View>
+
+            </SafeAreaView>
 
             <ScrollView contentContainerStyle = {{ flexGrow: 1, paddingBottom: 20 }}>
 
@@ -188,12 +191,12 @@ export default function welcomeDashboard() {
 
                     <View style = { styles.spacer }/>
 
-                    <ThemedView style = { styles.card }>
-                        <ThemedText style = { styles.welcomeText }>Welcome, {username}</ThemedText>
+                    <View style = { styles.card }>
+                        <Text style = { styles.welcomeText }>Welcome, {username}</Text>
 
                         <View style = {{ flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
 
-                            <ThemedText style = { styles.headingText }>Recently You...</ThemedText>
+                            <Text style = { styles.headingText }>Recently You...</Text>
 
                             <TouchableOpacity
                                 onPress = { () => setSummaryModalVisible(true) }
@@ -223,11 +226,11 @@ export default function welcomeDashboard() {
 
                             </>
                         )}
-                    </ThemedView>
+                    </View>
 
-                    <ThemedView style = { styles.card }>
+                    <View style = { styles.card }>
                         <View style = { styles.suggestionsHeaderRow }>
-                            <ThemedText style = { styles.headingText }>Exercise Suggestions</ThemedText>
+                            <Text style = { styles.headingText }>Exercise Suggestions</Text>
 
                             <TouchableOpacity
                                 style = { styles.refreshButton }
@@ -267,7 +270,7 @@ export default function welcomeDashboard() {
                                 </Text>
                             </TouchableOpacity>
                         ))}
-                    </ThemedView>
+                    </View>
 
                 </View>
 
@@ -393,16 +396,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#E6F3FF',
     },
     logo: {
-        width: 320,
-        height: 100,
+        width: '80%',
+        height: undefined,
+        aspectRatio: 3.2,
         resizeMode: 'contain',
+        flexShrink: 1,
     },
     topSection: {
-        height: '20%',
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'white',
-        paddingHorizontal: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -423,9 +426,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 3,
-        position: 'absolute',
-        top: 46,
-        right: 12,
+        marginHorizontal: 4,
         zIndex: 10,
     },
     logoutButton: {
@@ -438,9 +439,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 3,
-        position: 'absolute',
-        top: 46,
-        left: 12,
+        marginHorizontal: 4,
         zIndex: 10,
     },
     headerButtonText: {
@@ -481,12 +480,15 @@ const styles = StyleSheet.create({
     },
     primaryButton: {
         backgroundColor: '#3EEF7C',
-        paddingVertical: 24,
+        width: '88%',
+        minHeight: 70,
+        maxHeight: 90,
         borderRadius: 20,
-        marginTop: 16,
-        marginVertical: 8,
-        marginHorizontal: 28,
+        marginTop: 20,
+        marginBottom: 16,
+        alignSelf: 'center',
         alignItems: 'center',
+        justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -495,9 +497,10 @@ const styles = StyleSheet.create({
     },
     secondaryButton: {
         backgroundColor: '#46C3F3',
-        paddingVertical: 24,
         flex: 1,
-        borderRadius: 16,
+        minHeight: 65,
+        maxHeight: 85,
+        borderRadius: 18,
         marginHorizontal: 8,
         alignItems: 'center',
         justifyContent: 'center',
@@ -509,9 +512,10 @@ const styles = StyleSheet.create({
     },
     secondaryButtonWIP: {
         backgroundColor: '#757575',
-        paddingVertical: 24,
         flex: 1,
-        borderRadius: 16,
+        minHeight: 70,
+        maxHeight: 90,
+        borderRadius: 18,
         marginHorizontal: 8,
         alignItems: 'center',
         justifyContent: 'center',
@@ -524,17 +528,17 @@ const styles = StyleSheet.create({
     buttonRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginHorizontal: 20,
+        marginHorizontal: '4%',
         marginTop: 8,
     },
     primaryButtonText: {
         color: 'white',
-        fontSize: 30,
+        fontSize: 26,
         fontWeight: 'bold',
     },
     buttonText: {
         color: 'white',
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         textAlign: 'center',
     },
@@ -687,4 +691,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         paddingVertical: 2,
     },
+    headerRow: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+    },
+
 });

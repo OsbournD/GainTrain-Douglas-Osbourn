@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, ScrollView, Switch, Alert } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { logoutUser, deleteUserAccount } from '../src/firestore';
 import { query, collection, where, getDocs, doc, updateDoc } from "firebase/firestore";
@@ -164,35 +163,39 @@ export default function settingsScreen() {
 
         <View style = { styles.appBackground }>
 
-            <ThemedView style = { styles.headerContainer }>
+            <SafeAreaView style = { styles.headerContainer }>
+
+                <View style = { styles.headerRow }>
 
                     <TouchableOpacity style = { styles.logoutButton } onPress = { logoutClicked } >
                         <Text style = { styles.headerButtonText }> LOG OUT </Text>
                     </TouchableOpacity>
 
-                    <ThemedText style = { styles.titleText }>Settings</ThemedText>
+                    <Text style = { styles.titleText }>Settings</Text>
 
                     <TouchableOpacity style = { styles.backButton } onPress = { backButtonClicked } >
                         <Text style = { styles.headerButtonText }> BACK </Text>
                     </TouchableOpacity>
 
-            </ThemedView>
+                </View>
+
+            </SafeAreaView>
 
             <ScrollView style = {{ marginTop: 20, marginBottom: 40 }}>
 
                 <View style = { styles.card }>
 
-                    <ThemedText style = { styles.sectionTitle }>Account</ThemedText>
+                    <Text style = { styles.sectionTitle }>Account</Text>
 
-                    <ThemedText style = { styles.rowText }>Username:   { user.username }</ThemedText>
+                    <Text style = { styles.rowText }>Username:   { user.username }</Text>
 
-                    <ThemedText style = { styles.rowText }>Experience Level:   { user.experienceLevel || "Not set" }</ThemedText>
+                    <Text style = { styles.rowText }>Experience Level:   { user.experienceLevel || "Not set" }</Text>
 
                 </View>
 
                 <View style = { styles.card }>
 
-                    <ThemedText style = { styles.sectionTitle }>Preferences</ThemedText>
+                    <Text style = { styles.sectionTitle }>Preferences</Text>
 
                     <View style = { styles.toggleRow }>
                         <Text style = { styles.rowText }>Measurement Units</Text>
@@ -247,7 +250,7 @@ export default function settingsScreen() {
 
                     <View style = { styles.toggleRow }>
 
-                        <ThemedText style = { styles.sectionTitle }>Notifications</ThemedText>
+                        <Text style = { styles.sectionTitle }>Notifications</Text>
                         <Switch
                             value = { user?.notifications?.enabled ?? true }
                             onValueChange = { async (value) => {
@@ -278,7 +281,7 @@ export default function settingsScreen() {
 
                 <View style = { styles.card }>
 
-                    <ThemedText style = { styles.sectionTitle }>App Info</ThemedText>
+                    <Text style = { styles.sectionTitle }>App Info</Text>
 
                     <TouchableOpacity style = { styles.rowButton } onPress = { () => setShowTerms(true) }>
                         <Text style = { styles.rowText }>Terms of Service</Text>
@@ -292,7 +295,7 @@ export default function settingsScreen() {
 
                 <View style = { styles.card }>
 
-                    <ThemedText style = { [styles.sectionTitle, { color: 'red' }] }>Danger Zone</ThemedText>
+                    <Text style = { [styles.sectionTitle, { color: 'red' }] }>Danger Zone</Text>
 
                     <TouchableOpacity
                         style = { styles.dangerButton }
@@ -550,55 +553,46 @@ const styles = StyleSheet.create({
         backgroundColor: '#E6F3FF',
     },
     headerContainer: {
-        height: '15%',
-        justifyContent: 'center',
         backgroundColor: 'white',
-        paddingHorizontal: 20,
-        position: 'relative',
-        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 8,
-        zIndex: 20,
+        elevation: 6,
     },
-    centerTitle: {
+    headerRow: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        flex: 1,
     },
     backButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
         backgroundColor: '#D9D9D9',
-        borderRadius: 12,
+        borderRadius: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 3,
-        position: 'absolute',
-        top: 46,
-        left: 12,
-        zIndex: 10,
     },
     logoutButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 6,
+        paddingVertical: 8,
+        paddingHorizontal: 4,
         backgroundColor: '#FF4646',
-        borderRadius: 12,
+        borderRadius: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 3,
-        position: 'absolute',
-        top: 46,
-        right: 12,
-        zIndex: 10,
     },
     headerButtonText: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
     },
     card: {
@@ -617,12 +611,13 @@ const styles = StyleSheet.create({
         height: 10,
     },
     titleText: {
-        fontSize: 45,
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 32,
+        lineHeight: 36,
         fontWeight: 'bold',
         color: '#24C3FF',
-        position: 'absolute',
-        textAlign: 'center',
-        lineHeight: 50,
+        flexShrink: 1,
     },
     headingText: {
         fontSize: 20,

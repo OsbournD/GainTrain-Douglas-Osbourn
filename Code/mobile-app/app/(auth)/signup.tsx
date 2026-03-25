@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, Button, View, Alert, Text, ScrollView, Image, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Link, router } from 'expo-router';
 import { seedTestData, addTestUser } from '../../src/firestore';
 

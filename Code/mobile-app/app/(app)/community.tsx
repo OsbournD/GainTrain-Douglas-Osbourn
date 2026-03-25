@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Button, ActivityIndicator, TouchableOpacity, Text, TextInput, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { logoutUser } from '../../src/firestore';
 import { useIsFocused } from '@react-navigation/native';
@@ -40,19 +39,23 @@ export default function communityPage() {
 
         <View style = { styles.appBackground }>
 
-            <ThemedView style = { styles.headerContainer }>
+            <SafeAreaView style = { styles.headerContainer }>
 
-                <TouchableOpacity style = { styles.backButton } onPress = { backToDashboardClicked } >
-                    <Text style = { styles.headerButtonText }> BACK </Text>
-                </TouchableOpacity>
+                <View style = { styles.headerRow }>
 
-                <ThemedText style = { styles.titleText }>Community</ThemedText>
+                    <TouchableOpacity style = { styles.backButton } onPress = { backToDashboardClicked } >
+                        <Text style = { styles.headerButtonText }> BACK </Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
-                    <Text style = { styles.headerButtonText }> SETTINGS </Text>
-                </TouchableOpacity>
+                    <Text style = { styles.titleText }>Community</Text>
 
-            </ThemedView>
+                    <TouchableOpacity style = { styles.headerButton } onPress = { settingsClicked } >
+                        <Text style = { styles.headerButtonText }> SETTINGS </Text>
+                    </TouchableOpacity>
+
+                </View>
+
+            </SafeAreaView>
 
             <KeyboardAvoidingView
                 style = {{ flex: 1 }}
@@ -562,7 +565,7 @@ function ChallengesContent() {
 
                 <View style = { styles.card }>
 
-                    <ThemedText type = "subtitle" padding = "10" >Challenge Invites</ThemedText>
+                    <Text type = "subtitle" padding = "10" >Challenge Invites</Text>
 
                     { invites.length === 0 ? (
                         <Text style = { styles.placeholderText } > No pending invites </Text>
@@ -576,7 +579,7 @@ function ChallengesContent() {
 
                 <View style = { styles.card }>
 
-                    <ThemedText type = "subtitle" padding = "10" >Active Challenges</ThemedText>
+                    <Text type = "subtitle" padding = "10" >Active Challenges</Text>
 
                     { activeChallenges.length === 0 ? (
                         <Text style = { styles.placeholderText } > No active challenges </Text>
@@ -597,7 +600,7 @@ function ChallengesContent() {
 
                 <View style = { styles.card }>
 
-                    <ThemedText type="subtitle" padding="10"> Completed Challenges </ThemedText>
+                    <Text type="subtitle" padding="10"> Completed Challenges </Text>
 
                     { completedChallenges.length === 0 ? (
                         <Text style = { styles.placeholderText }> No completed challenges </Text>
@@ -618,7 +621,7 @@ function ChallengesContent() {
 
                 <View style = { styles.card }>
 
-                    <ThemedText type="subtitle" padding="10"> Expired / Cancelled Challenges </ThemedText>
+                    <Text type="subtitle" padding="10"> Expired / Cancelled Challenges </Text>
 
                     { expiredChallenges.length === 0 ? (
                         <Text style = { styles.placeholderText }> No expired or cancelled challenges </Text>
@@ -1535,7 +1538,7 @@ function FriendsContent() {     // Loads username and listens for incoming frien
 
             <View style = { styles.card }>
 
-                <ThemedText type = "subtitle" padding = "10" >Add a Friend</ThemedText>
+                <Text type = "subtitle" padding = "10" >Add a Friend</Text>
 
                 <TextInput style = { styles.input } placeholder = "Enter a friend's username" value = { targetUser } onChangeText = { setTargetUser } />
 
@@ -1547,7 +1550,7 @@ function FriendsContent() {     // Loads username and listens for incoming frien
 
             <View style = { styles.card }>
 
-                <ThemedText type = "subtitle" padding = "10" >Incoming Requests</ThemedText>
+                <Text type = "subtitle" padding = "10" >Incoming Requests</Text>
 
                 { incoming.length === 0 ? (
                     <Text style = { styles.placeholderText } > No Incoming Requests </Text>
@@ -1580,7 +1583,7 @@ function FriendsContent() {     // Loads username and listens for incoming frien
 
             <View style = { styles.card }>
 
-                <ThemedText type = "subtitle" padding = "10" >Friends</ThemedText>
+                <Text type = "subtitle" padding = "10" >Friends</Text>
 
                 { friends.length === 0 ? (
                     <Text style = { styles.placeholderText } > No Friends Added </Text>
@@ -1606,61 +1609,51 @@ const styles = StyleSheet.create({
         backgroundColor: '#E6F3FF',
     },
     headerContainer: {
-        height: '15%',
-        justifyContent: 'center',
         backgroundColor: 'white',
-        paddingHorizontal: 20,
-        position: 'relative',
-        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 8,
-        zIndex: 20,
+        elevation: 6,
     },
-    centerTitle: {
+    headerRow: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        flex: 1,
     },
     headerButton: {
-        paddingVertical: 10,
+        paddingVertical: 8,
         paddingHorizontal: 2,
         backgroundColor: '#D9D9D9',
-        borderRadius: 12,
+        borderRadius: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 3,
-        position: 'absolute',
-        top: 46,
-        right: 12,
-        zIndex: 10,
     },
     backButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
         backgroundColor: '#D9D9D9',
-        borderRadius: 12,
+        borderRadius: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 3,
-        position: 'absolute',
-        top: 46,
-        left: 12,
-        zIndex: 10,
     },
     headerButtonText: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
     },
     card: {
         backgroundColor: 'white',
         borderRadius: 8,
-        padding: 15,
+        padding: 10,
         marginHorizontal: 20,
         marginVertical: 6,
         shadowColor: '#000',
@@ -1673,12 +1666,13 @@ const styles = StyleSheet.create({
         height: 10,
     },
     titleText: {
-        fontSize: 45,
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 32,
+        lineHeight: 36,
         fontWeight: 'bold',
         color: '#24C3FF',
-        position: 'absolute',
-        textAlign: 'center',
-        lineHeight: 50,
+        flexShrink: 1,
     },
     headingText: {
         fontSize: 20,
