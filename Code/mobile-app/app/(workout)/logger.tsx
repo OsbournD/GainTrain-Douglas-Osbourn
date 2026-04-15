@@ -297,6 +297,24 @@ export default function workoutLogger() {
         return Number(value.toFixed(2));
     };
 
+    const moveExerciseUp = (index: number) => {
+        if (index === 0) return; // Already at top.
+        const updated = [...exercises];
+        const temp = updated[index - 1];
+        updated[index - 1] = updated[index];
+        updated[index] = temp;
+        setExercises(updated);
+    };
+
+    const moveExerciseDown = (index: number) => {
+        if (index === exercises.length - 1) return; // Already at bottom.
+        const updated = [...exercises];
+        const temp = updated[index + 1];
+        updated[index + 1] = updated[index];
+        updated[index] = temp;
+        setExercises(updated);
+    };
+
     return(
 
         <View style = { [styles.appBackground, { position: 'relative' }] }>
@@ -425,7 +443,33 @@ export default function workoutLogger() {
 
                             <View key = { index } style = { styles.exerciseCard }>
 
-                                <Text style = { styles.exerciseTitle }>{ exercise.name }</Text>
+                                <View style = { styles.exerciseTitleRow }>
+                                    <Text style = { styles.exerciseTitle }>{ exercise.name }</Text>
+                                </View>
+
+                                <View style = { styles.reorderColumn }>
+                                    <TouchableOpacity
+                                        onPress = { () => index > 0 && moveExerciseUp(index) }
+                                        disabled = { index === 0 }
+                                        style = {[
+                                            styles.reorderButton,
+                                            { opacity: index === 0 ? 0.3 : 1 }
+                                        ]}
+                                    >
+                                        <Text style = { styles.reorderButtonText }>▲</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        onPress = { () => index < exercises.length - 1 && moveExerciseDown(index) }
+                                        disabled = { index === exercises.length - 1 }
+                                        style = {[
+                                            styles.reorderButton,
+                                            { opacity: index === exercises.length - 1 ? 0.3 : 1 }
+                                        ]}
+                                    >
+                                        <Text style = { styles.reorderButtonText }>▼</Text>
+                                    </TouchableOpacity>
+                                </View>
 
                                 {/* First render the sets per exercise. */}
                                 { exercise.sets && exercise.sets.length > 0 && exercise.sets.map((set, setIndex) => (
@@ -1395,6 +1439,9 @@ const styles = StyleSheet.create({
         height: 60,
     },
     exerciseCard: {
+        position: 'relative',
+        paddingRight: 50,
+        paddingBottom: 20,
         marginVertical: 4,
         backgroundColor: '#F5F5F5',
         borderRadius: 8,
@@ -1642,5 +1689,33 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         textAlign: 'center',
     },
-
+    exerciseTitleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    reorderColumn: {
+        position: 'absolute',
+        right: 5,
+        top: 5,
+        flexDirection: 'column',
+        alignItems: 'center',
+    },
+    reorderButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        backgroundColor: '#E6F3FF',
+        borderRadius: 8,
+        marginVertical: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    reorderButtonText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#24C3FF',
+    },
 });
