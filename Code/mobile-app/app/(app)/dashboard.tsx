@@ -281,14 +281,10 @@ export default function welcomeDashboard() {
                 <TouchableOpacity style = { styles.primaryButton } onPress = { () => startWorkoutClicked() } >
                     <Text style = { styles.primaryButtonText }> Start Workout </Text>
                 </TouchableOpacity>
-                <View style = { styles.buttonRow }>
-                    <TouchableOpacity style = { styles.secondaryButton } onPress = { () => workoutDiaryClicked()} >
-                        <Text style = { styles.buttonText }> Workout Diary </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style = { styles.secondaryButtonWIP } onPress = { () => console.log("Exercise discovery clicked")} >
-                        <Text style = { styles.buttonText }>Exercise Discovery (WIP!!)</Text>
-                    </TouchableOpacity>
-                </View>
+
+                <TouchableOpacity style = { styles.secondaryButton } onPress = { () => workoutDiaryClicked()} >
+                    <Text style = { styles.buttonText }> Workout Diary </Text>
+                </TouchableOpacity>
 
             </View>
 
@@ -411,6 +407,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 8,
+        zIndex: 999,
     },
     centerTitle: {
         alignItems: 'center',
@@ -481,11 +478,10 @@ const styles = StyleSheet.create({
     primaryButton: {
         backgroundColor: '#3EEF7C',
         width: '88%',
-        minHeight: 70,
-        maxHeight: 90,
+        height: '40%',
         borderRadius: 20,
-        marginTop: 20,
-        marginBottom: 16,
+        marginTop: '4%',
+        marginBottom: '4%',
         alignSelf: 'center',
         alignItems: 'center',
         justifyContent: 'center',
@@ -497,11 +493,11 @@ const styles = StyleSheet.create({
     },
     secondaryButton: {
         backgroundColor: '#46C3F3',
-        flex: 1,
-        minHeight: 65,
-        maxHeight: 85,
-        borderRadius: 18,
-        marginHorizontal: 8,
+        width: '88%',
+        height: '40%',
+        borderRadius: 20,
+        marginBottom: '4%',
+        alignSelf: 'center',
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#000',
@@ -510,27 +506,7 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 4,
     },
-    secondaryButtonWIP: {
-        backgroundColor: '#757575',
-        flex: 1,
-        minHeight: 70,
-        maxHeight: 90,
-        borderRadius: 18,
-        marginHorizontal: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 4,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginHorizontal: '4%',
-        marginTop: 8,
-    },
+
     primaryButtonText: {
         color: 'white',
         fontSize: 26,
@@ -538,7 +514,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         color: 'white',
-        fontSize: 18,
+        fontSize: 26,
         fontWeight: 'bold',
         textAlign: 'center',
     },
@@ -590,7 +566,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     bottomButtonsContainer: {
-        paddingBottom: 10,
+        height: '25%',
         backgroundColor: '#E6F3FF',
     },
     modalOverlay: {

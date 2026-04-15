@@ -341,8 +341,9 @@ export default function workoutLogger() {
                                 <Text style = { styles.headingText }>Session Setup</Text>
 
                                 <TextInput
-                                    style = { styles.input }
-                                    placeholder = "Session Name"
+                                    style = { styles.inputRequired }
+                                    placeholder = "Session Name *"
+                                    placeholderTextColor = "red"
                                     value = { sessionName }
                                     onChangeText = { setSessionName }
                                 />
@@ -1370,6 +1371,14 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
+        borderColor: 'black',
+        borderRadius: 5,
+        padding: 6,
+        marginVertical: 6,
+        backgroundColor: 'white',
+    },
+    inputRequired: {
+        borderWidth: 1.5,
         borderColor: 'black',
         borderRadius: 5,
         padding: 6,
