@@ -231,13 +231,6 @@ export default function welcomeDashboard() {
                     <View style = { styles.card }>
                         <View style = { styles.suggestionsHeaderRow }>
                             <Text style = { styles.headingText }>Exercise Suggestions</Text>
-
-                            <TouchableOpacity
-                                style = { styles.refreshButton }
-                                onPress = { refreshSuggestions }
-                            >
-                                <Text style = { styles.refreshButtonText }>REFRESH</Text>
-                            </TouchableOpacity>
                         </View>
 
                         { loadingRecommendations && (
