@@ -1,10 +1,27 @@
 # GainTrain: A Cross-Platform Social Fitness and Workout Tracking App
-Repository for my Comp3000 Final Year Project 'GainTrain'.
+GainTrain is a student-focused fitness application developed as part of the COMP3000 final year project at the University of Plymouth. The application is designed to support consistent exercise habits through simple workout logging, smart exercise suggestions and low-pressure social features, without competitive mechanics or paywalled functionality.
 
-## GainTrain aims to be:
-  - A social-fitness app where you can set yourself goals and log your daily workouts.
-  - A place to share and discuss your favourite workout plans with your friends and discover new exercises.
-  - A gym companion, helping you keep on top of your progress, giving you a head start when it comes to planning your schedule.
+## Project Overview
+The project responds to common barriers faced by university students when maintaining regular exercise routines, including time pressure, motivation issues and overly complex fitness platforms. GainTrain prioritises simplicity, accessibility and supportive interaction rather than performance comparison.
+
+Core functionality includes:
+- User authentication and onboarding.
+- Structured workout logging and exercise diary.
+- Smart exercise recommendations based on user activity.
+- Low-pressure friend challenges and social features.
+- Cross-platform mobile support (Android and iOS).
+
+## Technology Stack
+- React Native
+- Expo
+- TypeScript
+- Firebase Authentication
+- Firestore
+- AsyncStorage
+
+## Running the Project
+1. Install dependencies: npm install
+2. Start the development server: npx expo start
 
 ## Allocated Supervisor: 
 Rory Hopcraft
