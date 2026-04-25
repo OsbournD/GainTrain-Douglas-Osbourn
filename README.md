@@ -20,8 +20,19 @@ Core functionality includes:
 - AsyncStorage
 
 ## Running the Project
-1. Install dependencies: npm install
-2. Start the development server: npx expo start
+1. Clone the repository:
+   git clone https://github.com/OsbournD/COMP3000-Douglas-Osbourn.git
+3. Open project folder in Android Studio
+4. Terminal to:
+   COMP3000-Douglas-Osbourn/Code/mobile-app
+6. Install dependencies:
+   npm install
+8. Start the development server:
+   npx expo start
+10. Press 's' key to switch to Expo Go
+11. Press 'a' to open GainTrain on an Android Emulator with Expo Go
+   OR
+   scan the generated QR code to launch on own device with Expo Go installed
 
 ## Allocated Supervisor: 
 Rory Hopcraft
