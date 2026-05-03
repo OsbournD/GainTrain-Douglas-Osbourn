@@ -1,4 +1,4 @@
-// STEP 12 - Returns the single strongest reason why an exercise was recommended.
+// Returns the single strongest reason why an exercise was recommended.
 
 import { ScoredExercise } from "./types.ts";
 

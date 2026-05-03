@@ -81,3 +81,6 @@ credentials.json
 ~*.tmp
 *.tmp
 
+# .idea files
+.idea/
+
