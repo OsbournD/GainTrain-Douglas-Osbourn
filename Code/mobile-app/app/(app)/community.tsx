@@ -60,6 +60,7 @@ export default function communityPage() {
             <KeyboardAvoidingView
                 style = {{ flex: 1 }}
                 behavior = { Platform.OS === 'ios' ? 'padding' : 'height' }
+                 keyboardVerticalOffset = { 25 }
             >
 
                 <View style = { styles.tabBar }>
