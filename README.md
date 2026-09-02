@@ -21,10 +21,10 @@ Core functionality includes:
 
 ## Running the Project
 1. Clone the repository:
-   git clone https://github.com/OsbournD/COMP3000-Douglas-Osbourn.git
+   git clone https://github.com/OsbournD/GainTrain-Douglas-Osbourn.git
 3. Open project folder in Android Studio
 4. Terminal to:
-   COMP3000-Douglas-Osbourn/Code/mobile-app
+   GainTrain-Douglas-Osbourn/Code/mobile-app
 6. Install dependencies:
    npm install
 8. Start the development server:
